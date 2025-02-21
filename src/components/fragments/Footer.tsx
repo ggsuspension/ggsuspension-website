@@ -29,38 +29,52 @@ const Footer = () => {
             <h4 className="text-xl font-bold">ALAMAT KAMI</h4>
             <p className="text-gray-400 flex gap-1">
               <FaLocationDot />
+              <a href="https://maps.app.goo.gl/nUE1ptZQuaQQsaxg7">
               <i className="fas fa-map-marker-alt"></i>BEKASI - Jl. Kelana,
               Cibuntu, Cibitung, Bekasi
+              </a>
             </p>
             <p className="text-gray-400 flex gap-1">
               <FaLocationDot />
+              <a href="https://maps.app.goo.gl/Nj3KB4oveM4R3ugA7">
               <i className="fas fa-map-marker-alt"></i>TANGERANG - Jl. Dr.
               Soetomo, Joglo, Karang Tengah, Tangerang
+              </a>
             </p>
             <p className="text-gray-400 flex gap-1">
               <FaLocationDot />
+              <a href="https://maps.app.goo.gl/gF33nGxzY41FPpTG6">
               <i className="fas fa-map-marker-alt"></i>DEPOK - Jl. Tole
               Iskandar, Abadijaya, Sukmajaya, Depok
+              </a>
             </p>
             <p className="text-gray-400 flex gap-1">
               <FaLocationDot />
+              <a href="https://maps.app.goo.gl/46v1C4KK8njbWbSDA">
               <i className="fas fa-map-marker-alt"></i>JAKTIM - Jl. Malaka,
               Malaka Sari, Duren Sawit, Jakarta Timur
+              </a>
             </p>
             <p className="text-gray-400 flex gap-1">
               <FaLocationDot />
+              <a href="https://maps.app.goo.gl/afCf8QTr3uxHqBn18">
               <i className="fas fa-map-marker-alt"></i>JAKSEL - Jl. Raya Pasar
               Minggu, Pancoran, Jakarta Selatan
+              </a>
             </p>
             <p className="text-gray-400 flex gap-1">
               <FaLocationDot />
+              <a href="https://maps.app.goo.gl/gbg5PmY11nP63cXC8">
               <i className="fas fa-map-marker-alt"></i>CIKARANG - Jl.
               Cilemahabang, Jayamukti, Cikarang Pusat
+              </a>
             </p>
             <p className="text-gray-400 flex gap-1">
               <FaLocationDot />
+              <a href="https://maps.app.goo.gl/e6fiH1iwo3SzyDYT6">
               <i className="fas fa-map-marker-alt"></i>BOGOR - Jl. Rimba Baru,
               Pasirkuda, Kec. Bogor Bar., Bogor
+              </a>
             </p>
           </div>
 

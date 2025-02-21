@@ -223,7 +223,7 @@ export default function CekHargaSection({ hargaLayanan, hargaSeal }: any) {
                 ))}
             </select>
           </span>
-          <div className="container mx-auto px-4 flex flex-col gap-4 bg-slate-200 py-4">
+          <div className="container mx-auto px-4 flex flex-col gap-4 bg-slate-200 py-4 rounded-lg">
             {/* Select Kategori */}
             <div>
               <span className="flex justify-between">
@@ -236,7 +236,7 @@ export default function CekHargaSection({ hargaLayanan, hargaSeal }: any) {
                 value={selectedCategoryIndex}
                 onChange={handleCategoryChange}
               >
-                <option value="">-- Pilih Kategori --</option>
+                <option value="">Pilih Kategori</option>
                 {hargaSeal &&
                   hargaSeal.map((item: any, index: number) => (
                     <option key={index} value={index}>
@@ -261,7 +261,7 @@ export default function CekHargaSection({ hargaLayanan, hargaSeal }: any) {
                   value={selectedTipeSubIndex}
                   onChange={handleTipeSubChange}
                 >
-                  <option value="">-- Pilih Tipe / Subkategori --</option>
+                  <option value="">Pilih Tipe / Subkategori</option>
                   {tipeSubOptions.map((option: any, idx: any) => (
                     <option key={idx} value={idx}>
                       {option}
