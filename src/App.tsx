@@ -23,13 +23,17 @@ const Website = () => {
     "PAKET REBOUND & DOWNSIZE",
   ];
   useEffect(() => {
-    axios.get("http://localhost:8000/api/list-motor").then((res) => {
-      setListMotor(res.data[0]);
-    });
+    axios
+      .get(
+        "https://backend-gg-suspension-production.up.railway.app/api/list-motor"
+      )
+      .then((res) => {
+        setListMotor(res.data[0]);
+      });
   }, []);
 
   return (
-    <div className="min-h-screen bg-blue-700 font-poppins overflow-hidden">
+    <div className="relative min-h-screen bg-blue-700 font-poppins overflow-hidden">
       <Navigation />
       {/* <SideNav /> */}
       <div className="w-full h-[40em] tablet:h-[55em] desktop:h-[50em]">
@@ -47,6 +51,12 @@ const Website = () => {
       <ArticleSection />
       {/* <SelectOptionSeal hargaSeal={listMotor&&JSON.parse(listMotor.seal)}/> */}
       <Footer />
+      <img
+        src="./LOGO%20WA.webp"
+        className="fixed z-40 bottom-4 right-4 w-12 bg-white rounded-full"
+        alt=""
+        onClick={()=>window.open("https://wa.me/6282112345678")}
+      />
     </div>
   );
 };

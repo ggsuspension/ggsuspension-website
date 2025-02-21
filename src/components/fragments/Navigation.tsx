@@ -1,5 +1,6 @@
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { FaLocationDot } from "react-icons/fa6";
 // import { FaInstagram } from "react-icons/fa6";
 // import { PiTiktokLogoBold } from "react-icons/pi";
 
@@ -13,21 +14,35 @@ export const Navigation = () => {
     <nav className="bg-white shadow-lg fixed top-0 left-0 z-50 w-full">
       <div className="max-w-7xl mx-auto px-2 tablet:px-8">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center gap-2">
-            <img src="./LOGO%20REMAKE.png" className="w-8 h-8" alt="" />
-            <h1 className="text-xl tablet:text-3xl font-bold text-orange-600">
+          <div className="flex items-center tablet:gap-2 gap-1">
+            <img src="./LOGO%20REMAKE.png" className="tablet:w-10 tablet:h-10 w-6 h-6" alt="" />
+            <h1 className="text-lg tablet:text-3xl font-bold text-orange-600">
               GG Suspension
             </h1>
           </div>
+          <div className="flex gap-1 tablet:gap-5">
+          <div className="flex items-center text-xs tablet:text-lg">
+            <FaLocationDot className="text-red-500"/><select name="location" className="w-[6.8em] tablet:w-full" id="">
+              <option value="">Pilih Gerai</option>
+              <option value="Bekasi">Bekasi</option>
+              <option value="Tangerang">Tangerang</option>
+              <option value="Depok">Depok</option>
+              <option value="Cikarang">Cikarang</option>
+              <option value="Jaksel">Jaksel</option>
+              <option value="Jaktim">Jaktim</option>
+              <option value="Bogor">Bogor</option>
+            </select>
+          </div>
 
-          <div className="md:hidden flex items-center">
+          <div className="flex items-center">
             <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? (
                 <X className="h-6 w-6" />
               ) : (
-                <Menu className="h-6 w-6" />
+                <Menu className="h-6 w-6 bg-orange-500 rounded-md text-white tablet:bg-white tablet:text-black tablet:h-8 tablet:w-8" />
               )}
             </button>
+          </div>
           </div>
           {/* <span className='flex tablet:gap-3 gap-1'>
             <a className="hover:cursor-pointer" href="https://www.instagram.com/officialggsuspension/">
