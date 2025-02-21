@@ -5,7 +5,6 @@ import { ServicesSection } from "./components/fragments/ServiceSection";
 import { AboutSection } from "./components/fragments/AboutSection";
 import { HeroSection } from "./components/fragments/HeroSection";
 import { Navigation } from "./components/fragments/Navigation";
-import { SideNav } from "./components/fragments/SideNav";
 import WhyChooseUs from "./components/fragments/WhyChooseUs";
 import CekHargaSection from "./components/fragments/CekHargaSection";
 
@@ -32,7 +31,7 @@ const Website = () => {
   return (
     <div className="min-h-screen bg-blue-700 font-poppins overflow-hidden">
       <Navigation />
-      <SideNav />
+      {/* <SideNav /> */}
       <div className="w-full h-[40em] tablet:h-[55em] desktop:h-[50em]">
         <HeaderCarousel />
       </div>

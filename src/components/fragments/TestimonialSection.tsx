@@ -3,8 +3,8 @@ import { MessageCircle, Star } from 'lucide-react';
 
 export const TestimonialsSection = () => {
   return (
-    <section className="pt-[5em] pb-[10em] bg-gray-50">
-      <div id="testimoni" className="px-5">
+    <section id="testimoni" className="pt-[5em] pb-[10em] bg-gray-50">
+      <div className="px-5">
         <span className="flex flex-col items-center">
           <h1 className="text-4xl tablet:text-6xl font-bold text-center text-red-600">APA ?</h1>
           <h2 className="text-xl tablet:text-3xl font-bold text-center mb-5">KATA MEREKA</h2>

@@ -39,7 +39,7 @@ const HeaderCarousel = () => {
             alt={`Slide ${index + 1}`}
             className="h-full w-full object-cover"
           />
-         {index==1&& <span className="absolute z-20 top-12 tablet:top-1/4 left-2 tablet:left-12 text-yellow-400 font-bold flex flex-col">
+         {index==1&& <span className="absolute z-20 top-1/4 left-2 tablet:left-12 text-yellow-400 font-bold flex flex-col">
             <p className="font-extrabold tablet:text-[5em] text-[2.5em] text-white">
               TERSEDIA DI :
             </p>
@@ -71,16 +71,16 @@ const HeaderCarousel = () => {
               </span>
             </div>
           </span>}
-         {index==2&& <span className="absolute z-20 top-12 left-2 tablet:left-12 text-yellow-400 font-bold flex flex-col">
+         {index==2&& <span className="absolute z-20 top-1/4 left-2 tablet:left-12 text-yellow-400 font-bold flex flex-col">
             <p className="font-extrabold tablet:text-[5em] text-[2.5em]">
               PROMO REBOUND
             </p>
           </span>}
-         {index==0&& <span className="absolute z-20 top-12 left-2 tablet:left-12 text-white font-bold flex flex-col tablet:top-1/4">
+         {index==0&& <span className="absolute z-20 top-1/4 left-2 tablet:left-12 text-white font-bold flex flex-col tablet:top-1/4">
             <p className="font-extrabold tablet:text-[5em] text-[2.5em]">
               SELAMAT DATANG DI
             </p>
-            <p className="font-extrabold tablet:text-[5em] text-yellow-400 text-[1.8em] flex gap-2 items-center">
+            <p className="top-1/4 font-extrabold tablet:text-[5em] text-yellow-400 text-[1.8em] flex gap-2 items-center">
               GG SUSPENSION <GiHand className="rotate-12" />
             </p>
           </span>}

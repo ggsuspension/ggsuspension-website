@@ -143,7 +143,7 @@ export default function CekHargaSection({ hargaLayanan, hargaSeal }: any) {
   }, [textLayanan, textJenisMotor, textBagianMotor, motor, hargaData]);
 
   return (
-    <div>
+    <div id="harga">
       <div className="flex tablet:flex-row flex-col justify-center tablet:gap-12 gap-3 items-center bg-gray-50 py-[8em] relative">
         <PiMoneyWavy className="absolute top-5 left-8 text-5xl rotate-45" />
         <PiMoneyWavy className="absolute top-5 right-3 text-3xl rotate-[-45deg]" />
@@ -151,8 +151,7 @@ export default function CekHargaSection({ hargaLayanan, hargaSeal }: any) {
         <PiMoneyWavy className="absolute bottom-5 right-1 text-2xl rotate-[-45deg]" />
         <PiMoneyWavy className="absolute bottom-1/2 left-0 text-xl rotate-45" />
         <PiMoneyWavy className="absolute bottom-5 left-3 text-4xl rotate-45" />
-        <p
-          id="harga"
+        <p          
           className="tablet:text-6xl text-4xl w-[4em] font-extrabold tracking-widest tablet:text-right"
         >
           CEK <span className="text-yellow-400">HARGA</span>
