@@ -30,10 +30,10 @@ const Website = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-blue-700 font-poppins">
+    <div className="min-h-screen bg-blue-700 font-poppins overflow-hidden">
       <Navigation />
       <SideNav />
-      <div className="w-full h-[25em] tablet:h-[55em] desktop:h-[50em]">
+      <div className="w-full h-[28em] tablet:h-[55em] desktop:h-[50em]">
         <HeaderCarousel />
       </div>
       <HeroSection data={listMotor && JSON.parse(listMotor.layanan)} />
@@ -45,7 +45,7 @@ const Website = () => {
         hargaLayanan={listMotor && JSON.parse(listMotor.layanan)}
       />
       <TestimonialsSection />
-      <ArticleSection/>
+      <ArticleSection />
       {/* <SelectOptionSeal hargaSeal={listMotor&&JSON.parse(listMotor.seal)}/> */}
       <Footer />
     </div>

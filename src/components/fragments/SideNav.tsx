@@ -34,7 +34,7 @@ const [isSideNav,setIsSideNav]=useState(true);
   ) : (
     <IoIosArrowDroprightCircle
       onClick={() => setIsSideNav(!isSideNav)}
-      className="text-4xl cursor-pointer fixed opacity-70 text-orange-600 top-1/2 -translate-y-1/2 hover:opacity-100 z-20 items-center justify-center font-bold right-1 bg-white rounded-full"
+      className="z-30 text-4xl cursor-pointer fixed opacity-70 text-orange-600 top-1/2 -translate-y-1/2 hover:opacity-100 items-center justify-center font-bold right-1 bg-white rounded-full"
     />
   )}
 </>
