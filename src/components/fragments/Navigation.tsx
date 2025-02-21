@@ -1,14 +1,12 @@
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { FaInstagram } from "react-icons/fa6";
-import { PiTiktokLogoBold } from "react-icons/pi";
+// import { FaInstagram } from "react-icons/fa6";
+// import { PiTiktokLogoBold } from "react-icons/pi";
 
 export const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    setIsLoaded(true);
   }, []);
 
   return (
