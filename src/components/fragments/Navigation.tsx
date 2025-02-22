@@ -16,7 +16,7 @@ export const Navigation = () => {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center tablet:gap-2 gap-1">
             <img src="./LOGO%20REMAKE.png" className="tablet:w-10 tablet:h-10 w-6 h-6" alt="" />
-            <h1 className="text-sm tablet:text-3xl font-bold text-orange-600">
+            <h1 className="text-lg tablet:text-3xl font-bold text-orange-600">
               GG Suspension
             </h1>
           </div>
