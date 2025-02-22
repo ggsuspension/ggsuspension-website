@@ -57,7 +57,7 @@ const Website = () => {
         src="./LOGO%20WA.webp"
         className="fixed z-40 bottom-4 right-4 w-8 bg-white rounded-full"
         alt=""
-        onClick={()=>window.open("https://wa.me/6282112345678")}
+        onClick={()=>window.open("https://wa.me/6282225232505")}
       />
       <CustomerSupport/>
     </div>
