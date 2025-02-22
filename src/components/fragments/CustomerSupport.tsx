@@ -69,6 +69,7 @@ export default function CustomerSupport() {
                   setText("");
                   integrasiAPI(text).then((res) => {
                     setArrayTextCS([...arrayText, res]);
+                    setIsSend(false);
                   });
                 }}
                 className="text-white"
