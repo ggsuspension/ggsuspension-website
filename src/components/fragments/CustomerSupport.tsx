@@ -34,9 +34,6 @@ export default function CustomerSupport() {
             <p className="flex text-sm text-white bg-gray-600 w-3/4 p-2 rounded-lg">
               Saya GG min siap membantu!
             </p>
-            <p className="flex self-end text-sm bg-green-600 text-white w-3/4 p-2 rounded-lg">
-              Saya GG min siap membantu!
-            </p>
             {arrayText.length > 0 &&
               arrayText.map((item: any, i: number) => (
                 <p
