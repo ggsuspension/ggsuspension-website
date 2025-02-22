@@ -1,4 +1,4 @@
-import { Menu, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FaLocationDot } from "react-icons/fa6";
 // import { FaInstagram } from "react-icons/fa6";
@@ -16,7 +16,7 @@ export const Navigation = () => {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center tablet:gap-2 gap-1">
             <img src="./LOGO%20REMAKE.png" className="tablet:w-10 tablet:h-10 w-6 h-6" alt="" />
-            <h1 className="text-lg tablet:text-3xl font-bold text-orange-600">
+            <h1 className="text-sm tablet:text-3xl font-bold text-orange-600">
               GG Suspension
             </h1>
           </div>
@@ -39,7 +39,8 @@ export const Navigation = () => {
               {isMenuOpen ? (
                 <X className="h-6 w-6" />
               ) : (
-                <Menu className="h-6 w-6 bg-orange-500 rounded-md text-white tablet:bg-white tablet:text-black tablet:h-8 tablet:w-8" />
+                <p className="text-xs font-semibold tablet:text-lg p-1  bg-orange-500 rounded-md text-white">Menu</p>
+                // <Menu className="h-6 w-6 bg-orange-500 rounded-md text-white tablet:bg-white tablet:text-black tablet:h-8 tablet:w-8" />
               )}
             </button>
           </div>
@@ -54,14 +55,15 @@ export const Navigation = () => {
             </span> */}
         </div>
         {isMenuOpen && (
-          <div className="md:hidden">
+          <div className="">
             <div className="px-2 pt-2 pb-3 space-y-1">
-              <a href="#home" className="block px-3 py-2 text-gray-600 hover:text-blue-600">Awal</a>
               <a href="#about" className="block px-3 py-2 text-gray-600 hover:text-blue-600">Tentang Kami</a>
               <a href="#services" className="block px-3 py-2 text-gray-600 hover:text-blue-600">Layanan</a>
               <a href="#harga" className="block px-3 py-2 text-gray-600 hover:text-blue-600">Cek Harga</a>
               <a href="#testimoni" className="block px-3 py-2 text-gray-600 hover:text-blue-600">Testimoni</a>
               <a href="#article" className="block px-3 py-2 text-gray-600 hover:text-blue-600">Artikel & Tips</a>
+              <a href="#contact" className="block px-3 py-2 text-gray-600 hover:text-blue-600">Kontak</a>
+              <a href="#article" className="block px-3 py-2 text-gray-600 hover:text-blue-600">Customer Support</a>
             </div>
           </div>)}
       </div>

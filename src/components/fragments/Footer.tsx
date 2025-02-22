@@ -78,7 +78,7 @@ const Footer = () => {
             </p>
           </div>
 
-          <div>
+          <div id="contact">
             <h4 className="font-semibold">SOCIAL MEDIA</h4>
             <div className="flex flex-col">
               <a

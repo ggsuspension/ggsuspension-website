@@ -11,6 +11,7 @@ import CekHargaSection from "./components/fragments/CekHargaSection";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import ArticleSection from "./components/fragments/ArticleSection";
+import CustomerSupport from "./components/fragments/CustomerSupport";
 
 // Main Website component
 const Website = () => {
@@ -53,10 +54,11 @@ const Website = () => {
       <Footer />
       <img
         src="./LOGO%20WA.webp"
-        className="fixed z-40 bottom-4 right-4 w-12 bg-white rounded-full"
+        className="fixed z-40 bottom-4 right-4 w-8 bg-white rounded-full"
         alt=""
         onClick={()=>window.open("https://wa.me/6282112345678")}
       />
+      <CustomerSupport/>
     </div>
   );
 };
