@@ -9,9 +9,9 @@ import WhyChooseUs from "./components/fragments/WhyChooseUs";
 import CekHargaSection from "./components/fragments/CekHargaSection";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
 import ArticleSection from "./components/fragments/ArticleSection";
 import CustomerSupport from "./components/fragments/CustomerSupport";
+import { dataListMotor } from "./utils/dataListMotor";
 
 // Main Website component
 const Website = () => {
@@ -24,13 +24,14 @@ const Website = () => {
     "PAKET REBOUND & DOWNSIZE",
   ];
   useEffect(() => {
-    axios
-      .get(
-        "https://backend-gg-suspension-production.up.railway.app/api/list-motor"
-      )
-      .then((res) => {
-        setListMotor(res.data[0]);
-      });
+    // axios
+    //   .get(
+    //     "https://backend-gg-suspension-production.up.railway.app/api/list-motor"
+    //   )
+    //   .then((res) => {
+    //     setListMotor(res.data[0]);
+    //   });
+    setListMotor(dataListMotor);
   }, []);
 
   return (
@@ -40,13 +41,13 @@ const Website = () => {
       <div className="w-full h-[40em] tablet:h-[55em] desktop:h-[50em]">
         <HeaderCarousel />
       </div>
-      <HeroSection data={listMotor && JSON.parse(listMotor.layanan)} />
+      <HeroSection data={listMotor && listMotor.layanan} />
       <AboutSection />
       <WhyChooseUs />
       <ServicesSection services={SEMUA_LAYANAN} />
       <CekHargaSection
-        hargaSeal={listMotor && JSON.parse(listMotor.seal)}
-        hargaLayanan={listMotor && JSON.parse(listMotor.layanan)}
+        hargaSeal={listMotor&&listMotor.seal}
+        hargaLayanan={listMotor && listMotor.layanan}
       />
       <TestimonialsSection />
       <ArticleSection />
