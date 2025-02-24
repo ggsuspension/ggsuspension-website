@@ -10,7 +10,6 @@ export default function CustomerSupport() {
   const [isSend, setIsSend] = useState(false);
   const [arrayText, setArrayText] = useState<any>([]);
   const [text, setText] = useState("");
-  const [arrayTextCS, setArrayTextCS] = useState<any>([]);
   return (
     <>
       {isCSActive && (
@@ -36,21 +35,18 @@ export default function CustomerSupport() {
             </p>
             {arrayText.length > 0 &&
               arrayText.map((item: any, i: number) => (
-                <p
-                  key={i}
-                  className="flex self-end text-sm bg-green-600 text-white w-3/4 p-2 rounded-lg"
-                >
-                  {item}
-                </p>
-              ))}
-            {arrayTextCS.length > 0 &&
-              arrayTextCS.map((item: any, i: number) => (
-                <p
-                  key={i}
-                  className="flex text-sm text-white bg-gray-600 w-3/4 p-2 rounded-lg"
-                >
-                  {item}
-                </p>
+                <div key={i}>
+                  {item.isUser && (
+                    <p className="flex place-self-end text-sm bg-green-600 text-white w-3/4 p-2 rounded-lg">
+                      {item.isUser}
+                    </p>
+                  )}
+                  {!item.isUser && (
+                    <p className="flex text-sm bg-gray-600 text-white w-3/4 p-2 rounded-lg">
+                      {item}
+                    </p>
+                  )}
+                </div>
               ))}
             {/* <p className="flex text-xs">Halo masbro! Selamat datang di GG Suspension <PiHandPalmFill className="text-2xl bg-yellow-200" /></p> */}
           </span>
@@ -64,11 +60,13 @@ export default function CustomerSupport() {
             {!isSend && (
               <BsFillSendFill
                 onClick={() => {
-                  setArrayText([...arrayText, text]);
                   setIsSend(!isSend);
                   setText("");
-                  integrasiAPI(text).then((res) => {
-                    setArrayTextCS([...arrayText, res]);
+                  const objText = { isUser: text };
+                  setArrayText([...arrayText, objText]);
+                  console.log(arrayText);
+                  integrasiAPI(arrayText,text).then((res) => {
+                    setArrayText([...arrayText, objText, res]);
                     setIsSend(false);
                   });
                 }}

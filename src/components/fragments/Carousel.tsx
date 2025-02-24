@@ -71,11 +71,11 @@ const HeaderCarousel = () => {
               </span>
             </div>
           </span>}
-         {index==2&& <span className="absolute z-20 top-1/4 left-2 tablet:left-12 text-yellow-400 font-bold flex flex-col">
+         {/* {index==2&& <span className="absolute z-20 top-1/4 left-2 tablet:left-12 text-yellow-400 font-bold flex flex-col">
             <p className="font-extrabold tablet:text-[5em] text-[2.5em]">
               PROMO REBOUND
             </p>
-          </span>}
+          </span>} */}
          {index==0&& <span className="absolute z-20 top-1/4 left-2 tablet:left-12 text-white font-bold flex flex-col tablet:top-1/4">
             <p className="font-extrabold tablet:text-[5em] text-[2.5em]">
               SELAMAT DATANG DI

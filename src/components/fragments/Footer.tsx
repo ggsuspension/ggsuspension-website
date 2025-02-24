@@ -82,14 +82,14 @@ const Footer = () => {
             <h4 className="font-semibold">SOCIAL MEDIA</h4>
             <div className="flex flex-col">
               <a
-                href="#"
+                href="https://www.instagram.com/officialggsuspension/"
                 className="flex gap-2 items-center text-gray-400 hover:text-white"
               >
                 <BsInstagram />
                 ggsuspension
               </a>
               <a
-                href="#"
+                href="https://www.tiktok.com/@officialggsuspension"
                 className="flex items-center gap-2 text-gray-400 hover:text-white"
               >
                 <BsTiktok />

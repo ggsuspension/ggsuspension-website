@@ -93,15 +93,18 @@ export default function CekHargaSection({ hargaLayanan, hargaSeal }: any) {
           : `(${h.qty} - ${h.range})`;
         return label;
       });
+      if (selectedHargaIndex !== "") {
+        hargaData = hargaData[selectedHargaIndex];
+      }
 
-    //   if (selectedHargaIndex !== "") {
-    //     const selectedHargaObj = hargaData[selectedHargaIndex];
-    //     res = `Qty: ${selectedHargaObj.qty}, Range: ${selectedHargaObj.range}`;
-    //   }
-    // } else {
-    //   if (!showTipeSubSelect || selectedTipeSubIndex !== "") {
-    //     res = `Qty: ${hargaData.qty}, Range: ${hargaData.range}`;
-    //   }
+      //   if (selectedHargaIndex !== "") {
+      //     const selectedHargaObj = hargaData[selectedHargaIndex];
+      //     res = `Qty: ${selectedHargaObj.qty}, Range: ${selectedHargaObj.range}`;
+      //   }
+      // } else {
+      //   if (!showTipeSubSelect || selectedTipeSubIndex !== "") {
+      //     res = `Qty: ${hargaData.qty}, Range: ${hargaData.range}`;
+      //   }
     }
   }
 
@@ -130,18 +133,39 @@ export default function CekHargaSection({ hargaLayanan, hargaSeal }: any) {
       );
       res = res?.filter((motor: any) => motor.subcategory == textJenisMotor);
       res = res?.filter((motor: any) => motor.service == textBagianMotor);
-      const priceBasic = res[0].price
-        .toString()
-        .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      const priceBasic = res[0]
+        ? res[0].price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+        : "";
       if (hargaData.range) {
+        if (!hargaData.range.length) {
+          let price = res[0].price + hargaData.range;
+          price = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+          return setHarga(price);
+        }
         let price = res[0].price + hargaData.range[1];
         price = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         return setHarga(price);
       }
       setHarga(priceBasic);
     }
+    if (textJenisMotor&&textJenisMotor.includes("OHLINS")) {
+      const priceBasic = jenisMotor[0]
+        ? jenisMotor[0].price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+        : "";
+      if (hargaData.range) {
+        if (!hargaData.range.length) {
+          let price = jenisMotor[0].price + hargaData.range;
+          price = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+          return setHarga(price);
+        }
+        let price = jenisMotor[0].price + hargaData.range[1];
+        price = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        return setHarga(price);
+      }
+      setHarga(priceBasic);
+    }
   }, [textLayanan, textJenisMotor, textBagianMotor, motor, hargaData]);
-
+  
   return (
     <div id="harga">
       <div className="flex tablet:flex-row flex-col justify-center tablet:gap-12 gap-3 items-center bg-gray-50 py-[8em] relative">
@@ -151,9 +175,7 @@ export default function CekHargaSection({ hargaLayanan, hargaSeal }: any) {
         <PiMoneyWavy className="absolute bottom-5 right-1 text-2xl rotate-[-45deg]" />
         <PiMoneyWavy className="absolute bottom-1/2 left-0 text-xl rotate-45" />
         <PiMoneyWavy className="absolute bottom-5 left-3 text-4xl rotate-45" />
-        <p          
-          className="tablet:text-6xl text-4xl w-[4em] font-extrabold tracking-widest tablet:text-right"
-        >
+        <p className="tablet:text-6xl text-4xl w-[4em] font-extrabold tracking-widest tablet:text-right">
           CEK <span className="text-yellow-400">HARGA</span>
         </p>
         <div className="flex gap-5 flex-col tablet:w-1/4 px-4">
@@ -214,12 +236,14 @@ export default function CekHargaSection({ hargaLayanan, hargaSeal }: any) {
               disabled={jenisMotor ? false : true}
             >
               <option value="">Pilih Motor</option>
-              {jenisMotor?.length > 0 &&
+              {!textJenisMotor?.includes("OHLINS") &&
+                jenisMotor?.length > 0 &&
                 jenisMotor[0].motor.map((motor: any, i: number) => (
                   <option key={i} value={motor}>
                     {motor}
                   </option>
                 ))}
+              <option value="">Lainnya</option>
             </select>
           </span>
           <div className="container mx-auto px-4 flex flex-col gap-4 bg-slate-200 py-4 rounded-lg">
@@ -236,6 +260,7 @@ export default function CekHargaSection({ hargaLayanan, hargaSeal }: any) {
                 onChange={handleCategoryChange}
               >
                 <option value="">Pilih Kategori</option>
+                <option value="">Batalkan</option>
                 {hargaSeal &&
                   hargaSeal.map((item: any, index: number) => (
                     <option key={index} value={index}>
@@ -271,7 +296,7 @@ export default function CekHargaSection({ hargaLayanan, hargaSeal }: any) {
             )}
 
             {/* Select Harga (jika harga berupa array) */}
-            {Array.isArray(hargaData) && (
+            {selectedTipeSubIndex && (
               <div>
                 <label
                   htmlFor="hargaSelect"
@@ -306,12 +331,19 @@ export default function CekHargaSection({ hargaLayanan, hargaSeal }: any) {
               <p className="text-2xl font-bold">{harga}</p>
             </span>
             <span
-              onClick={() =>
-                kirimPesan(
-                  "6289513169983",
-                  `Halo min! saya mau layanan ${textLayanan}, ${textJenisMotor}, bagian ${textBagianMotor}, motor ${motor}`
-                )
-              }
+              onClick={() => {
+                if (hargaData.range) {
+                  kirimPesan(
+                    "6289513169983",
+                    `Halo min! saya mau layanan ${textLayanan}, ${textJenisMotor}, bagian ${textBagianMotor}, motor ${motor}, dan ingin membeli seal dengan kategori ${tipeSubOptions}, dengan harga ${harga}`
+                  );
+                } else {
+                  kirimPesan(
+                    "6289513169983",
+                    `Halo min! saya mau layanan ${textLayanan}, ${textJenisMotor}, bagian ${textBagianMotor}, motor ${motor}, dengan harga ${harga}`
+                  );
+                }
+              }}
               className="bg-green-500 text-xl text-white p-2 rounded-lg font-medium flex gap-2 items-center cursor-pointer"
             >
               Lanjut WA <BsSendFill />

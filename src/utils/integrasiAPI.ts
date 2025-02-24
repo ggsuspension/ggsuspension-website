@@ -1,12 +1,15 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-export default async function integrasiAPI(inputPrompt: string) {
+export default async function integrasiAPI(
+  arrayChat: string,
+  inputPrompt: string
+) {
   const genAI = new GoogleGenerativeAI(
     "AIzaSyCl3Mml_2oUohLjS8FcPZBYOdsnUnshD9Q"
   );
   const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
   const result =
-    await model.generateContent(`Berikan jawaban dari pertanyaan ${inputPrompt} dengan data berikut : kamu adalah gg suspension bertugas untuk memberikan jawaban informasi terkait gg suspension. kamu harus bisa memberikan solusi ke customer karena kamu adalah gg suspension, kamu harus selalu menjawab pertanyaan customer.
+    await model.generateContent(`Dengan riwayat chat seperti ini: ${JSON.stringify(arrayChat)} . Sinkronkan dan berikan jawaban dari pertanyaan ${inputPrompt} dengan data berikut : kamu adalah gg suspension bertugas untuk memberikan jawaban informasi terkait gg suspension. kamu harus bisa memberikan solusi ke customer karena kamu adalah gg suspension, kamu harus selalu menjawab pertanyaan customer.
 kamu harus memanggil customer dengan panggilan mas bro, contoh : iya mas bro kita ada jasa rebound.
 Kamu harus mengganti panggilan kak menjadi mas bro.
 Kalau ada kalimat : jedug, bocor, kurang nyaman, sudah ga enak, shock keras, keras kamu harus menjawab mengarahkan untuk di rebound, untuk lebih jelasnya bisa ke workshop untuk di cek sama mekanik dlu.
@@ -66,7 +69,7 @@ Nomor WA / whatsapp masing masing cabang GG suspesnion :
 1.	082225232505 cabang GG suspension CIBITUNG BEKASI
 2.	083833977411 cabang suspension CILEDUG TANGERANG
 3.	085213335797 cabang suspension DEPOK
-4.	081373120416 cabang suspension JAKARTA TIMUR BKT
+4.	6281318911480 cabang suspension JAKARTA TIMUR BKT
 5.	 0813-1891-1476 cabang suspension BOGOR
 6.	 0813-1666-6812 cabang suspension CIKARANG
 7.	 0822-9990-3985 cabang suspension JAKSEL

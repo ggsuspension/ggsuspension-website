@@ -16,8 +16,8 @@ export const ServicesSection = ({ services }:any) => {
               <div key={i} className="py-4 px-2 tablet:px-4 border-2 tablet:rounded-tr-[5em] rounded-tr-[2em] hover:shadow-lg transition flex justify-start bg-white gap-2">
                 <FaScrewdriverWrench className="text-orange-600 text-xl tablet:text-2xl" />
                 <span className="flex flex-col w-3/4">
-                  <h3 className="text-sm font-semibold tablet:text-xl tablet:overflow-hidden">{layanan}</h3>
-                  <p>Ganti oli, tune-up, pemeriksaan berkala</p>
+                  <h3 className="text-sm font-semibold tablet:text-xl tablet:overflow-hidden">{layanan.nama}</h3>
+                  <p className="text-xs tablet:text-lg">{layanan.desc}</p>
                 </span>
               </div>
             ))}

@@ -25,9 +25,8 @@ export const HeroSection = ({ data }: any) => {
         <div className="text-center">
           <span className="flex items-center justify-center tablet:gap-4">
           <img className="w-[5em]" src="./shock.png" alt="" />
-          <h1 className="text-4xl md:text-6xl font-bold mb-2">
-            Solusi <span className="text-yellow-300 italic">SHOCK</span> Motor
-            Anda
+          <h1 className="text-3xl tablet:texxt-4xl md:text-6xl font-bold mb-2">
+            Semua Orang Butuh <span className="text-yellow-300 italic">SHOCK ENAK</span>
           </h1>
           </span>
           <p className="text-xl mb-8">
