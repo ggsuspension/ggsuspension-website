@@ -110,7 +110,7 @@ export const Navigation = ({namaGerai}:any) => {
                 onClick={()=>setIsMenuOpen(false)}
                 className="block px-3 py-2 text-gray-600 hover:text-blue-600"
               >
-                Sosial Media
+                Alamat & SosMed
               </a>
             </div>
           </div>
