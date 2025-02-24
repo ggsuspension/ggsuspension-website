@@ -43,7 +43,7 @@ export const TestimonialsSection = () => {
                   </div>
                 </div>
               </div>
-              <p className="text-gray-600">{item.review}</p>
+              <p className="text-gray-600 text-lg">{item.review}</p>
             </div>
           ))}
         </div>
