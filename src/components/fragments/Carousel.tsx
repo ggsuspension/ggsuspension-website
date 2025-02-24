@@ -10,7 +10,6 @@ const HeaderCarousel = () => {
     "./banner-website-punggung.webp",
   ];
 
-  // Auto slide setiap 5 detik
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % images.length);

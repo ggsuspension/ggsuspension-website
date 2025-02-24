@@ -12,17 +12,34 @@ import { useEffect, useState } from "react";
 import ArticleSection from "./components/fragments/ArticleSection";
 import CustomerSupport from "./components/fragments/CustomerSupport";
 import { dataListMotor } from "./utils/dataListMotor";
+import { getCookie } from "./utils/getCookie";
 
 // Main Website component
 const Website = () => {
   const [listMotor, setListMotor] = useState<any>(undefined);
-  const [WAgerai, setWAGerai] = useState<any>(undefined);
+  const [gerai, setGerai] = useState<any>(undefined);
+  const geraiCookie = getCookie("geraiSelected");
   const SEMUA_LAYANAN = [
-    {nama: "REBOUND",desc:"Mengoptimalkan kemampuan shock absorber untuk kembali ke posisi semula setelah mengalami penekanan atau benturan"},
-    {nama:"DOWNSIZE",desc:"Mengoptimalkan suspensi dengan mengganti shock absorber berat dengan model yang lebih ringan dan kompak, sehingga mengurangi total beban kendaraan"},
-    {nama:"MAINTENANCE",desc:"Merupakan perawatan rutin untuk memastikan semua komponen suspensi, khususnya shock absorber, tetap bekerja optimal."},
-    {nama:"UPGRADE",desc:"Penggantian shock absorber standar dengan tipe high performance, penyetelan ulang suspensi agar lebih responsif"},
-    {nama:"PAKET REBOUND & DOWNSIZE",desc:"Kombinasi ini ideal bagi kendaraan yang ingin mendapatkan performa suspensi maksimal dengan respons cepat serta pengurangan berat total"},
+    {
+      nama: "REBOUND",
+      desc: "Mengoptimalkan kemampuan shock absorber untuk kembali ke posisi semula setelah mengalami penekanan atau benturan",
+    },
+    {
+      nama: "DOWNSIZE",
+      desc: "Mengoptimalkan suspensi dengan mengganti shock absorber berat dengan model yang lebih ringan dan kompak, sehingga mengurangi total beban kendaraan",
+    },
+    {
+      nama: "MAINTENANCE",
+      desc: "Merupakan perawatan rutin untuk memastikan semua komponen suspensi, khususnya shock absorber, tetap bekerja optimal.",
+    },
+    {
+      nama: "UPGRADE",
+      desc: "Penggantian shock absorber standar dengan tipe high performance, penyetelan ulang suspensi agar lebih responsif",
+    },
+    {
+      nama: "PAKET REBOUND & DOWNSIZE",
+      desc: "Kombinasi ini ideal bagi kendaraan yang ingin mendapatkan performa suspensi maksimal dengan respons cepat serta pengurangan berat total",
+    },
   ];
   useEffect(() => {
     // axios
@@ -35,12 +52,12 @@ const Website = () => {
     setListMotor(dataListMotor);
   }, []);
   function setGeraiSelected(geraiSelected: any) {
-    setWAGerai(geraiSelected);
+    setGerai(geraiSelected);
   }
 
   return (
     <div className="relative min-h-screen bg-blue-700 font-poppins overflow-hidden">
-      <Navigation nomorGerai={setGeraiSelected} />
+      <Navigation namaGerai={setGeraiSelected} />
       {/* <SideNav /> */}
       <div className="w-full h-[40em] tablet:h-[55em] desktop:h-[50em]">
         <HeaderCarousel />
@@ -62,8 +79,23 @@ const Website = () => {
         className="fixed z-40 bottom-4 right-4 w-8 bg-white rounded-full"
         alt=""
         onClick={() => {
-          if (!WAgerai) return alert("Silahkan pilih gerai terlebih dahulu!");
-          window.open(`https://wa.me/${WAgerai}`);
+          const listGerai: any = {
+            bekasi: 6282225232505,
+            tangerang: 6283833977411,
+            depok: 6285213335797,
+            jaktim: 6281318911480,
+            bogor: 6281318911476,
+            cikarang: 6281316666812,
+            jaksel: 6282299903985,
+          };
+          const geraiResult=geraiCookie?Object.keys(listGerai).find(
+            (item) => item.toLowerCase() == geraiCookie.toLowerCase()
+          ):Object.keys(listGerai).find(
+            (item) => item.toLowerCase() == gerai.toLowerCase()
+          );
+          if (!gerai && !geraiCookie)
+            return alert("Silahkan pilih gerai terlebih dahulu!");
+          geraiResult&&window.open(`https://wa.me/${listGerai[geraiResult]}`);
         }}
       />
       <CustomerSupport />

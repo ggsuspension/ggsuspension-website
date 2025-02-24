@@ -1,28 +1,20 @@
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FaLocationDot } from "react-icons/fa6";
+import { setCookie } from "../../utils/setCookie";
+import { getCookie } from "../../utils/getCookie";
 // import { FaInstagram } from "react-icons/fa6";
 // import { PiTiktokLogoBold } from "react-icons/pi";
 
-export const Navigation = ({nomorGerai}:any) => {
+export const Navigation = ({namaGerai}:any) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const geraiSelected=getCookie("geraiSelected");
+  const listGerai=['BEKASI','TANGERANG',"JAKSEL","DEPOK","CIKARANG","BOGOR","JAKTIM"]
   useEffect(() => {}, []);
 
   function handlePilihGerai(e: any) {
-    const listGerai:any = {
-      bekasi: 6282225232505,
-      tangerang: 6283833977411,
-      depok: 6285213335797,
-      jaktim: 6281318911480,
-      bogor: 6281318911476,
-      cikarang: 6281316666812,
-      jaksel: 6282299903985,
-    };
-    const geraiSelected = Object.keys(listGerai).find(
-      (gerai) => gerai.toLowerCase() == e.target.value.toLowerCase()
-    );
-    // console.log(typeof geraiSelected)
-    geraiSelected&&nomorGerai(listGerai[geraiSelected]);
+    namaGerai(e.target.value);
+    geraiSelected&&setCookie("geraiSelected",geraiSelected);
   }
   return (
     <nav className="bg-white shadow-lg fixed top-0 left-0 z-50 w-full">
@@ -34,7 +26,7 @@ export const Navigation = ({nomorGerai}:any) => {
               className="tablet:w-10 tablet:h-10 w-6 h-6"
               alt=""
             />
-            <h1 className="text-lg tablet:text-3xl font-bold text-orange-600">
+            <h1 className="text-[1.05rem] tablet:text-3xl font-bold text-orange-600">
               GG Suspension
             </h1>
           </div>
@@ -46,15 +38,10 @@ export const Navigation = ({nomorGerai}:any) => {
                 onChange={handlePilihGerai}
                 className="w-[6.8em] tablet:w-full"
                 id=""
+                value={geraiSelected?.toUpperCase()}
               >
                 <option value="">Pilih Gerai</option>
-                <option value="Bekasi">Bekasi</option>
-                <option value="Tangerang">Tangerang</option>
-                <option value="Depok">Depok</option>
-                <option value="Cikarang">Cikarang</option>
-                <option value="Jaksel">Jaksel</option>
-                <option value="Jaktim">Jaktim</option>
-                <option value="Bogor">Bogor</option>
+              {listGerai.map((item,i)=>(<option key={i} value={item}>{item}</option>))}
               </select>
             </div>
 

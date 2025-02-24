@@ -7,7 +7,7 @@ export default function ArticleSection() {
           Artikel & Tips
         </h2>
         <div className="grid md:grid-cols-3 gap-8">
-          {arrayArticle.map((article=>(<div className="bg-white rounded-lg overflow-hidden shadow-md">
+          {arrayArticle.map(((article,i)=>(<div key={i} className="bg-white rounded-lg overflow-hidden shadow-md">
             <img
               src={article.img}
               className="bg-gray-300 h-48 w-full object-cover"
