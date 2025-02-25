@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { LineChart } from "@tremor/react";
 
 export default function Dashboard() {
   const stats = [
@@ -96,14 +95,6 @@ export default function Dashboard() {
             <CardDescription>Monthly revenue trends</CardDescription>
           </CardHeader>
           <CardContent>
-            <LineChart
-              className="h-72"
-              data={chartData}
-              index="month"
-              categories={["Revenue"]}
-              colors={["blue"]}
-              yAxisWidth={48}
-            />
           </CardContent>
         </Card>
 
@@ -161,13 +152,6 @@ export default function Dashboard() {
   );
 }
 
-const chartData = [
-  { month: "Jan", Revenue: 4000 },
-  { month: "Feb", Revenue: 3200 },
-  { month: "Mar", Revenue: 4300 },
-  { month: "Apr", Revenue: 2800 },
-  { month: "May", Revenue: 5000 },
-];
 
 const projects = [
   { id: 1, name: "Website Redesign", progress: 65 },
