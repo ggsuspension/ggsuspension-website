@@ -1,160 +1,118 @@
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  BarChart4,
+  LayoutDashboard,
   Users,
-  Wallet,
+  Settings,
   Package,
-  ArrowUpRight,
+  Wallet,
+  BarChart4,
+  ChevronLeft,
+  Bell,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Link, Outlet } from "react-router-dom";
+import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import TabelAntrianHarian from "../fragments/TabelAntrianHarian";
 
-export default function Dashboard() {
-  const stats = [
+export default function Layout() {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const menuItems = [
     {
-      title: "Total Users",
-      value: "2,543",
-      icon: <Users className="h-4 w-4" />,
-      trend: 12.5,
+      name: "Dashboard",
+      icon: <LayoutDashboard className="h-4 w-4" />,
+      path: "/",
     },
+    { name: "Users", icon: <Users className="h-4 w-4" />, path: "/users" },
     {
-      title: "Revenue",
-      value: "$45,234",
-      icon: <Wallet className="h-4 w-4" />,
-      trend: 8.2,
-    },
-    {
-      title: "Conversions",
-      value: "1,234",
-      icon: <BarChart4 className="h-4 w-4" />,
-      trend: -3.1,
-    },
-    {
-      title: "Support Tickets",
-      value: "56",
+      name: "Products",
       icon: <Package className="h-4 w-4" />,
-      trend: 2.4,
+      path: "/products",
     },
-  ];
-
-  const recentOrders = [
-    { id: "#1234", customer: "John Doe", amount: "$250", status: "Delivered" },
     {
-      id: "#1235",
-      customer: "Jane Smith",
-      amount: "$150",
-      status: "Processing",
+      name: "Analytics",
+      icon: <BarChart4 className="h-4 w-4" />,
+      path: "/analytics",
     },
-    { id: "#1236", customer: "Bob Johnson", amount: "$499", status: "Pending" },
+    { name: "Finance", icon: <Wallet className="h-4 w-4" />, path: "/finance" },
+    {
+      name: "Settings",
+      icon: <Settings className="h-4 w-4" />,
+      path: "/settings",
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-muted/40">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4">
-        {/* Stats Cards */}
-        {stats.map((stat, index) => (
-          <Card key={index} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">
-                {stat.title}
-              </CardTitle>
-              {stat.icon}
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <div className="flex items-center pt-2 text-xs text-muted-foreground">
-                <ArrowUpRight
-                  className={`h-3 w-3 ${
-                    stat.trend > 0 ? "text-green-500" : "text-red-500"
-                  }`}
-                />
-                <span
-                  className={`ml-1 ${
-                    stat.trend > 0 ? "text-green-500" : "text-red-500"
-                  }`}
-                >
-                  {stat.trend}%
-                </span>
-                <span className="ml-1">vs last month</span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+    <div className="flex min-h-screen">
+      {/* Sidebar */}
+      <div
+        className={`bg-background border-r ${
+          isCollapsed ? "w-[60px]" : "w-64"
+        } transition-all duration-300`}
+      >
+        <div className="flex items-center justify-between p-4 border-b">
+          {!isCollapsed && <h1 className="text-xl font-bold">Admin Panel</h1>}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+          >
+            <ChevronLeft className={`h-4 w-4 ${isCollapsed && "rotate-180"}`} />
+          </Button>
+        </div>
 
-        {/* Main Chart */}
-        <Card className="md:col-span-3">
-          <CardHeader>
-            <CardTitle>Revenue Overview</CardTitle>
-            <CardDescription>Monthly revenue trends</CardDescription>
-          </CardHeader>
-          <CardContent>
-          </CardContent>
-        </Card>
+        <nav className="p-2">
+          {menuItems.map((item) => (
+            <Link
+              key={item.name}
+              to={item.path}
+              className="flex items-center gap-3 p-2 rounded hover:bg-muted transition-colors"
+            >
+              {item.icon}
+              {!isCollapsed && <span>{item.name}</span>}
+            </Link>
+          ))}
+        </nav>
+      </div>
 
-        {/* Recent Orders */}
-        <Card className="md:col-span-1">
-          <CardHeader>
-            <CardTitle>Recent Orders</CardTitle>
-            <CardDescription>Latest transactions</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {recentOrders.map((order) => (
-              <div
-                key={order.id}
-                className="flex justify-between items-center hover:bg-muted/50 p-2 rounded"
-              >
-                <div>
-                  <p className="text-sm font-medium">{order.id}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {order.customer}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">{order.status}</Badge>
-                  <span className="text-sm font-medium">{order.amount}</span>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Projects Progress */}
-        <Card className="md:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Active Projects</CardTitle>
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Top Bar */}
+        <header className="bg-background border-b p-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-semibold">Dashboard Overview</h2>
+          </div>
+          <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm">
-              View all
+              <Bell className="h-4 w-4" />
             </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {projects.map((project) => (
-              <div key={project.id}>
-                <div className="flex justify-between mb-2">
-                  <span className="text-sm font-medium">{project.name}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {project.progress}%
-                  </span>
-                </div>
-                <Progress value={project.progress} className="h-2" />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="rounded-full h-8 w-8">
+                  <span className="sr-only">User menu</span>
+                  <div className="h-6 w-6 rounded-full bg-primary text-white flex items-center justify-center">
+                    JD
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem>Profile</DropdownMenuItem>
+                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuItem>Logout</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </header>
+        <TabelAntrianHarian />
+        <main className="flex-1">
+          <Outlet />
+        </main>
       </div>
     </div>
   );
 }
-
-
-const projects = [
-  { id: 1, name: "Website Redesign", progress: 65 },
-  { id: 2, name: "Mobile App Development", progress: 40 },
-  { id: 3, name: "Marketing Campaign", progress: 85 },
-];

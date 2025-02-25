@@ -1,25 +1,25 @@
-import React, { useRef, useState, useEffect } from 'react';
-import jsQR from 'jsqr';
-
+import React, { useRef, useState, useEffect } from "react";
+import jsQR from "jsqr";
 const QRScanner: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [qrData, setQRData] = useState<string>('');
+  const [qrData, setQRData] = useState<string>("");
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
     // Minta akses ke kamera dengan kamera belakang (facingMode: 'environment')
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    navigator.mediaDevices
+      .getUserMedia({ video: { facingMode: "environment" } })
       .then((stream) => {
         video.srcObject = stream;
-        video.setAttribute('playsinline', 'true'); // agar iOS tidak fullscreen
+        video.setAttribute("playsinline", "true"); // agar iOS tidak fullscreen
         video.play();
         requestAnimationFrame(scan);
       })
       .catch((err) => {
-        console.error('Error accessing camera: ', err);
+        console.error("Error accessing camera: ", err);
       });
 
     // Hentikan stream kamera saat komponen unmount
@@ -38,13 +38,11 @@ const QRScanner: React.FC = () => {
       requestAnimationFrame(scan);
       return;
     }
-
-    const context = canvas.getContext('2d');
+    const context = canvas.getContext("2d");
     if (!context) {
       requestAnimationFrame(scan);
       return;
     }
-
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
       // Sesuaikan ukuran canvas dengan video
       canvas.width = video.videoWidth;
@@ -54,7 +52,9 @@ const QRScanner: React.FC = () => {
       // Ambil data gambar dari canvas
       const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
       // Dekode QR code dari data gambar
-      const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: "dontInvert",
+      });
       if (code) {
         setQRData(code.data);
       }
@@ -65,11 +65,27 @@ const QRScanner: React.FC = () => {
 
   return (
     <div>
-      <h1>QR Code Scanner</h1>
-      <video ref={videoRef} style={{ width: '100%', height: 'auto' }} />
-      {/* Canvas untuk memproses frame video, bisa disembunyikan */}
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
       {qrData && <p>Scanned QR Code: {qrData}</p>}
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-orange-500 to-yellow-500 p-4">
+        <h1 className="text-black text-4xl font-bold mb-6">Scan QR Code</h1>
+        <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+          <p className="text-gray-700 text-center mb-4">
+            Silahkan arahkan QR code ke dalam bingkai di bawah
+          </p>
+          <div className="relative border-4 border-dashed border-gray-300 rounded-lg overflow-hidden">
+            {/* Video Preview */}
+            <video ref={videoRef} style={{ width: "100%", height: "auto" }} />
+            {/* Canvas untuk memproses frame video, bisa disembunyikan */}
+            <canvas ref={canvasRef} style={{ display: "none" }} />
+            {/* Overlay untuk area scanning */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="border border-dashed border-gray-500 rounded-lg p-2 bg-white bg-opacity-70">
+                <p className="text-gray-500 text-sm">Area Scan</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

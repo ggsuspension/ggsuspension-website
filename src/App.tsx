@@ -1,7 +1,8 @@
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import Home from "./Home";
-import Layout from "./components/dashboard/layout";
+import Layout from "./components/dashboard";
 import ScanQR from "./components/fragments/ScanQR";
+import FormPelayanan from "./components/pages/FormPelanggan";
 
 const router = createHashRouter([
   {
@@ -14,7 +15,11 @@ const router = createHashRouter([
   },
   {
     path: "/scan",
-    element: <ScanQR/>,
+    element: <ScanQR />,
+  },
+  {
+    path: "/pelanggan",
+    element: <FormPelayanan />,
   },
 ]);
 
