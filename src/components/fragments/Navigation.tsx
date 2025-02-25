@@ -1,19 +1,28 @@
-import { X } from "lucide-react";
-import {  useState } from "react";
+import { Camera, X } from "lucide-react";
+import { useState } from "react";
 import { FaLocationDot } from "react-icons/fa6";
 import { setCookie } from "../../utils/setCookie";
 import { getCookie } from "../../utils/getCookie";
+import { Link } from "react-router-dom";
 // import { FaInstagram } from "react-icons/fa6";
 // import { PiTiktokLogoBold } from "react-icons/pi";
 
-export const Navigation = ({namaGerai}:any) => {
+export const Navigation = ({ namaGerai }: any) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const geraiSelected=getCookie("geraiSelected");
-  const listGerai=['BEKASI','TANGERANG',"JAKSEL","DEPOK","CIKARANG","BOGOR","JAKTIM"]
+  const geraiSelected = getCookie("geraiSelected");
+  const listGerai = [
+    "BEKASI",
+    "TANGERANG",
+    "JAKSEL",
+    "DEPOK",
+    "CIKARANG",
+    "BOGOR",
+    "JAKTIM",
+  ];
 
   function handlePilihGerai(e: any) {
     namaGerai(e.target.value);
-    setCookie("geraiSelected",e.target.value);
+    setCookie("geraiSelected", e.target.value);
   }
   return (
     <nav className="bg-white shadow-lg fixed top-0 left-0 z-50 w-full">
@@ -40,7 +49,11 @@ export const Navigation = ({namaGerai}:any) => {
                 value={geraiSelected?.toUpperCase()}
               >
                 <option value="">Pilih Gerai</option>
-              {listGerai.map((item,i)=>(<option key={i} value={item}>{item}</option>))}
+                {listGerai.map((item, i) => (
+                  <option key={i} value={item}>
+                    {item}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -71,46 +84,54 @@ export const Navigation = ({namaGerai}:any) => {
             <div className="px-2 pt-2 pb-3 space-y-1">
               <a
                 href="#about"
-                onClick={()=>setIsMenuOpen(false)}
+                onClick={() => setIsMenuOpen(false)}
                 className="block px-3 py-2 text-gray-600 hover:text-blue-600"
               >
                 Tentang Kami
               </a>
               <a
                 href="#services"
-                onClick={()=>setIsMenuOpen(false)}
+                onClick={() => setIsMenuOpen(false)}
                 className="block px-3 py-2 text-gray-600 hover:text-blue-600"
               >
                 Layanan
               </a>
               <a
                 href="#harga"
-                onClick={()=>setIsMenuOpen(false)}
+                onClick={() => setIsMenuOpen(false)}
                 className="block px-3 py-2 text-gray-600 hover:text-blue-600"
               >
                 Cek Harga
               </a>
               <a
                 href="#testimoni"
-                onClick={()=>setIsMenuOpen(false)}
+                onClick={() => setIsMenuOpen(false)}
                 className="block px-3 py-2 text-gray-600 hover:text-blue-600"
               >
                 Testimoni
               </a>
               <a
                 href="#article"
-                onClick={()=>setIsMenuOpen(false)}
+                onClick={() => setIsMenuOpen(false)}
                 className="block px-3 py-2 text-gray-600 hover:text-blue-600"
               >
                 Artikel & Tips
               </a>
               <a
                 href="#contact"
-                onClick={()=>setIsMenuOpen(false)}
+                onClick={() => setIsMenuOpen(false)}
                 className="block px-3 py-2 text-gray-600 hover:text-blue-600"
               >
                 Alamat & SosMed
               </a>
+              <Link to="/scan"
+                onClick={() => setIsMenuOpen(false)}
+                className="block px-3 py-2 text-gray-600 hover:text-blue-600"
+              >
+                <span className="flex gap-2">
+                  Scan QR <Camera />
+                </span>
+              </Link>
             </div>
           </div>
         )}

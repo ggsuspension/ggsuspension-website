@@ -12,7 +12,6 @@ export default function CekHargaSection({
     "REBOUND",
     "DOWNSIZE",
     "MAINTENANCE",
-    "UPGRADE",
     "PAKET REBOUND & DOWNSIZE",
   ];
   const listMotor = hargaLayanan;
