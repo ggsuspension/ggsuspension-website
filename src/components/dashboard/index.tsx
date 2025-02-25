@@ -96,14 +96,14 @@ export default function Dashboard() {
             <CardDescription>Monthly revenue trends</CardDescription>
           </CardHeader>
           <CardContent>
-            {/* <LineChart
+            <LineChart
               className="h-72"
               data={chartData}
               index="month"
               categories={["Revenue"]}
               colors={["blue"]}
               yAxisWidth={48}
-            /> */}
+            />
           </CardContent>
         </Card>
 
