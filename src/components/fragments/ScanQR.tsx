@@ -6,233 +6,230 @@ interface Camera {
   label: string;
 }
 
-const QRScanner: React.FC = () => {
-  const [scanning, setScanning] = useState<boolean>(false);
-  const [scanResult, setScanResult] = useState<string | null>(null);
+const QRCodeScanner: React.FC = () => {
   const [cameras, setCameras] = useState<Camera[]>([]);
-  const [selectedCameraId, setSelectedCameraId] = useState<string>('');
-  const [error, setError] = useState<string>('');
-  const [showPreview, setShowPreview] = useState<boolean>(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const previewStreamRef = useRef<MediaStream | null>(null);
-  
+  const [selectedCamera, setSelectedCamera] = useState<string>('');
+  const [scanning, setScanning] = useState<boolean>(false);
+  const [result, setResult] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const scannerContainerRef = useRef<HTMLDivElement>(null);
+
+  // Load available cameras when component mounts
   useEffect(() => {
-    // Memeriksa kamera yang tersedia
-    Html5Qrcode.getCameras()
-      .then((devices: Camera[]) => {
+    const loadCameras = async (): Promise<void> => {
+      try {
+        const devices = await Html5Qrcode.getCameras();
         if (devices && devices.length) {
           setCameras(devices);
-          // Default pilih kamera belakang jika tersedia
-          const backCamera = devices.find(device => 
-            device.label.toLowerCase().includes('back') || 
-            device.label.toLowerCase().includes('belakang')
+          
+          // Try to select back camera by default
+          const backCamera = devices.find(
+            camera => camera.label.toLowerCase().includes('back') || 
+                      camera.label.toLowerCase().includes('belakang')
           );
+          
           if (backCamera) {
-            setSelectedCameraId(backCamera.id);
+            setSelectedCamera(backCamera.id);
           } else {
-            setSelectedCameraId(devices[0].id);
+            setSelectedCamera(devices[0].id);
           }
         } else {
-          setError('Tidak ada kamera yang terdeteksi!');
+          setError('Tidak ada kamera yang terdeteksi');
         }
-      })
-      .catch((err: Error) => {
-        setError(`Error memuat kamera: ${err.message}`);
-      });
-      
-    // Cleanup function
+      } catch (err) {
+        setError(`Error mengakses kamera: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        console.error('Failed to get cameras', err);
+      }
+    };
+
+    loadCameras();
+
+    // Cleanup on unmount
     return () => {
-      stopPreview();
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        scannerRef.current.stop().catch(err => {
+          console.error('Failed to stop scanner', err);
+        });
+      }
     };
   }, []);
-  
-  // Menghentikan preview kamera
-  const stopPreview = (): void => {
-    if (previewStreamRef.current) {
-      previewStreamRef.current.getTracks().forEach(track => track.stop());
-      previewStreamRef.current = null;
-      setShowPreview(false);
-    }
-  };
-  
-  // Memulai preview kamera
-  const startPreview = async (): Promise<void> => {
-    if (!selectedCameraId) {
-      setError('Silakan pilih kamera terlebih dahulu');
-      return;
-    }
-    
-    try {
-      stopPreview(); // Hentikan preview sebelumnya jika ada
-      
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: { exact: selectedCameraId } }
-      });
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        previewStreamRef.current = stream;
-        setShowPreview(true);
-        setError('');
-      }
-    } catch (err) {
-      setError(`Error memulai preview kamera: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      setShowPreview(false);
-    }
-  };
-
-  const startScanning = (): void => {
-    if (!selectedCameraId) {
-      setError('Silakan pilih kamera terlebih dahulu');
-      return;
-    }
-
-    // Hentikan preview sebelum memulai scanning
-    stopPreview();
-    
-    setScanning(true);
-    setScanResult(null);
-    setError('');
-
-    const html5QrCode = new Html5Qrcode("reader");
-    
-    html5QrCode.start(
-      selectedCameraId,
-      {
-        fps: 10,
-        qrbox: 250
-      },
-      (decodedText: string) => {
-        setScanResult(decodedText);
-        html5QrCode.stop().then(() => {
-          setScanning(false);
-        }).catch((err: Error) => {
-          setError(`Error menghentikan kamera: ${err.message}`);
-        });
-      },
-      (errorMessage: string) => {
-        // Ini hanya untuk error pada fase scanning, bukan error fatal
-        console.log(errorMessage);
-      }
-    ).catch((err: Error) => {
-      setScanning(false);
-      setError(`Error memulai kamera: ${err.message}`);
-    });
-  };
 
   const handleCameraChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
-    setSelectedCameraId(e.target.value);
-    stopPreview(); // Hentikan preview saat kamera berubah
+    setSelectedCamera(e.target.value);
+  };
+
+  const startScanning = async (): Promise<void> => {
+    if (!selectedCamera) {
+      setError('Pilih kamera terlebih dahulu');
+      return;
+    }
+
+    try {
+      setError(null);
+      setResult(null);
+      setScanning(true);
+
+      // Create scanner instance
+      if (!scannerContainerRef.current) {
+        throw new Error('Scanner container not found');
+      }
+
+      const scannerId = 'html5-qrcode-scanner';
+      
+      // Clear previous scanner element if exists
+      let scannerElement = document.getElementById(scannerId);
+      if (scannerElement) {
+        scannerElement.innerHTML = '';
+      } else {
+        scannerElement = document.createElement('div');
+        scannerElement.id = scannerId;
+        scannerContainerRef.current.appendChild(scannerElement);
+      }
+
+      // Initialize scanner
+      scannerRef.current = new Html5Qrcode(scannerId);
+
+      // Configure and start scanner
+      await scannerRef.current.start(
+        selectedCamera,
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+        },
+        (decodedText: string) => {
+          // QR code detected
+          setResult(decodedText);
+          stopScanning();
+        },
+        (errorMessage: string) => {
+          // Handle non-fatal errors (logs only, not stopping scan)
+          console.log('QR scan error:', errorMessage);
+        }
+      );
+    } catch (err) {
+      setScanning(false);
+      setError(`Error memulai scanner: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      console.error('Failed to start scanner', err);
+    }
+  };
+
+  const stopScanning = async (): Promise<void> => {
+    if (scannerRef.current && scannerRef.current.isScanning) {
+      try {
+        await scannerRef.current.stop();
+      } catch (err) {
+        console.error('Failed to stop scanner', err);
+      }
+    }
+    setScanning(false);
   };
 
   const resetScanner = (): void => {
-    setScanResult(null);
-    setError('');
+    setResult(null);
+    setError(null);
+  };
+
+  // Handle QR code result - check if it's a URL
+  const isUrl = (text: string): boolean => {
+    try {
+      new URL(text);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  };
+
+  const getFormattedUrl = (text: string): string => {
+    if (text.startsWith('http://') || text.startsWith('https://')) {
+      return text;
+    }
+    return `https://${text}`;
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-md">
-      <h1 className="text-2xl font-bold mb-4 text-center">QR Code Scanner</h1>
-      
+    <div className="max-w-md mx-auto p-4">
+      <h1 className="text-2xl font-bold text-center mb-6">QR Code Scanner</h1>
+
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded">
+          <p>{error}</p>
         </div>
       )}
 
-      {!scanning && !scanResult && (
-        <>
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Pilih Kamera:</label>
-            <select 
-              className="border rounded w-full py-2 px-3" 
-              onChange={handleCameraChange}
-              value={selectedCameraId}
-            >
-              <option value="">Pilih kamera</option>
-              {cameras.map(camera => (
-                <option key={camera.id} value={camera.id}>
-                  {camera.label || `Kamera ${camera.id}`}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          {/* Preview kamera */}
-          <div className="mb-4">
-            {showPreview ? (
-              <div className="relative">
-                <video 
-                  ref={videoRef} 
-                  className="w-full rounded border" 
-                  autoPlay 
-                  playsInline
-                ></video>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="border-2 border-dashed border-blue-500 w-48 h-48 rounded"></div>
-                </div>
-              </div>
-            ) : (
-              <button 
-                className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded w-full mb-2"
-                onClick={startPreview}
-                disabled={!selectedCameraId}
-              >
-                Tampilkan Preview Kamera
-              </button>
-            )}
-          </div>
-          
-          <div className="flex space-x-2">
-            {showPreview && (
-              <button 
-                className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded flex-1"
-                onClick={stopPreview}
-              >
-                Tutup Preview
-              </button>
-            )}
-            
-            <button 
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex-1"
-              onClick={startScanning}
-              disabled={!selectedCameraId}
-            >
-              Mulai Scan
-            </button>
-          </div>
-        </>
+      {!scanning && !result && (
+        <div className="mb-6">
+          <label className="block mb-2 font-medium">
+            Pilih Kamera:
+          </label>
+          <select
+            value={selectedCamera}
+            onChange={handleCameraChange}
+            className="w-full p-2 border rounded mb-4 bg-white"
+            disabled={cameras.length === 0}
+          >
+            <option value="" disabled>
+              {cameras.length === 0 ? 'Tidak ada kamera' : 'Pilih kamera'}
+            </option>
+            {cameras.map((camera) => (
+              <option key={camera.id} value={camera.id}>
+                {camera.label || `Kamera ${camera.id}`}
+              </option>
+            ))}
+          </select>
+
+          <button
+            onClick={startScanning}
+            disabled={!selectedCamera}
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            Mulai Scan QR Code
+          </button>
+        </div>
       )}
 
       {scanning && (
-        <div className="mb-4">
-          <div id="reader" className="w-full"></div>
-          <p className="text-center mt-2">Scanning...</p>
+        <div className="mb-6">
+          <div 
+            ref={scannerContainerRef} 
+            className="w-full bg-gray-100 rounded overflow-hidden"
+            style={{ minHeight: '300px' }}
+          ></div>
+          
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={stopScanning}
+              className="bg-red-600 text-white py-2 px-4 rounded font-medium hover:bg-red-700"
+            >
+              Berhenti Scan
+            </button>
+          </div>
         </div>
       )}
 
-      {scanResult && (
-        <div className="mt-4">
-          <h2 className="text-xl font-semibold mb-2">Hasil Scan:</h2>
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-            {scanResult}
-          </div>
+      {result && (
+        <div className="bg-green-50 border border-green-200 rounded p-4 mb-6">
+          <h2 className="text-lg font-medium mb-2">Hasil Scan:</h2>
+          <p className="bg-white p-3 rounded border break-all mb-4">{result}</p>
           
           <div className="flex space-x-2">
-            <button 
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex-1"
+            <button
               onClick={resetScanner}
+              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded font-medium hover:bg-blue-700"
             >
               Scan Lagi
             </button>
-            <a 
-              href={scanResult.startsWith('http') ? scanResult : `https://${scanResult}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded flex-1 text-center"
-            >
-              Buka Link
-            </a>
+            
+            {isUrl(result) || result.includes('.') ? (
+              <a
+                href={isUrl(result) ? result : getFormattedUrl(result)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 bg-green-600 text-white py-2 px-4 rounded font-medium hover:bg-green-700 text-center"
+              >
+                Buka Link
+              </a>
+            ) : null}
           </div>
         </div>
       )}
@@ -240,4 +237,4 @@ const QRScanner: React.FC = () => {
   );
 };
 
-export default QRScanner;
+export default QRCodeScanner;
