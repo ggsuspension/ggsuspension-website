@@ -16,7 +16,7 @@ import { dataListMotor } from "./utils/dataListMotor";
 import { getCookie } from "./utils/getCookie";
 
 // Komponen AnimatedSection untuk membungkus setiap section
-const AnimatedSection = ({ children, className = "" }:any) => {
+const AnimatedSection = ({ children, className = "" }: any) => {
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
@@ -39,6 +39,7 @@ const AnimatedSection = ({ children, className = "" }:any) => {
 const Website = () => {
   const [listMotor, setListMotor] = useState<any>(undefined);
   const [gerai, setGerai] = useState<any>(undefined);
+  const [nomorWA, setNomorWA] = useState<any>(undefined);
   const geraiCookie = getCookie("geraiSelected");
   const SEMUA_LAYANAN = [
     {
@@ -65,7 +66,25 @@ const Website = () => {
 
   useEffect(() => {
     setListMotor(dataListMotor);
-  }, []);
+    const listGerai: any = {
+      bekasi: 6282225232505,
+      tangerang: 6283833977411,
+      depok: 6285213335797,
+      jaktim: 6281318911480,
+      bogor: 6281318911476,
+      cikarang: 6281316666812,
+      jaksel: 6282299903985,
+    };
+
+    const geraiResult = geraiCookie
+      ? Object.keys(listGerai).find(
+          (item) => item.toLowerCase() === geraiCookie.toLowerCase()
+        )
+      : Object.keys(listGerai).find(
+          (item) => item.toLowerCase() === gerai?.toLowerCase()
+        );
+    geraiResult && setNomorWA(listGerai[geraiResult]);
+  }, [geraiCookie, gerai]);
 
   function setGeraiSelected(geraiSelected: any) {
     setGerai(geraiSelected);
@@ -81,23 +100,25 @@ const Website = () => {
       cikarang: 6281316666812,
       jaksel: 6282299903985,
     };
-    
-    const geraiResult = geraiCookie 
-      ? Object.keys(listGerai).find(item => item.toLowerCase() === geraiCookie.toLowerCase())
-      : Object.keys(listGerai).find(item => item.toLowerCase() === gerai?.toLowerCase());
 
+    const geraiResult = geraiCookie
+      ? Object.keys(listGerai).find(
+          (item) => item.toLowerCase() === geraiCookie.toLowerCase()
+        )
+      : Object.keys(listGerai).find(
+          (item) => item.toLowerCase() === gerai?.toLowerCase()
+        );
     if (!gerai && !geraiCookie) {
       alert("Silahkan pilih gerai terlebih dahulu!");
       return;
     }
-    
     geraiResult && window.open(`https://wa.me/${listGerai[geraiResult]}`);
   };
 
   return (
     <div className="relative min-h-screen bg-blue-700 font-poppins overflow-hidden">
       <Navigation namaGerai={setGeraiSelected} />
-      
+
       <div className="w-full h-[40em] tablet:h-[55em] desktop:h-[50em]">
         <HeaderCarousel />
       </div>
@@ -122,6 +143,7 @@ const Website = () => {
         <CekHargaSection
           hargaSeal={listMotor && listMotor.seal}
           hargaLayanan={listMotor && listMotor.layanan}
+          gerai={nomorWA && nomorWA}
         />
       </AnimatedSection>
 

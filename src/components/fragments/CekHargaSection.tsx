@@ -3,7 +3,11 @@ import { kirimPesan } from "./TextToWA";
 import { BsSendFill } from "react-icons/bs";
 import { PiMoneyWavy } from "react-icons/pi";
 
-export default function CekHargaSection({ hargaLayanan, hargaSeal }: any) {
+export default function CekHargaSection({
+  hargaLayanan,
+  hargaSeal,
+  gerai,
+}: any) {
   const SEMUA_LAYANAN = [
     "REBOUND",
     "DOWNSIZE",
@@ -20,7 +24,6 @@ export default function CekHargaSection({ hargaLayanan, hargaSeal }: any) {
   const [textJenisMotor, setTextJenisMotor] = useState<any>(undefined);
   const [textBagianMotor, setTextBagianMotor] = useState<any>(undefined);
   const [harga, setHarga] = useState<number | undefined>(undefined);
-
   function setSelectLayanan(e: any) {
     const res = listMotor?.filter(
       (motor: any) => motor.category == e.target.value
@@ -148,7 +151,7 @@ export default function CekHargaSection({ hargaLayanan, hargaSeal }: any) {
       }
       setHarga(priceBasic);
     }
-    if (textJenisMotor&&textJenisMotor.includes("OHLINS")) {
+    if (textJenisMotor && textJenisMotor.includes("OHLINS")) {
       const priceBasic = jenisMotor[0]
         ? jenisMotor[0].price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
         : "";
@@ -164,8 +167,18 @@ export default function CekHargaSection({ hargaLayanan, hargaSeal }: any) {
       }
       setHarga(priceBasic);
     }
+    if (hargaData.range) {
+      if (!hargaData.range.length) {
+        let price = hargaData.range;
+        price = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        return setHarga(price);
+      }
+      let price = hargaData.range[1];
+      price = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      return setHarga(price);
+    }
   }, [textLayanan, textJenisMotor, textBagianMotor, motor, hargaData]);
-  
+
   return (
     <div id="harga">
       <div className="flex tablet:flex-row flex-col justify-center tablet:gap-12 gap-3 items-center bg-gray-50 py-[8em] relative">
@@ -296,7 +309,7 @@ export default function CekHargaSection({ hargaLayanan, hargaSeal }: any) {
             )}
 
             {/* Select Harga (jika harga berupa array) */}
-            {selectedTipeSubIndex && (
+            {(hargaData.length > 0 || selectedHargaIndex) && (
               <div>
                 <label
                   htmlFor="hargaSelect"
@@ -329,17 +342,18 @@ export default function CekHargaSection({ hargaLayanan, hargaSeal }: any) {
             <span>
               <p className="text-xl">Harga :</p>
               <p className="text-2xl font-bold">{harga}</p>
+              <p className="text-sm text-red-400">(harga hanya estimasi)</p>
             </span>
             <span
               onClick={() => {
                 if (hargaData.range) {
                   kirimPesan(
-                    "6289513169983",
+                    gerai,
                     `Halo min! saya mau layanan ${textLayanan}, ${textJenisMotor}, bagian ${textBagianMotor}, motor ${motor}, dan ingin membeli seal dengan kategori ${tipeSubOptions}, dengan harga ${harga}`
                   );
                 } else {
                   kirimPesan(
-                    "6289513169983",
+                    gerai,
                     `Halo min! saya mau layanan ${textLayanan}, ${textJenisMotor}, bagian ${textBagianMotor}, motor ${motor}, dengan harga ${harga}`
                   );
                 }

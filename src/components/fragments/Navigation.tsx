@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useEffect, useState } from "react";
+import {  useState } from "react";
 import { FaLocationDot } from "react-icons/fa6";
 import { setCookie } from "../../utils/setCookie";
 import { getCookie } from "../../utils/getCookie";
@@ -10,11 +10,10 @@ export const Navigation = ({namaGerai}:any) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const geraiSelected=getCookie("geraiSelected");
   const listGerai=['BEKASI','TANGERANG',"JAKSEL","DEPOK","CIKARANG","BOGOR","JAKTIM"]
-  useEffect(() => {}, []);
 
   function handlePilihGerai(e: any) {
     namaGerai(e.target.value);
-    geraiSelected&&setCookie("geraiSelected",geraiSelected);
+    setCookie("geraiSelected",e.target.value);
   }
   return (
     <nav className="bg-white shadow-lg fixed top-0 left-0 z-50 w-full">
