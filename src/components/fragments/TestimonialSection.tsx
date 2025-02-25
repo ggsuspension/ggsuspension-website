@@ -4,13 +4,17 @@ import { Star } from "lucide-react";
 export const TestimonialsSection = () => {
   const arrayTesti = [
     {
-      nama: "Mitsu Simanjutak",
-      review: "Pelayanannya bgs dan rapih.. Bestlah pokok e",
+      nama: "Mitsu",
+      review: "Pelayanannya bgs dan rapih.. Bestlah pokok e..",
     },
-    { nama: "Irfan Ikhwanda", review: "Recommendedd bgt service di sinii" },
+    { nama: "Irfan Ikhwanda", review: "Recommendedd bgt service di sinii, pasti langganan trs lah" },
     {
       nama: "Rully Trisatyo",
       review: "Kemaren bru aja downsize di sini, mtor jdi mantul",
+    },
+    {
+      nama: "Toniatul",
+      review: "Mtor jdi sedepp hbs direboundd mantapppp",
     },
   ];
   return (
