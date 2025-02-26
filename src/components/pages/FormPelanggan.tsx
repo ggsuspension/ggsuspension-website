@@ -18,9 +18,9 @@ const FormPelanggan = () => {
     formData.id = formData.nama + Math.random().toString().substring(3, 8);
     setDataPelanggan(formData).then((res) => {
       if (res?.gerai) {
-        const response = setCookie("dataPelanggan", JSON.stringify(res));
-        if (response)
-          window.location.href = "/#/antrian/" + formData.gerai.toLowerCase();
+        const response = setCookie("pelangganGGSuspension", JSON.stringify(res));
+        if (response.status)
+          window.location.reload()
       }
     });
   };

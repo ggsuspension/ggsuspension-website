@@ -4,13 +4,14 @@ import FormPelanggan from "../pages/FormPelanggan";
 import { useParams } from "react-router-dom";
 import { getCookie } from "@/utils/getCookie";
 import { setDataPelanggan } from "@/firebase/service";
+import { setCookie } from "@/utils/setCookie";
 // import { QRCodeSVG } from "qrcode.react";
 const QRScanner: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [qrData, setQRData] = useState<any>("");
   const url = useParams().gerai;
-  const getCookiePelanggan = getCookie("dataPelanggan");
+  const getCookiePelanggan = getCookie("pelangganGGSuspension");
 
   useEffect(() => {
     const video = videoRef.current;
@@ -65,8 +66,11 @@ const QRScanner: React.FC = () => {
         if (url&&getCookiePelanggan) {
           let dataPelanggan = JSON.parse(getCookiePelanggan);
           dataPelanggan.status = true;
-          setDataPelanggan(dataPelanggan).then((res) => {
-            res && window.location.reload();
+          setDataPelanggan(dataPelanggan).then(() => {
+            const result=setCookie("pelangganGGSuspension", JSON.stringify(dataPelanggan));
+            if(result.status){
+                window.location.reload();
+            }
           });
         }
         setQRData(JSON.parse(code.data));

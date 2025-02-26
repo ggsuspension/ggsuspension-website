@@ -1,10 +1,13 @@
-import { createHashRouter, RouterProvider } from "react-router-dom";
+import { createHashRouter, Navigate, RouterProvider } from "react-router-dom";
 import Home from "./Home";
 import Layout from "./components/dashboard";
 import ScanQR from "./components/fragments/ScanQR";
 import FormPelayanan from "./components/pages/FormPelanggan";
 import AntrianPage from "./components/pages/AntrianPage";
+import { getCookie } from "./utils/getCookie";
 
+let cookieDataPelanggan: any = getCookie("pelangganGGSuspension");
+cookieDataPelanggan = cookieDataPelanggan&&JSON.parse(cookieDataPelanggan);
 const router = createHashRouter([
   {
     path: "/",
@@ -16,7 +19,7 @@ const router = createHashRouter([
   },
   {
     path: "/scan",
-    element: <ScanQR />,
+    element: !cookieDataPelanggan?<ScanQR />:<Navigate to={`/antrian/${cookieDataPelanggan.gerai.toLowerCase()}`}/>,
   },
   {
     path: "/form-pelanggan",
@@ -24,7 +27,7 @@ const router = createHashRouter([
   },
   {
     path: "/antrian/:gerai",
-    element: <AntrianPage />,
+    element: cookieDataPelanggan?<AntrianPage />:<Navigate to="/scan"/>,
   },
 ]);
 const App = () => {

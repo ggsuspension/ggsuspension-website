@@ -9,7 +9,8 @@ export default function AntrianPage() {
   const [data, setData] = useState<any>(undefined);
   const gerai = useParams().gerai;
   const [isWantScan, setIsWantScan] = useState(false);
-const getCookiePelanggan = getCookie("dataPelanggan");
+let getCookiePelanggan:any = getCookie("pelangganGGSuspension");
+getCookiePelanggan = getCookiePelanggan ? JSON.parse(getCookiePelanggan) : "";
 
   useEffect(() => {
     getDataLayananSemuaCabang().then((res) => {
@@ -21,18 +22,17 @@ const getCookiePelanggan = getCookie("dataPelanggan");
   }, []);
 
   return (
-    <div>
+    <div className="flex flex-col min-h-screen bg-orange-500">
       {!isWantScan ? (
-        <div>
-          <h1 className="text-3xl font-bold underline">Antrian</h1>
-          {!getCookiePelanggan && <span
+        <div className="flex flex-col bg-white w-3/4 mx-auto mt-12 p-5 rounded-xl">
+          <h1 className="text-3xl font-bold text-white bg-green-600 w-fit py-2 px-6 rounded-xl self-center">List Antrian</h1>
+          {getCookiePelanggan.status==false&& <span
             onClick={() => setIsWantScan(true)}
             className="flex items-center gap-1 font-bold"
           >
             Scan <BsCamera />
           </span>}
-          <div className="w-full p-4 bg-white rounded-lg">
-            <h1 className="text-xl font-bold mb-4">Tabel Data Antrian</h1>
+          <div className="w-full p-4 rounded-lg">
             {/* <select onClick={(e: any) => setGerai(e.target.value)} name="" id="">
         <option value="">Pilih Gerai</option>
         <option value="BEKASI">BEKASI</option>
@@ -45,25 +45,25 @@ const getCookiePelanggan = getCookie("dataPelanggan");
       </select> */}
             <div>
               <div>
-                <h2>GERAI</h2>
+                <h2 className="text-2xl font-bold text-green-700">GERAI {gerai?.toUpperCase()}</h2>
                 <table className="w-full border-collapse border border-gray-300 mb-4">
                   <thead>
-                    <tr className="bg-gray-200">
+                    <tr className="bg-orange-400 text-xl">
                       <th className="border p-2">Nomor</th>
                       <th className="border p-2">Nama</th>
-                      <th className="border p-2">Nama Layanan</th>
-                      <th className="border p-2">Nama Motor</th>
+                      <th className="border p-2">Layanan</th>
+                      <th className="border p-2">Motor</th>
                       <th className="border p-2">Status</th>
                     </tr>
                   </thead>
                   {data &&
                     data.map((row: any, index: number) => (
                       <tbody key={index}>
-                        <tr>
-                          <td className="border p-2">{index + 1}</td>
-                          <td className="border p-2">{row.data.nama}</td>
+                        <tr className="font-semibold">
+                          <td className="border text-center">{index + 1}</td>
+                          <td className="border p-2">{row.data.nama.toUpperCase()}</td>
                           <td className="border p-2">{row.data.layanan}</td>
-                          <td className="border p-2">{row.data.motor}</td>
+                          <td className="border p-2">{row.data.motor.toUpperCase()}</td>
                           <td className="border p-2">
                             {row.status ? (
                               <span className="flex items-center font-bold text-green-600 gap-1">
