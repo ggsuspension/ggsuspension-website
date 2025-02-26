@@ -1,3 +1,4 @@
+import { setDataPelanggan } from "@/firebase/service";
 import { useState } from "react";
 
 const FormPelanggan = () => {
@@ -5,20 +6,21 @@ const FormPelanggan = () => {
   const [formData, setFormData] = useState({
     nama: "",
     gerai: "",
-    divisi: "",
+    layanan: "",
+    motor: "",
   });
-  
+
   const handleSubmit = (e: any) => {
-    setIsSubmit(true);
     e.preventDefault();
+    setIsSubmit(true);
+    setDataPelanggan(formData).then(
+      res => {if(res.msg)window.location.href="/#/antrian/"+formData.gerai.toLowerCase()})
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#e9d712] to-[#d38508]">
       {isSubmit && (
-        <div className="h-full w-full fixed z-10 bg-black opacity-70">
-          {/* <LoadingElement></LoadingElement> */}
-        </div>
+        <div className="h-full w-full fixed z-10 bg-black opacity-70"></div>
       )}
       <div className="glass-container bg-white backdrop-blur-lg rounded-2xl p-8 md:p-10 shadow-2xl border border-white/20 w-full max-w-md mx-4">
         <h1 className="text-black text-2xl md:text-3xl font-bold text-center mb-8 drop-shadow-md">
@@ -37,39 +39,34 @@ const FormPelanggan = () => {
                 setFormData({ ...formData, nama: e.target.value })
               }
             />
-          </div>         
+          </div>
+
           <div>
-          <select
+            <select
               required
               className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent appearance-none transition-all"
-              value={formData.gerai}
+              value={formData.layanan}
               onChange={(e) =>
-                setFormData({ ...formData, gerai: e.target.value })
+                setFormData({ ...formData, layanan: e.target.value })
               }
             >
               <option value="" disabled className="bg-white text-black">
                 Pilih Layanan
               </option>
-              <option value="BEKASI" className="bg-white text-black">
-                BEKASI (PUSAT)
+              <option value="REBOUND" className="bg-white text-black">
+                REBOUND
               </option>
-              <option value="TANGERANG" className="bg-white text-black">
-                TANGERANG
+              <option value="DOWNSIZE" className="bg-white text-black">
+                DOWNSIZE
               </option>
-              <option value="DEPOK" className="bg-white text-black">
-                DEPOK
+              <option value="MAINTENANCE" className="bg-white text-black">
+                MAINTENANCE
               </option>
-              <option value="JAKTIM" className="bg-white text-black">
-                JAKTIM
-              </option>
-              <option value="CIKARANG" className="bg-white text-black">
-                CIKARANG
-              </option>
-              <option value="BOGOR" className="bg-white text-black">
-                BOGOR
-              </option>
-              <option value="JAKSEL" className="bg-white text-black">
-                JAKSEL
+              <option
+                value="PAKET REBOUND & DOWNSIZE"
+                className="bg-white text-black"
+              >
+                PAKET REBOUND & DOWNSIZE
               </option>
             </select>
           </div>
@@ -80,9 +77,9 @@ const FormPelanggan = () => {
               placeholder="Motor"
               required
               className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
-              value={formData.nama}
+              value={formData.motor}
               onChange={(e) =>
-                setFormData({ ...formData, nama: e.target.value })
+                setFormData({ ...formData, motor: e.target.value })
               }
             />
           </div>

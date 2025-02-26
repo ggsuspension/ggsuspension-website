@@ -1,10 +1,13 @@
 import React, { useRef, useState, useEffect } from "react";
 import jsQR from "jsqr";
+import FormPelanggan from "../pages/FormPelanggan";
+import { useParams } from "react-router-dom";
+// import { QRCodeSVG } from "qrcode.react"; 
 const QRScanner: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [qrData, setQRData] = useState<string>("");
-
+  const [qrData, setQRData] = useState<any>("");
+  const url=useParams().gerai;
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -29,7 +32,7 @@ const QRScanner: React.FC = () => {
         tracks.forEach((track) => track.stop());
       }
     };
-  }, []);
+  }, [qrData]);
 
   const scan = () => {
     const video = videoRef.current;
@@ -56,7 +59,7 @@ const QRScanner: React.FC = () => {
         inversionAttempts: "dontInvert",
       });
       if (code) {
-        setQRData(code.data);
+        setQRData(JSON.parse(code.data));
       }
     }
     // Lanjutkan scanning pada frame berikutnya
@@ -65,8 +68,17 @@ const QRScanner: React.FC = () => {
 
   return (
     <div>
-      {qrData && <p>Scanned QR Code: {qrData}</p>}
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-orange-500 to-yellow-500 p-4">
+      {!url&&qrData&&qrData.instansi=="ggsuspension"&&qrData.password=="GGsuspension123"&&<FormPelanggan/>}
+      {/* <QRCodeSVG // Mengubah komponen QRCode menjadi QRCodeSVG
+                  value={JSON.stringify({
+                    instansi: "ggsuspension",
+                    password:"GGsuspension123"
+                  })}
+                  size={400}
+                  level="H"
+                  includeMargin={true}
+                /> */}
+      {!qrData&&<div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-orange-500 to-yellow-500 p-4">
         <h1 className="text-black text-4xl font-bold mb-6">Scan QR Code</h1>
         <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
           <p className="text-gray-700 text-center mb-4">
@@ -85,7 +97,7 @@ const QRScanner: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div>}
     </div>
   );
 };

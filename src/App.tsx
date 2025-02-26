@@ -3,6 +3,7 @@ import Home from "./Home";
 import Layout from "./components/dashboard";
 import ScanQR from "./components/fragments/ScanQR";
 import FormPelayanan from "./components/pages/FormPelanggan";
+import AntrianPage from "./components/pages/AntrianPage";
 
 const router = createHashRouter([
   {
@@ -18,11 +19,14 @@ const router = createHashRouter([
     element: <ScanQR />,
   },
   {
-    path: "/pelanggan",
+    path: "/form-pelanggan",
     element: <FormPelayanan />,
   },
+  {
+    path: "/antrian/:gerai",
+    element: <AntrianPage />,
+  },
 ]);
-
 const App = () => {
   return <RouterProvider router={router} />;
 };

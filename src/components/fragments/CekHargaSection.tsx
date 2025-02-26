@@ -199,7 +199,7 @@ export default function CekHargaSection({
               name="nama_layanan"
               id=""
             >
-              <option value="">Pilih Layanan</option>
+              <option disabled value="">Pilih Layanan</option>
               {SEMUA_LAYANAN.map((layanan, i) => (
                 <option key={i} value={layanan}>
                   {layanan}
@@ -215,7 +215,7 @@ export default function CekHargaSection({
               disabled={layanan ? false : true}
               id=""
             >
-              <option value="">Pilih Jenis Motor</option>
+              <option disabled value="">Pilih Jenis Motor</option>
               {layanan?.map((motor: any, i: number) => (
                 <option key={i} value={motor.subcategory}>
                   {motor.subcategory}
@@ -231,7 +231,7 @@ export default function CekHargaSection({
               id=""
               disabled={jenisMotor ? false : true}
             >
-              <option value="">Pilih Bagian Motor</option>
+              <option disabled value="">Pilih Bagian Motor</option>
               {jenisMotor?.map((motor: any, i: number) => (
                 <option key={i} value={motor.service}>
                   {motor.service}
@@ -247,7 +247,7 @@ export default function CekHargaSection({
               id=""
               disabled={jenisMotor ? false : true}
             >
-              <option value="">Pilih Motor</option>
+              <option disabled value="">Pilih Motor</option>
               {!textJenisMotor?.includes("OHLINS") &&
                 jenisMotor?.length > 0 &&
                 jenisMotor[0].motor.map((motor: any, i: number) => (
@@ -271,7 +271,7 @@ export default function CekHargaSection({
                 value={selectedCategoryIndex}
                 onChange={handleCategoryChange}
               >
-                <option value="">Pilih Kategori</option>
+                <option disabled value="">Pilih Kategori</option>
                 <option value="">Batalkan</option>
                 {hargaSeal &&
                   hargaSeal.map((item: any, index: number) => (
@@ -297,7 +297,7 @@ export default function CekHargaSection({
                   value={selectedTipeSubIndex}
                   onChange={handleTipeSubChange}
                 >
-                  <option value="">Pilih Tipe / Subkategori</option>
+                  <option disabled value="">Pilih Tipe / Subkategori</option>
                   {tipeSubOptions.map((option: any, idx: any) => (
                     <option key={idx} value={idx}>
                       {option}

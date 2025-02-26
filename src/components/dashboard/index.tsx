@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, Outlet } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,9 +18,59 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import TabelAntrianHarian from "../fragments/TabelAntrianHarian";
+import { getDataLayananSemuaCabang } from "@/firebase/service";
+import * as XLSX from "xlsx";
 
 export default function Layout() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [data, setData] = useState<any>(undefined);
+  const listGerai = [
+    "BEKASI",
+    "DEPOK",
+    "TANGERANG",
+    "CIKARANG",
+    "JAKSEL",
+    "BOGOR",
+    "JAKTIM",
+  ];
+
+  useEffect(() => {
+    getDataLayananSemuaCabang().then((res) => {
+      const result = listGerai.map(gerai => {
+        const filteredData = res
+          .filter(item => item.gerai === gerai)
+          .map(item => item.data);
+      
+        return { gerai, data: filteredData };
+      });
+      setData(result); 
+    });
+  }, []);
+  
+  const handleExport = () => {
+    const sheetData = data.flatMap((item: any) => [
+      ["GERAI", item.gerai, ""], // Baris judul gerai
+      ["ANTRIAN", "NAMA", "NAMA LAYANAN", "NAMA MOTOR"], // Header kolom
+      ...item.data.map((row: any, i: number) => [
+        i + 1,
+        row.nama,
+        row.layanan , // Pastikan tidak error jika layanan undefined
+        row.motor,
+      ]), 
+      [""], // Baris kosong sebagai pemisah antar gerai
+    ]);
+    function getFormattedDate(date:Date) {
+      const day = ("0" + date.getDate()).slice(-2);
+      const month = ("0" + (date.getMonth() + 1)).slice(-2);
+      const year = date.getFullYear().toString().slice(-2);
+      return `${day}-${month}-${year}`;
+    }
+    const today = new Date();
+    const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    XLSX.writeFile(workbook, `data_antrian-${getFormattedDate(today)}.xlsx`);
+  };
 
   const menuItems = [
     {
@@ -108,7 +158,10 @@ export default function Layout() {
             </DropdownMenu>
           </div>
         </header>
-        <TabelAntrianHarian />
+        <Button onClick={handleExport} className="w-full bg-blue-500 text-white">
+        Download Excel
+      </Button>
+        <TabelAntrianHarian data={data&&data}/>
         <main className="flex-1">
           <Outlet />
         </main>

@@ -1,66 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import * as XLSX from "xlsx";
-import { getDataLayananSemuaCabang } from "@/firebase/service";
-
-/**
- * TextToExcel component
- *
- * This component renders a table with input fields for adding data about customers.
- * The user can add new rows to the table by clicking the "Tambah Baris" button.
- * The user can download the data in Excel format by clicking the "Download Excel" button.
- *
- * @returns {JSX.Element}
- */
-const TabelAntrianHarian: React.FC = () => {
-  const [data, setData] = useState<any>(undefined);
-
-  useEffect(() => {
-    getDataLayananSemuaCabang().then((res) => {
-      const result = listGerai.map(gerai => {
-        const filteredData = res
-          .filter(item => item.gerai === gerai)
-          .map(item => item.data);
-      
-        return { gerai, data: filteredData };
-      });
-      setData(result); 
-    });
-  }, []);
-  const handleExport = () => {
-    const sheetData = data.flatMap((item: any) => [
-      ["GERAI", item.gerai, ""], // Baris judul gerai
-      ["ANTRIAN", "NAMA", "NAMA LAYANAN", "NAMA MOTOR"], // Header kolom
-      ...item.data.map((row: any, i: number) => [
-        i + 1,
-        row.nama,
-        row.layanan , // Pastikan tidak error jika layanan undefined
-        row.motor,
-      ]), 
-      [""], // Baris kosong sebagai pemisah antar gerai
-    ]);
-    function getFormattedDate(date:Date) {
-      const day = ("0" + date.getDate()).slice(-2);
-      const month = ("0" + (date.getMonth() + 1)).slice(-2);
-      const year = date.getFullYear().toString().slice(-2);
-      return `${day}-${month}-${year}`;
-    }
-    
-    const today = new Date();
-    const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-    XLSX.writeFile(workbook, `data_antrian-${getFormattedDate(today)}.xlsx`);
-  };
-  const listGerai = [
-    "BEKASI",
-    "DEPOK",
-    "TANGERANG",
-    "CIKARANG",
-    "JAKSEL",
-    "BOGOR",
-    "JAKTIM",
-  ];
+import React from "react";
+const TabelAntrianHarian: React.FC<{ data: any }> = ({data}) => {
 
   return (
     <div className="w-full p-4 bg-white shadow-lg rounded-lg">
@@ -97,16 +36,14 @@ const TabelAntrianHarian: React.FC = () => {
                         <td className="border p-2">{item.nama}</td>
                         <td className="border p-2">{item.layanan}</td>
                         <td className="border p-2">{item.motor}</td>
-                        <td className="border p-2">{item.status}</td>
+                        <td className="border p-2">{item.status?<span className="flex items-center font-bold text-green-600 gap-1"><span className="bg-green-500 w-5 h-5 rounded-full"/>Finish</span>:<span className="flex items-center font-bold text-yellow-500 gap-1"><span className="bg-yellow-500 w-5 h-5 rounded-full"/>Progress</span>}</td>
                       </tr>
                     </tbody>)}
                   </table>
               </div>
             ))}
         </div>
-      <Button onClick={handleExport} className="w-full bg-blue-500 text-white">
-        Download Excel
-      </Button>
+      
     </div>
   );
 };
