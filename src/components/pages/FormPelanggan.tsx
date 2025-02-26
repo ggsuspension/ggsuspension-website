@@ -1,9 +1,11 @@
 import { setDataPelanggan } from "@/firebase/service";
+import { setCookie } from "@/utils/setCookie";
 import { useState } from "react";
 
 const FormPelanggan = () => {
   const [isSubmit, setIsSubmit] = useState<boolean>(false);
   const [formData, setFormData] = useState({
+    id: "",
     nama: "",
     gerai: "",
     layanan: "",
@@ -13,8 +15,14 @@ const FormPelanggan = () => {
   const handleSubmit = (e: any) => {
     e.preventDefault();
     setIsSubmit(true);
-    setDataPelanggan(formData).then(
-      res => {if(res.msg)window.location.href="/#/antrian/"+formData.gerai.toLowerCase()})
+    formData.id = formData.nama + Math.random().toString().substring(3, 8);
+    setDataPelanggan(formData).then((res) => {
+      if (res?.gerai) {
+        const response = setCookie("dataPelanggan", JSON.stringify(res));
+        if (response)
+          window.location.href = "/#/antrian/" + formData.gerai.toLowerCase();
+      }
+    });
   };
 
   return (

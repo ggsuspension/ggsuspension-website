@@ -2,16 +2,19 @@ import React, { useRef, useState, useEffect } from "react";
 import jsQR from "jsqr";
 import FormPelanggan from "../pages/FormPelanggan";
 import { useParams } from "react-router-dom";
-// import { QRCodeSVG } from "qrcode.react"; 
+import { getCookie } from "@/utils/getCookie";
+import { setDataPelanggan } from "@/firebase/service";
+// import { QRCodeSVG } from "qrcode.react";
 const QRScanner: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [qrData, setQRData] = useState<any>("");
-  const url=useParams().gerai;
+  const url = useParams().gerai;
+  const getCookiePelanggan = getCookie("dataPelanggan");
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-
     // Minta akses ke kamera dengan kamera belakang (facingMode: 'environment')
     navigator.mediaDevices
       .getUserMedia({ video: { facingMode: "environment" } })
@@ -59,16 +62,25 @@ const QRScanner: React.FC = () => {
         inversionAttempts: "dontInvert",
       });
       if (code) {
+        if (url&&getCookiePelanggan) {
+          let dataPelanggan = JSON.parse(getCookiePelanggan);
+          dataPelanggan.status = true;
+          setDataPelanggan(dataPelanggan).then((res) => {
+            res && window.location.reload();
+          });
+        }
         setQRData(JSON.parse(code.data));
       }
     }
-    // Lanjutkan scanning pada frame berikutnya
     requestAnimationFrame(scan);
   };
 
   return (
     <div>
-      {!url&&qrData&&qrData.instansi=="ggsuspension"&&qrData.password=="GGsuspension123"&&<FormPelanggan/>}
+      {!url &&
+        qrData &&
+        qrData.instansi == "ggsuspension" &&
+        qrData.password == "GGsuspension123" && <FormPelanggan />}
       {/* <QRCodeSVG // Mengubah komponen QRCode menjadi QRCodeSVG
                   value={JSON.stringify({
                     instansi: "ggsuspension",
@@ -78,26 +90,28 @@ const QRScanner: React.FC = () => {
                   level="H"
                   includeMargin={true}
                 /> */}
-      {!qrData&&<div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-orange-500 to-yellow-500 p-4">
-        <h1 className="text-black text-4xl font-bold mb-6">Scan QR Code</h1>
-        <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
-          <p className="text-gray-700 text-center mb-4">
-            Silahkan arahkan QR code ke dalam bingkai di bawah
-          </p>
-          <div className="relative border-4 border-dashed border-gray-300 rounded-lg overflow-hidden">
-            {/* Video Preview */}
-            <video ref={videoRef} style={{ width: "100%", height: "auto" }} />
-            {/* Canvas untuk memproses frame video, bisa disembunyikan */}
-            <canvas ref={canvasRef} style={{ display: "none" }} />
-            {/* Overlay untuk area scanning */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="border border-dashed border-gray-500 rounded-lg p-2 bg-white bg-opacity-70">
-                <p className="text-gray-500 text-sm">Area Scan</p>
+      {!qrData && (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-orange-500 to-yellow-500 p-4">
+          <h1 className="text-black text-4xl font-bold mb-6">Scan QR Code</h1>
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+            <p className="text-gray-700 text-center mb-4">
+              Silahkan arahkan QR code ke dalam bingkai di bawah
+            </p>
+            <div className="relative border-4 border-dashed border-gray-300 rounded-lg overflow-hidden">
+              {/* Video Preview */}
+              <video ref={videoRef} style={{ width: "100%", height: "auto" }} />
+              {/* Canvas untuk memproses frame video, bisa disembunyikan */}
+              <canvas ref={canvasRef} style={{ display: "none" }} />
+              {/* Overlay untuk area scanning */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="border border-dashed border-gray-500 rounded-lg p-2 bg-white bg-opacity-70">
+                  <p className="text-gray-500 text-sm">Area Scan</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>}
+      )}
     </div>
   );
 };
