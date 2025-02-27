@@ -11,7 +11,7 @@ export async function getDataLayananSemuaCabang() {
 
 export async function setDataPelanggan(data: any) {
   await setDoc(doc(firestore, "data-layanan", data.id), {
-    data: {nama:data.nama||data.data.nama,layanan:data.layanan||data.data.layanan,motor:data.motor||data.data.motor},
+    data: {nama:data.nama||data.data.nama,layanan:data.layanan||data.data.layanan,motor:data.motor||data.data.motor,bagianMotor:data.bagianMotor||data.data.bagianMotor,jenisMotor:data.jenisMotor||data.data.jenisMotor,harga:data.harga||data.data.harga,noWA:data.noWA||data.data.noWA},
     gerai: data.gerai,
     status: data.status||false,
     id: data.id,

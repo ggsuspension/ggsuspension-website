@@ -1,52 +1,43 @@
-import {
-  LayoutDashboard,
-  Users,
-  Settings,
-  Package,
-  Wallet,
-  BarChart4,
-  ChevronLeft,
-  Bell,
-} from "lucide-react";
+import { DownloadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import TabelAntrianHarian from "../fragments/TabelAntrianHarian";
 import { getDataLayananSemuaCabang } from "@/firebase/service";
 import * as XLSX from "xlsx";
+import { MdAdminPanelSettings } from "react-icons/md";
 
 export default function Layout() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [data, setData] = useState<any>(undefined);
-  const listGerai = [
-    "BEKASI",
-    "DEPOK",
-    "TANGERANG",
-    "CIKARANG",
-    "JAKSEL",
-    "BOGOR",
-    "JAKTIM",
-  ];
 
   useEffect(() => {
-    getDataLayananSemuaCabang().then((res) => {
-      const result = listGerai.map(gerai => {
-        const filteredData = res
-          .filter(item => item.gerai === gerai)
-          .map(item => item.data);
-      
-        return { gerai, data: filteredData };
-      });
-      setData(result); 
+    getDataLayananSemuaCabang().then((res: any) => {
+      // Asumsi: res merupakan array data
+      const groupKey = (item: any) => {
+        return item.data.layanan.includes("REBOUND") ? "rebound" : "others";
+      };
+      const grouped = res.reduce((acc: any, cur: any) => {
+        const key = groupKey(cur);
+        if (!acc[key]) {
+          // Buat objek grup baru dengan struktur output yang diinginkan
+          acc[key] = {
+            id: cur.id, // ambil id dari item pertama di grup
+            data: [cur.data], // masukkan data awal sebagai array
+            gerai: cur.gerai, // ambil gerai dari item pertama
+            status: cur.status, // ambil status dari item pertama
+          };
+        } else {
+          // Jika grup sudah ada, cukup tambahkan data-nya ke array
+          acc[key].data.push(cur.data);
+        }
+        return acc;
+      }, {});
+
+      const output = Object.values(grouped);
+      setData(output);
     });
   }, []);
-  
+
   const handleExport = () => {
     const sheetData = data.flatMap((item: any) => [
       ["GERAI", item.gerai, ""], // Baris judul gerai
@@ -54,12 +45,14 @@ export default function Layout() {
       ...item.data.map((row: any, i: number) => [
         i + 1,
         row.nama,
-        row.layanan , // Pastikan tidak error jika layanan undefined
+        row.layanan,
         row.motor,
-      ]), 
+        row.bagianMotor,
+        row.harga,
+      ]),
       [""], // Baris kosong sebagai pemisah antar gerai
     ]);
-    function getFormattedDate(date:Date) {
+    function getFormattedDate(date: Date) {
       const day = ("0" + date.getDate()).slice(-2);
       const month = ("0" + (date.getMonth() + 1)).slice(-2);
       const year = date.getFullYear().toString().slice(-2);
@@ -72,96 +65,53 @@ export default function Layout() {
     XLSX.writeFile(workbook, `data_antrian-${getFormattedDate(today)}.xlsx`);
   };
 
-  const menuItems = [
-    {
-      name: "Dashboard",
-      icon: <LayoutDashboard className="h-4 w-4" />,
-      path: "/",
-    },
-    { name: "Users", icon: <Users className="h-4 w-4" />, path: "/users" },
-    {
-      name: "Products",
-      icon: <Package className="h-4 w-4" />,
-      path: "/products",
-    },
-    {
-      name: "Analytics",
-      icon: <BarChart4 className="h-4 w-4" />,
-      path: "/analytics",
-    },
-    { name: "Finance", icon: <Wallet className="h-4 w-4" />, path: "/finance" },
-    {
-      name: "Settings",
-      icon: <Settings className="h-4 w-4" />,
-      path: "/settings",
-    },
-  ];
+  // const menuItems = [
+  //   {
+  //     name: "Dashboard",
+  //     icon: <LayoutDashboard className="h-4 w-4" />,
+  //     path: "/",
+  //   },
+  //   { name: "Users", icon: <Users className="h-4 w-4" />, path: "/users" },
+  //   {
+  //     name: "Products",
+  //     icon: <Package className="h-4 w-4" />,
+  //     path: "/products",
+  //   },
+  //   {
+  //     name: "Analytics",
+  //     icon: <BarChart4 className="h-4 w-4" />,
+  //     path: "/analytics",
+  //   },
+  //   { name: "Finance", icon: <Wallet className="h-4 w-4" />, path: "/finance" },
+  //   {
+  //     name: "Settings",
+  //     icon: <Settings className="h-4 w-4" />,
+  //     path: "/settings",
+  //   },
+  // ];
 
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <div
-        className={`bg-background border-r ${
-          isCollapsed ? "w-[60px]" : "w-64"
-        } transition-all duration-300`}
-      >
-        <div className="flex items-center justify-between p-4 border-b">
-          {!isCollapsed && <h1 className="text-xl font-bold">Admin Panel</h1>}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-          >
-            <ChevronLeft className={`h-4 w-4 ${isCollapsed && "rotate-180"}`} />
-          </Button>
-        </div>
-
-        <nav className="p-2">
-          {menuItems.map((item) => (
-            <Link
-              key={item.name}
-              to={item.path}
-              className="flex items-center gap-3 p-2 rounded hover:bg-muted transition-colors"
-            >
-              {item.icon}
-              {!isCollapsed && <span>{item.name}</span>}
-            </Link>
-          ))}
-        </nav>
-      </div>
-
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Top Bar */}
-        <header className="bg-background border-b p-4 flex items-center justify-between">
+        <header className="bg-orange-500 border-b py-4 pl-7 flex items-center justify-between fixed w-full">
           <div className="flex items-center gap-4">
-            <h2 className="text-xl font-semibold">Dashboard Overview</h2>
-          </div>
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm">
-              <Bell className="h-4 w-4" />
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="rounded-full h-8 w-8">
-                  <span className="sr-only">User menu</span>
-                  <div className="h-6 w-6 rounded-full bg-primary text-white flex items-center justify-center">
-                    JD
-                  </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuItem>Logout</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <h2 className=" text-xl font-bold text-white flex gap-1 items-center">
+              <MdAdminPanelSettings /> Dashboard Admin
+            </h2>
           </div>
         </header>
-        <Button onClick={handleExport} className="w-full bg-blue-500 text-white">
-        Download Excel
-      </Button>
-        <TabelAntrianHarian data={data&&data}/>
+        <div className="flex items-center justify-center p-4 gap-4 mt-[4em]">
+          <h1 className="text-2xl font-bold flex">Tabel Data Antrian</h1>
+          <Button
+            onClick={handleExport}
+            className="w-fit text-xl bg-green-600 text-white"
+          >
+            <DownloadIcon />
+          </Button>
+        </div>
+        <TabelAntrianHarian data={data && data} />
         <main className="flex-1">
           <Outlet />
         </main>

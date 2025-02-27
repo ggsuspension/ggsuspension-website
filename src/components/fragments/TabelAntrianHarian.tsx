@@ -1,49 +1,92 @@
 import React from "react";
-const TabelAntrianHarian: React.FC<{ data: any }> = ({data}) => {
 
+const TabelAntrianHarian: React.FC<{ data: any }> = ({ data }) => {
   return (
-    <div className="w-full p-4 bg-white shadow-lg rounded-lg">
-      <h1 className="text-xl font-bold mb-4">Tabel Data Antrian</h1>
-      {/* <select onClick={(e: any) => setGerai(e.target.value)} name="" id="">
-        <option value="">Pilih Gerai</option>
-        <option value="BEKASI">BEKASI</option>
-        <option value="DEPOK">DEPOK</option>
-        <option value="TANGERANG">TANGERANG</option>
-        <option value="CIKARANG">CIKARANG</option>
-        <option value="JAKSEL">JAKSEL</option>
-        <option value="BOGOR">BOGOR</option>
-        <option value="JAKTIM">JAKTIM</option>
-      </select> */}
-        <div>
-          {data &&
-            data.map((row: any, index: number) => (
-              <div key={index}>
-                <h2>GERAI {row.gerai}</h2>
-                  <table className="w-full border-collapse border border-gray-300 mb-4">
-                    <thead>
-                      <tr className="bg-gray-200">
-                        <th className="border p-2">Nomor</th>
-                        <th className="border p-2">Nama</th>
-                        <th className="border p-2">Nama Layanan</th>
-                        <th className="border p-2">Nama Motor</th>
-                        <th className="border p-2">Status</th>
+    <div className="tablet:w-3/4 w-full mx-auto min-h-screen p-4 rounded-lg">
+      <div className="flex flex-col gap-[5em]">
+        {data &&
+          data.map((row: any, index: number) => (
+            <div
+              className="bg-white p-5 w-full self-center rounded-lg shadow-xl"
+              key={index}
+            >
+              <h2 className="text-xl sm:text-2xl font-bold italic mb-4">
+                GERAI {row.gerai}
+              </h2>
+              {/* Pembungkus untuk scroll horizontal jika diperlukan */}
+              <div className="overflow-x-auto">
+                <table className="min-w-full border-collapse border border-gray-300">
+                  <thead className="block md:table-header-group">
+                    <tr className="bg-gray-50 font-light text-sm sm:text-lg block md:table-row">
+                      <th className="border p-2 block md:table-cell">
+                        Nomor
+                      </th>
+                      <th className="border p-2 block md:table-cell">Nama</th>
+                      <th className="border p-2 block md:table-cell">
+                        Layanan
+                      </th>
+                      <th className="border p-2 block md:table-cell">
+                        Motor
+                      </th>
+                      <th className="border p-2 block md:table-cell">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="block md:table-row-group">
+                    {row.data.map((item: any, i: number) => (
+                      <tr
+                        key={i}
+                        className="bg-white border-b block md:table-row"
+                      >
+                        <td
+                          className="border p-2 text-center block md:table-cell"
+                          data-label="Nomor"
+                        >
+                          {i + 1}
+                        </td>
+                        <td
+                          className="border p-2 block md:table-cell"
+                          data-label="Nama"
+                        >
+                          {item.nama.toUpperCase()}
+                        </td>
+                        <td
+                          className="border p-2 block md:table-cell"
+                          data-label="Layanan"
+                        >
+                          {item.layanan}
+                        </td>
+                        <td
+                          className="border p-2 block md:table-cell"
+                          data-label="Motor"
+                        >
+                          {item.motor.toUpperCase()}
+                        </td>
+                        <td
+                          className="border p-2 block md:table-cell"
+                          data-label="Status"
+                        >
+                          {row.status === true ? (
+                            <span className="flex items-center font-semibold text-green-600 gap-1">
+                              <span className="bg-green-500 w-5 h-5 rounded-full" />
+                              FINISH
+                            </span>
+                          ) : (
+                            <span className="flex items-center text-yellow-500 gap-1 font-semibold">
+                              <span className="bg-yellow-500 w-5 h-5 rounded-full" />
+                              PROGRESS
+                            </span>
+                          )}
+                        </td>
                       </tr>
-                    </thead>
-                    {row.data.map((item:any, i: number) =>
-                    <tbody key={i}>
-                      <tr>
-                        <td className="border p-2">{i + 1}</td>
-                        <td className="border p-2">{item.nama}</td>
-                        <td className="border p-2">{item.layanan}</td>
-                        <td className="border p-2">{item.motor}</td>
-                        <td className="border p-2">{item.status?<span className="flex items-center font-bold text-green-600 gap-1"><span className="bg-green-500 w-5 h-5 rounded-full"/>Finish</span>:<span className="flex items-center font-bold text-yellow-500 gap-1"><span className="bg-yellow-500 w-5 h-5 rounded-full"/>Progress</span>}</td>
-                      </tr>
-                    </tbody>)}
-                  </table>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
-        </div>
-      
+            </div>
+          ))}
+      </div>
     </div>
   );
 };

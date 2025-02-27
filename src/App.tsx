@@ -23,7 +23,7 @@ const router = createHashRouter([
   },
   {
     path: "/form-pelanggan",
-    element: <FormPelayanan />,
+    element: !cookieDataPelanggan?<FormPelayanan/>:<Navigate to={`/antrian/${cookieDataPelanggan.gerai.toLowerCase()}`} />,
   },
   {
     path: "/antrian/:gerai",

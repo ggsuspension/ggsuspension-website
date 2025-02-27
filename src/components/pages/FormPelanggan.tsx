@@ -1,29 +1,98 @@
 import { setDataPelanggan } from "@/firebase/service";
+import { dataListMotor } from "@/utils/dataListMotor";
 import { setCookie } from "@/utils/setCookie";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const FormPelanggan = () => {
+  const listMotor = dataListMotor.layanan;
+  const [layanan, setLayanan] = useState<any>(undefined);
+  const [jenisMotor, setJenisMotor] = useState<any>(undefined);
+  // const [bagianMotor, setBagianMotor] = useState<any>(undefined);
+  const [motor, setMotor] = useState<any>(undefined);
+  const [textLayanan, setTextLayanan] = useState<any>(undefined);
+  const [textJenisMotor, setTextJenisMotor] = useState<any>(undefined);
+  const [textBagianMotor, setTextBagianMotor] = useState<any>(undefined);
+  const [harga, setHarga] = useState<any>(undefined);
+  const SEMUA_LAYANAN = [
+    "REBOUND",
+    "DOWNSIZE",
+    "MAINTENANCE",
+    "PAKET REBOUND & DOWNSIZE",
+  ];
+
   const [isSubmit, setIsSubmit] = useState<boolean>(false);
   const [formData, setFormData] = useState({
     id: "",
     nama: "",
+    noWA: "",
     gerai: "",
     layanan: "",
+    jenisMotor: "",
+    bagianMotor: "",
     motor: "",
+    harga: "",
   });
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
     setIsSubmit(true);
     formData.id = formData.nama + Math.random().toString().substring(3, 8);
+    formData.layanan = textLayanan;
+    formData.jenisMotor=textJenisMotor;
+    formData.bagianMotor=textBagianMotor;
+    formData.motor=motor;
+    formData.harga=harga;
     setDataPelanggan(formData).then((res) => {
       if (res?.gerai) {
-        const response = setCookie("pelangganGGSuspension", JSON.stringify(res));
-        if (response.status)
-          window.location.reload()
+        const response = setCookie(
+          "pelangganGGSuspension",
+          JSON.stringify(res)
+        );
+        if (response.status) window.location.href=`/#/antrian/${res.gerai.toLowerCase()}`;
       }
     });
   };
+
+  function setSelectLayanan(e: any) {
+    const res = listMotor?.filter(
+      (motor: any) => motor.category == e.target.value
+    );
+    let result: any = [];
+    res.forEach((item: any) => {
+      if (!result.find((u: any) => u.subcategory === item.subcategory)) {
+        result.push(item);
+      }
+    });
+    setLayanan(result);
+    setTextLayanan(e.target.value);
+  }
+  function setSelectJenisMotor(e: any) {
+    let res = listMotor?.filter((motor: any) => motor.category == textLayanan);
+    res = res.filter((motor: any) => motor.subcategory == e.target.value);
+    setTextJenisMotor(e.target.value);
+    setJenisMotor(res);
+  }
+
+  function setSelectBagianMotor(e: any) {
+    setTextBagianMotor(e.target.value);
+  }
+  function setSelectMotor(e: any) {
+    setMotor(e.target.value);
+  }
+
+  useEffect(()=>{
+    if (textLayanan && textJenisMotor && textBagianMotor && motor) {
+      let res = listMotor?.filter(
+        (motor: any) => motor.category == textLayanan
+      );
+      res = res?.filter((motor: any) => motor.subcategory == textJenisMotor);
+      res = res?.filter((motor: any) => motor.service == textBagianMotor);
+      const priceBasic = res[0]
+        ? res[0].price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+        : "";
+      setHarga(priceBasic);
+    }
+  },[textLayanan, textJenisMotor, textBagianMotor, motor])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#e9d712] to-[#d38508]">
@@ -50,46 +119,94 @@ const FormPelanggan = () => {
           </div>
 
           <div>
-            <select
+            <input
+              type="text"
+              placeholder="No WA"
               required
-              className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent appearance-none transition-all"
-              value={formData.layanan}
+              className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
+              value={formData.noWA}
               onChange={(e) =>
-                setFormData({ ...formData, layanan: e.target.value })
+                setFormData({ ...formData, noWA: e.target.value })
               }
+            />
+          </div>
+
+          <div>
+            <select
+              className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
+              onChange={setSelectLayanan}
+              name="nama_layanan"
+              id=""
             >
-              <option value="" disabled className="bg-white text-black">
+              <option value="">
                 Pilih Layanan
               </option>
-              <option value="REBOUND" className="bg-white text-black">
-                REBOUND
+              {SEMUA_LAYANAN.map((layanan, i) => (
+                <option key={i} value={layanan}>
+                  {layanan}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            {" "}
+            <select
+              className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
+              required
+              onChange={setSelectJenisMotor}
+              disabled={layanan ? false : true}
+              id=""
+            >
+              <option value="">
+                Pilih Jenis Motor
               </option>
-              <option value="DOWNSIZE" className="bg-white text-black">
-                DOWNSIZE
-              </option>
-              <option value="MAINTENANCE" className="bg-white text-black">
-                MAINTENANCE
-              </option>
-              <option
-                value="PAKET REBOUND & DOWNSIZE"
-                className="bg-white text-black"
-              >
-                PAKET REBOUND & DOWNSIZE
-              </option>
+              {layanan?.map((motor: any, i: number) => (
+                <option key={i} value={motor.subcategory}>
+                  {motor.subcategory}
+                </option>
+              ))}
             </select>
           </div>
 
           <div>
-            <input
-              type="text"
-              placeholder="Motor"
-              required
+            <select
               className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
-              value={formData.motor}
-              onChange={(e) =>
-                setFormData({ ...formData, motor: e.target.value })
-              }
-            />
+              required
+              onChange={setSelectBagianMotor}
+              id=""
+              disabled={jenisMotor ? false : true}
+            >
+              <option value="">
+                Pilih Bagian Motor
+              </option>
+              {jenisMotor?.map((motor: any, i: number) => (
+                <option key={i} value={motor.service}>
+                  {motor.service}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <select
+              className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
+              required
+              onChange={setSelectMotor}
+              id=""
+              disabled={jenisMotor ? false : true}
+            >
+              <option value="">
+                Pilih Motor
+              </option>
+              {!textJenisMotor?.includes("OHLINS") &&
+                jenisMotor?.length > 0 &&
+                jenisMotor[0].motor.map((motor: any, i: number) => (
+                  <option key={i} value={motor}>
+                    {motor}
+                  </option>
+                ))}
+              <option value="">Lainnya</option>
+            </select>
           </div>
 
           <div>
@@ -127,6 +244,7 @@ const FormPelanggan = () => {
               </option>
             </select>
           </div>
+          <div>{harga&& <p className="text-green-600 text-center font-bold text-xl">Harga : {harga}</p>}</div>
 
           <button
             type="submit"
