@@ -9,18 +9,4 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  // Add these configurations
-  server: {
-    headers: {
-      'Content-Type': 'application/javascript'
-    }
-  },
-  optimizeDeps: {
-    esbuildOptions: {
-      loader: {
-        '.js': 'jsx',
-        '.ts': 'tsx',
-      },
-    },
-  },
 })
