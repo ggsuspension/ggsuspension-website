@@ -8,10 +8,19 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-    extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
   },
+  // Add these configurations
   server: {
-    // Sometimes helps with MIME type issues
-    middlewareMode: false
-  }
+    headers: {
+      'Content-Type': 'application/javascript'
+    }
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      loader: {
+        '.js': 'jsx',
+        '.ts': 'tsx',
+      },
+    },
+  },
 })
