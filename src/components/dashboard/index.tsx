@@ -1,23 +1,29 @@
-import { DownloadIcon } from "lucide-react";
+import { DownloadIcon, LayoutDashboard, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import TabelAntrianHarian from "../fragments/TabelAntrianHarian";
 import { getDataLayananSemuaCabang } from "@/firebase/service";
 import * as XLSX from "xlsx";
-import { MdAdminPanelSettings } from "react-icons/md";
+import { Link } from "react-router-dom";
+import FinancePage from "../pages/FinancePage";
+
 
 export default function Layout() {
   const [data, setData] = useState<any>(undefined);
+  const url=window.location.hash;
+  function getFormattedDate(date: Date) {
+    const day = ("0" + date.getDate()).slice(-2);
+    const month = ("0" + (date.getMonth() + 1)).slice(-2);
+    const year = date.getFullYear().toString().slice(-2);
+    return `${day}-${month}-${year}`;
+  }
+  const today = new Date();
+  
 
   useEffect(() => {
     getDataLayananSemuaCabang().then((res: any) => {
-      // Asumsi: res merupakan array data
-      const groupKey = (item: any) => {
-        return item.data.layanan.includes("REBOUND") ? "rebound" : "others";
-      };
       const grouped = res.reduce((acc: any, cur: any) => {
-        const key = groupKey(cur);
+        const key = cur.gerai;
         if (!acc[key]) {
           // Buat objek grup baru dengan struktur output yang diinginkan
           acc[key] = {
@@ -65,30 +71,30 @@ export default function Layout() {
     XLSX.writeFile(workbook, `data_antrian-${getFormattedDate(today)}.xlsx`);
   };
 
-  // const menuItems = [
-  //   {
-  //     name: "Dashboard",
-  //     icon: <LayoutDashboard className="h-4 w-4" />,
-  //     path: "/",
-  //   },
-  //   { name: "Users", icon: <Users className="h-4 w-4" />, path: "/users" },
-  //   {
-  //     name: "Products",
-  //     icon: <Package className="h-4 w-4" />,
-  //     path: "/products",
-  //   },
-  //   {
-  //     name: "Analytics",
-  //     icon: <BarChart4 className="h-4 w-4" />,
-  //     path: "/analytics",
-  //   },
-  //   { name: "Finance", icon: <Wallet className="h-4 w-4" />, path: "/finance" },
-  //   {
-  //     name: "Settings",
-  //     icon: <Settings className="h-4 w-4" />,
-  //     path: "/settings",
-  //   },
-  // ];
+  const menuItems = [
+    {
+      name: "Dashboard",
+      icon: <LayoutDashboard className="h-4 w-4" />,
+      path: "/admin",
+    },
+    // { name: "Users", icon: <Users className="h-4 w-4" />, path: "/users" },
+    // {
+    //   name: "Products",
+    //   icon: <Package className="h-4 w-4" />,
+    //   path: "/products",
+    // },
+    // {
+    //   name: "Analytics",
+    //   icon: <BarChart4 className="h-4 w-4" />,
+    //   path: "/analytics",
+    // },
+    { name: "Finance", icon: <Wallet className="h-4 w-4" />, path: "/admin/finance" },
+    // {
+    //   name: "Settings",
+    //   icon: <Settings className="h-4 w-4" />,
+    //   path: "/settings",
+    // },
+  ];
 
   return (
     <div className="flex min-h-screen">
@@ -97,24 +103,38 @@ export default function Layout() {
         {/* Top Bar */}
         <header className="bg-orange-500 border-b py-4 pl-7 flex items-center justify-between fixed w-full">
           <div className="flex items-center gap-4">
-            <h2 className=" text-xl font-bold text-white flex gap-1 items-center">
-              <MdAdminPanelSettings /> Dashboard Admin
+            <h2 className=" text-xl font-bold text-white flex gap-2 items-center">
+              <img
+                src="./LOGO%20REMAKE.png"
+                className="w-8 p-1 bg-white rounded-full"
+                alt=""
+              />{" "}
+              Dashboard Admin
             </h2>
           </div>
+          <nav className="p-2">
+          {menuItems.map((item) => (
+            <Link
+              key={item.name}
+              to={item.path}
+              className="flex items-center gap-3 p-2 rounded hover:bg-muted transition-colors text-white"
+            >
+              {item.icon}
+              <span className="text-white">{item.name}</span>
+            </Link>
+          ))}
+        </nav>
         </header>
-        <div className="flex items-center justify-center p-4 gap-4 mt-[4em]">
-          <h1 className="text-2xl font-bold flex">Tabel Data Antrian</h1>
+        <div className="flex items-center justify-center p-4 gap-4 mt-[8em]">
+          <h1 className="text-2xl font-bold flex">Tabel Data {getFormattedDate(today)}</h1>
           <Button
             onClick={handleExport}
             className="w-fit text-xl bg-green-600 text-white"
-          >
-            <DownloadIcon />
+            >
+            Download <DownloadIcon />
           </Button>
         </div>
-        <TabelAntrianHarian data={data && data} />
-        <main className="flex-1">
-          <Outlet />
-        </main>
+        {url=="#/admin"?<TabelAntrianHarian data={data && data} />:<FinancePage/>}
       </div>
     </div>
   );

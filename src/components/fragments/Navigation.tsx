@@ -3,7 +3,7 @@ import { useState } from "react";
 import { FaLocationDot } from "react-icons/fa6";
 import { setCookie } from "../../utils/setCookie";
 import { getCookie } from "../../utils/getCookie";
-import { Link } from "react-router-dom";
+import { Link } from 'react-scroll';
 // import { FaInstagram } from "react-icons/fa6";
 // import { PiTiktokLogoBold } from "react-icons/pi";
 
@@ -73,65 +73,67 @@ export const Navigation = ({ namaGerai }: any) => {
           {/* <span className='flex tablet:gap-3 gap-1'>
             <a className="hover:cursor-pointer" href="https://www.instagram.com/officialggsuspension/">
               <FaInstagram className='bg-gradient-to-br from-[#FEDA75] via-[#D62976] to-[#4F5BD5] text-white tablet:text-4xl text-2xl rounded-full p-1'/>
-            </a>
+            </Lin>
             <a className="hover:cursor-pointer" href="https://www.tiktok.com/@officialggsuspension">
             <PiTiktokLogoBold className='hover:cursor-pointer bg-gradient-to-br from-[#69C9D0] to-[#EE1D52] text-white tablet:text-4xl text-2xl rounded-full p-1'/>
-            </a>              
+            </Lin>              
             </span> */}
         </div>
         {isMenuOpen && (
           <div className="">
             <div className="px-2 pt-2 pb-3 space-y-1">
-              <a
-                href="#about"
+              <Link to="about" smooth={true} duration={500} 
                 onClick={() => setIsMenuOpen(false)}
-                className="block px-3 py-2 text-gray-600 hover:text-blue-600"
+                className="cursor-pointer block px-3 py-2 text-gray-600 hover:text-blue-600"
               >
                 Tentang Kami
-              </a>
-              <a
-                href="#services"
+              </Link>
+              <Link to="services" smooth={true} duration={500}
                 onClick={() => setIsMenuOpen(false)}
-                className="block px-3 py-2 text-gray-600 hover:text-blue-600"
+                className="cursor-pointer block px-3 py-2 text-gray-600 hover:text-blue-600"
               >
                 Layanan
-              </a>
-              <a
-                href="#harga"
+              </Link>
+              <Link smooth={true} duration={500} to="harga"
                 onClick={() => setIsMenuOpen(false)}
-                className="block px-3 py-2 text-gray-600 hover:text-blue-600"
+                className="cursor-pointer block px-3 py-2 text-gray-600 hover:text-blue-600"
               >
                 Cek Harga
-              </a>
-              <a
-                href="#testimoni"
+              </Link>
+              <Link smooth={true} duration={500} to="testimoni"
                 onClick={() => setIsMenuOpen(false)}
-                className="block px-3 py-2 text-gray-600 hover:text-blue-600"
+                className="cursor-pointer block px-3 py-2 text-gray-600 hover:text-blue-600"
               >
                 Testimoni
-              </a>
-              <a
-                href="#article"
+              </Link>
+              <Link smooth={true} duration={500} to="article"
                 onClick={() => setIsMenuOpen(false)}
-                className="block px-3 py-2 text-gray-600 hover:text-blue-600"
+                className="cursor-pointer block px-3 py-2 text-gray-600 hover:text-blue-600"
               >
                 Artikel & Tips
-              </a>
-              <a
-                href="#contact"
+              </Link>
+              <Link smooth={true} duration={500} to="contact"
                 onClick={() => setIsMenuOpen(false)}
-                className="block px-3 py-2 text-gray-600 hover:text-blue-600"
+                className="cursor-pointer block px-3 py-2 text-gray-600 hover:text-blue-600"
               >
                 Alamat & SosMed
-              </a>
-              <Link to="/scan"
+              </Link>
+              <a href="/#/antrian"
                 onClick={() => setIsMenuOpen(false)}
-                className="block px-3 py-2 text-gray-600 hover:text-blue-600"
+                className="cursor-pointer block px-3 py-2 text-gray-600 hover:text-blue-600"
+              >
+                <span className="flex gap-2">
+                  List Antrian
+                </span>
+              </a>
+              <a href="/#/scan"
+                onClick={() => setIsMenuOpen(false)}
+                className="cursor-pointer block px-3 py-2 text-gray-600 hover:text-blue-600"
               >
                 <span className="flex gap-2">
                   Scan QR <Camera />
                 </span>
-              </Link>
+              </a>
             </div>
           </div>
         )}

@@ -5,6 +5,7 @@ import ScanQR from "./components/fragments/ScanQR";
 import FormPelayanan from "./components/pages/FormPelanggan";
 import AntrianPage from "./components/pages/AntrianPage";
 import { getCookie } from "./utils/getCookie";
+import AntrianSemuaGerai from "./components/pages/AntrianSemuaGerai";
 
 let cookieDataPelanggan: any = getCookie("pelangganGGSuspension");
 cookieDataPelanggan = cookieDataPelanggan&&JSON.parse(cookieDataPelanggan);
@@ -19,15 +20,23 @@ const router = createHashRouter([
   },
   {
     path: "/scan",
-    element: !cookieDataPelanggan?<ScanQR />:<Navigate to={`/antrian/${cookieDataPelanggan.gerai.toLowerCase()}`}/>,
+    element: <ScanQR/>,
   },
   {
     path: "/form-pelanggan",
     element: !cookieDataPelanggan?<FormPelayanan/>:<Navigate to={`/antrian/${cookieDataPelanggan.gerai.toLowerCase()}`} />,
   },
   {
+  path: "/antrian",
+    element: <AntrianSemuaGerai/>,
+  },
+  {
     path: "/antrian/:gerai",
     element: cookieDataPelanggan?<AntrianPage />:<Navigate to="/scan"/>,
+  },
+  {
+    path: "/admin/finance",
+    element: <Layout/>,
   },
 ]);
 const App = () => {

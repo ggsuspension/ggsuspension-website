@@ -1,4 +1,5 @@
-export const dataListMotor = {layanan:[
+export const dataListMotor = {
+  layanan:[
     {
       category: "REBOUND",
       subcategory: "SPORT/NAKED/TRAIL 110cc-140cc",
