@@ -14,10 +14,10 @@ export default function AntrianPage() {
 
   useEffect(() => {
     getDataLayananSemuaCabang().then((res) => {
-      const filteredData = res.filter(
-        (item) => item.gerai.toLowerCase() == gerai
-      );
-      setData(filteredData.reverse());
+      const filteredData = res
+        .filter((item) => item.gerai.toLowerCase() == gerai)
+        .sort((a, b) => a.data.waktu - b.data.waktu);
+      setData(filteredData);
     });
   }, []);
   const isSameId =
@@ -62,9 +62,7 @@ export default function AntrianPage() {
                     data.map((row: any, index: number) => (
                       <tbody key={index}>
                         <tr className="font-semibold text-center">
-                          <td className="border p-2">
-                            {index+1}
-                          </td>
+                          <td className="border p-2">{index + 1}</td>
                           <td className="border p-2">
                             {row.data.nama.toUpperCase()}
                           </td>
@@ -88,7 +86,13 @@ export default function AntrianPage() {
                       </tbody>
                     ))
                   ) : (
-                    <tbody ><tr><td className="self-center w-full font-bold">loading...</td></tr></tbody>
+                    <tbody>
+                      <tr>
+                        <td className="self-center w-full font-bold">
+                          loading...
+                        </td>
+                      </tr>
+                    </tbody>
                   )}
                 </table>
               </div>

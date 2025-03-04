@@ -5,7 +5,10 @@ import { useParams } from "react-router-dom";
 import { getCookie } from "@/utils/getCookie";
 import { setDataPelanggan } from "@/firebase/service";
 import { setCookie } from "@/utils/setCookie";
+import Swal from "sweetalert2";
 // import { QRCodeSVG } from "qrcode.react";
+
+
 const QRScanner: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -64,6 +67,11 @@ const QRScanner: React.FC = () => {
       });
       if (code) {
         if (url&&getCookiePelanggan) {
+          Swal.fire({
+            title: "Berhasil Scan!",
+            text: "Terimakasih sudah memakai pelayanan GG Suspension..",
+            icon: "success"
+          });
           let dataPelanggan = JSON.parse(getCookiePelanggan);
           dataPelanggan.status = true;
           setDataPelanggan(dataPelanggan).then(() => {

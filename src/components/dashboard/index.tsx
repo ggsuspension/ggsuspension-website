@@ -126,7 +126,7 @@ export default function Layout() {
         </nav>
         </header>
         <div className="flex items-center justify-center p-4 gap-4 mt-[8em]">
-          <h1 className="text-2xl font-bold flex">Tabel Data {getFormattedDate(today)}</h1>
+          <h1 className="text-2xl font-bold flex">Tabel Data Antrian {getFormattedDate(today)}</h1>
           <Button
             onClick={handleExport}
             className="w-fit text-xl bg-green-600 text-white"

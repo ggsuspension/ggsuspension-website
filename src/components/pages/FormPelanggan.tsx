@@ -1,6 +1,6 @@
 import { setDataPelanggan } from "@/firebase/service";
 import { dataListMotor } from "@/utils/dataListMotor";
-import { setCookie } from "@/utils/setCookie";
+import Cookies from "js-cookie";
 import { useState } from "react";
 
 const FormPelanggan = () => {
@@ -38,6 +38,7 @@ const FormPelanggan = () => {
     hargaSeal: "",
     totalHarga: "",
     seal: "",
+    plat: "",
   });
 
   function setSelectLayanan(e: any) {
@@ -206,21 +207,19 @@ const FormPelanggan = () => {
     formData.jenisMotor = textJenisMotor;
     formData.bagianMotor = textBagianMotor;
     formData.motor = motor;
-    formData.hargaLayanan = hargaSealNumber?hargaNumber - hargaSealNumber:hargaNumber;
-    formData.hargaSeal = hargaSealNumber??"0";
+    formData.hargaLayanan = hargaSealNumber
+      ? hargaNumber - hargaSealNumber
+      : hargaNumber;
+    formData.hargaSeal = hargaSealNumber ?? "0";
     formData.totalHarga = hargaNumber;
     formData.seal = selectedItem ? selectedItem.kategori : "false";
     setDataPelanggan(formData).then((res) => {
-      if (res?.gerai) {
-        const response = setCookie(
-          "pelangganGGSuspension",
-          JSON.stringify(res)
-        );
-        if (response.status == true)
-          setTimeout(() => {
-            window.location.href = `/#/antrian/${res.gerai.toLowerCase()}`;
-          }, 500);
-      }
+      Cookies.set("pelangganGGSuspension", JSON.stringify(res), {
+        expires: 12 / 24,
+      });
+      setTimeout(()=>{
+        window.location.href = `/#/antrian/${res?.gerai.toLowerCase()}`;
+      },1000)
     });
   };
 
@@ -230,12 +229,11 @@ const FormPelanggan = () => {
         <div className="h-full w-full fixed z-10 bg-black top-0 opacity-70"></div>
       )}
       <div className="glass-container bg-white backdrop-blur-lg rounded-2xl p-8 md:p-10 shadow-2xl border border-white/20 w-full max-w-md mx-4">
-        <h1 className="text-black text-2xl md:text-3xl font-bold text-center mb-8 drop-shadow-md">
+        <h1 className="text-black text-2xl md:text-3xl font-bold text-center mb-6 drop-shadow-md">
           Form Pelanggan
         </h1>
-
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
+          <div className="flex gap-2 tablet:gap-4">
             <input
               type="text"
               placeholder="Nama"
@@ -244,6 +242,16 @@ const FormPelanggan = () => {
               value={formData.nama}
               onChange={(e) =>
                 setFormData({ ...formData, nama: e.target.value })
+              }
+            />
+            <input
+              type="text"
+              placeholder="Plat Motor"
+              required
+              className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
+              value={formData.plat}
+              onChange={(e) =>
+                setFormData({ ...formData, plat: e.target.value })
               }
             />
           </div>

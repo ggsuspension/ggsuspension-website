@@ -1,5 +1,6 @@
 // components/TestimonialsSection.tsx
 import { Star } from "lucide-react";
+import { RiAccountCircleFill } from "react-icons/ri";
 
 export const TestimonialsSection = () => {
   const arrayTesti = [
@@ -7,13 +8,20 @@ export const TestimonialsSection = () => {
       nama: "Mitsu",
       review: "Pelayanannya bgs dan rapih.. Bestlah pokok e..",
     },
-    { nama: "Irfan Ikhwanda", review: "Recommendedd bgt service di sinii, pasti langganan trs lah" },
+    {
+      nama: "Irfan Ikhwanda",
+      review: "Recommendedd bgt service di sinii, pasti langganan trs lah",
+    },
     {
       nama: "Rully Trisatyo",
       review: "Kemaren bru aja downsize di sini, mtor jdi mantul",
     },
     {
-      nama: "Toniatul",
+      nama: "M Isro",
+      review: "Servicenya keren..",
+    },
+    {
+      nama: "Kevin Kurniawan",
       review: "Mtor jdi sedepp hbs direboundd mantapppp",
     },
   ];
@@ -32,11 +40,8 @@ export const TestimonialsSection = () => {
           {arrayTesti.map((item, i) => (
             <div key={i} className="bg-white p-6 rounded-lg shadow-md">
               <div className="flex items-center mb-4">
-                <div className="bg-orange-100 overflow-hidden w-12 h-12 rounded-full flex items-center justify-center mr-4">
-                  <img
-                    src="https://thispersondoesnotexist.com/"
-                    className="w-full h-full text-orange-600"
-                  />
+                <div className="bg-white overflow-hidden w-12 h-12 rounded-full flex items-center justify-center mr-4">
+                  <RiAccountCircleFill className="w-full h-full" />
                 </div>
                 <div>
                   <h4 className="font-semibold">{item.nama}</h4>

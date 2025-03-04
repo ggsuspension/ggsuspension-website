@@ -4,8 +4,6 @@ import { FaLocationDot } from "react-icons/fa6";
 import { setCookie } from "../../utils/setCookie";
 import { getCookie } from "../../utils/getCookie";
 import { Link } from 'react-scroll';
-// import { FaInstagram } from "react-icons/fa6";
-// import { PiTiktokLogoBold } from "react-icons/pi";
 
 export const Navigation = ({ namaGerai }: any) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -24,6 +22,7 @@ export const Navigation = ({ namaGerai }: any) => {
     namaGerai(e.target.value);
     setCookie("geraiSelected", e.target.value);
   }
+  
   return (
     <nav className="bg-white shadow-lg fixed top-0 left-0 z-50 w-full">
       <div className="max-w-7xl mx-auto px-2 tablet:px-8">

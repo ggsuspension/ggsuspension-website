@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { kirimPesan } from "./TextToWA";
 import { BsSendFill } from "react-icons/bs";
 import { PiMoneyWavy } from "react-icons/pi";
@@ -22,8 +22,13 @@ export default function CekHargaSection({
   const [textLayanan, setTextLayanan] = useState<any>(undefined);
   const [textJenisMotor, setTextJenisMotor] = useState<any>(undefined);
   const [textBagianMotor, setTextBagianMotor] = useState<any>(undefined);
-  const [harga, setHarga] = useState<number | undefined>(undefined);
+  const [harga, setHarga] = useState<any>(undefined);
+  const [isMotor, setIsMotor] = useState<any>(undefined);
+  const [isBagianMotor, setIsBagianMotor] = useState<any>(undefined);
+  const [isJenisMotor, setisJenisMotor] = useState<any>(undefined);
+
   function setSelectLayanan(e: any) {
+    setHarga(undefined);
     const res = listMotor?.filter(
       (motor: any) => motor.category == e.target.value
     );
@@ -35,24 +40,26 @@ export default function CekHargaSection({
     });
     setLayanan(result);
     setTextLayanan(e.target.value);
+    setIsMotor("");
+    setIsBagianMotor("");
+    setisJenisMotor("");
   }
   function setSelectJenisMotor(e: any) {
+    setHarga(undefined);
     let res = listMotor?.filter((motor: any) => motor.category == textLayanan);
     res = res.filter((motor: any) => motor.subcategory == e.target.value);
     setTextJenisMotor(e.target.value);
+    setisJenisMotor(undefined);
     setJenisMotor(res);
+    setIsMotor("");
+    setIsBagianMotor("");
   }
 
   function setSelectBagianMotor(e: any) {
-    // const res = jenisMotor?.filter(
-    //   (motor: any) => motor.service == e.target.value
-    // );
-    // setBagianMotor(res);
+    setHarga(undefined);
     setTextBagianMotor(e.target.value);
-  }
-
-  function setSelectMotor(e: any) {
-    setMotor(e.target.value);
+    setIsMotor("");
+    setIsBagianMotor(undefined);
   }
 
   const [selectedCategoryIndex, setSelectedCategoryIndex] = useState<any>("");
@@ -127,9 +134,10 @@ export default function CekHargaSection({
   const handleHargaChange = (e: any) => {
     setSelectedHargaIndex(e.target.value);
   };
-
-  useEffect(() => {
-    if (textLayanan && textJenisMotor && textBagianMotor && motor) {
+  function setSelectMotor(e: any) {
+    setIsMotor(undefined);
+    setMotor(e.target.value);
+    if (textLayanan && textJenisMotor && textBagianMotor) {
       let res = listMotor?.filter(
         (motor: any) => motor.category == textLayanan
       );
@@ -138,6 +146,22 @@ export default function CekHargaSection({
       const priceBasic = res[0]
         ? res[0].price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
         : "";
+      if (textJenisMotor && textJenisMotor.includes("OHLINS")) {
+        const priceBasic = jenisMotor[0]
+          ? jenisMotor[0].price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+          : "";
+        if (hargaData.range) {
+          if (!hargaData.range.length) {
+            let price = jenisMotor[0].price + hargaData.range;
+            price = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            return setHarga(price);
+          }
+          let price = jenisMotor[0].price + hargaData.range[1];
+          price = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+          return setHarga(price);
+        }
+        setHarga(priceBasic);
+      }
       if (hargaData.range) {
         if (!hargaData.range.length) {
           let price = res[0].price + hargaData.range;
@@ -150,22 +174,7 @@ export default function CekHargaSection({
       }
       setHarga(priceBasic);
     }
-    if (textJenisMotor && textJenisMotor.includes("OHLINS")) {
-      const priceBasic = jenisMotor[0]
-        ? jenisMotor[0].price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
-        : "";
-      if (hargaData.range) {
-        if (!hargaData.range.length) {
-          let price = jenisMotor[0].price + hargaData.range;
-          price = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-          return setHarga(price);
-        }
-        let price = jenisMotor[0].price + hargaData.range[1];
-        price = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        return setHarga(price);
-      }
-      setHarga(priceBasic);
-    }
+
     if (hargaData.range) {
       if (!hargaData.range.length) {
         let price = hargaData.range;
@@ -176,7 +185,13 @@ export default function CekHargaSection({
       price = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
       return setHarga(price);
     }
-  }, [textLayanan, textJenisMotor, textBagianMotor, motor, hargaData]);
+  }
+
+  const hargaSealNumber =
+    hargaData.range && hargaData.range.length > 0
+      ? hargaData.range[1]
+      : hargaData.range;
+  const hargaNumber = harga && Number(harga.replace(".", ""));
 
   return (
     <div id="harga">
@@ -212,6 +227,7 @@ export default function CekHargaSection({
             <select
               className="w-full text-lg bg-white"
               onChange={setSelectJenisMotor}
+              value={isJenisMotor && isJenisMotor}
               disabled={layanan ? false : true}
               id=""
             >
@@ -231,6 +247,7 @@ export default function CekHargaSection({
               className="w-full text-lg bg-white"
               onChange={setSelectBagianMotor}
               id=""
+              value={isBagianMotor && isBagianMotor}
               disabled={jenisMotor ? false : true}
             >
               <option disabled value="">
@@ -250,6 +267,7 @@ export default function CekHargaSection({
               onChange={setSelectMotor}
               id=""
               disabled={jenisMotor ? false : true}
+              value={isMotor && isMotor}
             >
               <option disabled value="">
                 Pilih Motor
@@ -347,12 +365,27 @@ export default function CekHargaSection({
         </div>
 
         {harga && (
-          <span className="flex justify-center gap-10 items-center mt-8">
-            <span>
-              <p className="text-xl">Harga :</p>
-              <p className="text-2xl font-bold">{harga}</p>
-              <p className="text-sm text-red-400">(harga hanya estimasi)</p>
-            </span>
+          <span className="flex justify-center gap-4 items-center mt-8">
+            <div>
+              <span className="flex justify-center text-center font-bold text-lg">
+                {harga && hargaSealNumber && (
+                  <span className="flex gap-1">
+                    <p>{hargaNumber - hargaSealNumber}</p> <p>+</p>{" "}
+                    <p>{hargaSealNumber}</p>
+                  </span>
+                )}
+              </span>
+              {harga && (
+                <p className="text-center font-bold text-xl text-green-700">
+                  Total Harga : {harga}
+                </p>
+              )}
+              {hargaData != 0 && (
+                <p className="text-md text-red-500 text-center">
+                  ( harga seal hanya estimasi )
+                </p>
+              )}
+            </div>
             <span
               onClick={() => {
                 if (hargaData.range) {
@@ -367,7 +400,7 @@ export default function CekHargaSection({
                   );
                 }
               }}
-              className="bg-green-500 text-xl text-white p-2 rounded-lg font-medium flex gap-2 items-center cursor-pointer"
+              className="bg-green-500 text-md  tablet:text-xl text-white p-2 rounded-lg font-medium flex gap-2 items-center cursor-pointer"
             >
               Lanjut WA <BsSendFill />
             </span>

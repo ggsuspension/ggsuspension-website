@@ -24,6 +24,7 @@ export async function getDataLayananSemuaCabang() {
   return result;
 }
 
+const waktu=Date.now();
 export async function setDataPelanggan(data: any) {
   await setDoc(
     doc(firestore, `data-layanan-${getFormattedDate(today)}`, data.id),
@@ -38,7 +39,7 @@ export async function setDataPelanggan(data: any) {
         hargaSeal: data.hargaSeal || data.data.hargaSeal,
         totalHarga: data.totalHarga || data.data.totalHarga,
         noWA: data.noWA || data.data.noWA,
-        seal: data.seal || data.data.seal,
+        seal: data.seal || data.data.seal,waktu,plat: data.plat || data.data.plat
       },
       gerai: data.gerai,
       status: data.status || false,
