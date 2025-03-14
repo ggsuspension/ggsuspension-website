@@ -2,6 +2,7 @@ import { getDataLayananSemuaCabang } from "@/firebase/service";
 import { getCookie } from "@/utils/getCookie";
 import { useEffect, useState } from "react";
 import { FaMotorcycle } from "react-icons/fa";
+import NewNavigation from "../fragments/NewNavigation";
 
 
 export default function AntrianSemuaGerai() {
@@ -33,7 +34,8 @@ export default function AntrianSemuaGerai() {
 
   return (
     <div className="w-full mx-auto min-h-screen bg-orange-500">
-      <div className="flex flex-col gap-3 p-2 tablet:p-10">
+       <NewNavigation/>
+      <div className="flex flex-col gap-3 p-2 pt-12 tablet:p-20">
         <h1 className="tablet:text-5xl tablet:mb-5 text-xl font-bold text-center text-white mt-12 tracking-widest">
           LIST ANTRIAN SEMUA GERAI <FaMotorcycle className="inline" />
         </h1>

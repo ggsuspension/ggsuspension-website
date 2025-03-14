@@ -21,7 +21,6 @@ const Location = ({ onLocationUpdate }: LocationProps) => {
         async (position) => {
           const { latitude, longitude } = position.coords;
           setLocation({ latitude, longitude });
-          
           // Get address using reverse geocoding
           try {
             const response = await fetch(
@@ -49,11 +48,11 @@ const Location = ({ onLocationUpdate }: LocationProps) => {
   }, [onLocationUpdate]);
 
   if (error) {
-    return <div className="text-red-500">{error}</div>;
+    return <div className="text-red-500 absolute bottom-0 right-4 hidden">{error}</div>;
   }
 
   return (
-    <div className="flex items-center space-x-2 text-sm text-black font-bold fixed bottom-0 right-4 rounded-full p-2 opacity-60">
+    <div className="items-center space-x-2 text-sm text-black font-bold fixed bottom-0 right-4 rounded-full p-2 opacity-60 hidden">
       <MapPin className="w-4 h-4" />
       {location ? (
         <span className="truncate max-w-[300px]">

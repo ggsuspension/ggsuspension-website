@@ -26,7 +26,7 @@ export default function LayananSection() {
   ];
   return (
     <div>
-       <img src="./layanan-mekanik.jpg" className="w-full h-full object-cover object-center absolute top-0 opacity-10" alt="" />
+       <img src="./layanan-mekanik.jpg" className="w-full h-full object-cover object-center absolute top-0 opacity-15" alt="" />
     <div className="container mx-auto tablet:max-w-6xl tablet:px-10 relative">
       <div className="px-4">
         {/* Headings */}
