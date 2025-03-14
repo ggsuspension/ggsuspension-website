@@ -25,7 +25,7 @@ const PremiumTestimonials = () => {
       location: "Milan, Italy",
       rating: 5,
       image: "/api/placeholder/100/100",
-      text: "Pelayananya ramah cepet, pasti langganan sini",
+      text: "Pelayanan e ramah cpet, pasti langganan sini",
       product: "Paket Rebound & Downsize",
       vehicle: "Ducati Panigale V4",
       background: "bg-gradient-to-r from-green-900 to-black"
@@ -41,6 +41,42 @@ const PremiumTestimonials = () => {
       product: "Maintenance",
       vehicle: "BMW GS 1250",
       background: "bg-gradient-to-r from-gray-700 to-black"
+    },
+    {
+      id: 4,
+      name: "Muhammad Rizky",
+      title: "Adventure Rider",
+      location: "Melbourne, Australia",
+      rating: 5,
+      image: "/api/placeholder/100/100",
+      text: "Kece abiss",
+      product: "Rebound",
+      vehicle: "BMW GS 1250",
+      background: "bg-gradient-to-r from-blue-700 to-black"
+    },
+    {
+      id: 4,
+      name: "Muhammad Rizky",
+      title: "Adventure Rider",
+      location: "Melbourne, Australia",
+      rating: 5,
+      image: "/api/placeholder/100/100",
+      text: "Bgus servis di sini",
+      product: "Downsize",
+      vehicle: "BMW GS 1250",
+      background: "bg-gradient-to-r from-blue-700 to-black"
+    },
+    {
+      id: 4,
+      name: "Muhammad Rizky",
+      title: "Adventure Rider",
+      location: "Melbourne, Australia",
+      rating: 5,
+      image: "/api/placeholder/100/100",
+      text: "Bgus servis di sini",
+      product: "Downsize",
+      vehicle: "BMW GS 1250",
+      background: "bg-gradient-to-r from-blue-700 to-black"
     }
   ];
   

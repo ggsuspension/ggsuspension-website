@@ -1,4 +1,12 @@
-import { collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
 import { firestore } from "./init";
 
 function getFormattedDate(date: Date) {
@@ -9,11 +17,9 @@ function getFormattedDate(date: Date) {
 }
 const today = new Date();
 
-export async function getDataLayananSemuaCabang(date:any) {
-  date=date??getFormattedDate(today);
-  const res = await getDocs(
-    collection(firestore, `data-layanan-${date}`)
-  );
+export async function getDataLayananSemuaCabang(date: any) {
+  date = date ?? getFormattedDate(today);
+  const res = await getDocs(collection(firestore, `data-layanan-${date}`));
   const result = res.docs.map((doc) => {
     return {
       id: doc.id,
@@ -25,14 +31,14 @@ export async function getDataLayananSemuaCabang(date:any) {
   return result;
 }
 
-const waktu=Date.now();
+const waktu = Date.now();
 export async function setDataPelanggan(data: any) {
   await setDoc(
     doc(firestore, `data-layanan-${getFormattedDate(today)}`, data.id),
     {
       data: {
         nama: data.nama || data.data.nama,
-        layanan: data.layanan || data.data.layanan||"",
+        layanan: data.layanan || data.data.layanan || "",
         motor: data.motor || data.data.motor,
         bagianMotor: data.bagianMotor || data.data.bagianMotor,
         bagianMotor2: data.bagianMotor2 || data.data.bagianMotor2,
@@ -42,7 +48,10 @@ export async function setDataPelanggan(data: any) {
         totalHarga: data.totalHarga || data.data.totalHarga,
         noWA: data.noWA || data.data.noWA,
         info: data.info || data.data.info,
-        seal: data.seal || data.data.seal,waktu,plat: data.plat || data.data.plat,sumber_info: data.sumber_info || data.data.sumber_info
+        seal: data.seal || data.data.seal,
+        waktu,
+        plat: data.plat || data.data.plat,
+        sumber_info: data.sumber_info || data.data.sumber_info,
       },
       gerai: data.gerai,
       status: data.status || false,
@@ -55,15 +64,17 @@ export async function setDataPelanggan(data: any) {
   return result.data();
 }
 
-export async function setFinishNow(data:any){
+export async function setFinishNow(data: any) {
   await updateDoc(
-    doc(firestore, `data-layanan-${getFormattedDate(today)}`, data.id),{status:true})
-    window.location.reload();
+    doc(firestore, `data-layanan-${getFormattedDate(today)}`, data.id),
+    { status: true }
+  );
+  window.location.reload();
 }
 
-export async function setCancelNow(id:any){
+export async function setCancelNow(id: any) {
   await deleteDoc(
     doc(firestore, `data-layanan-${getFormattedDate(today)}`, id)
-  )
-    window.location.reload();
+  );
+  window.location.reload();
 }

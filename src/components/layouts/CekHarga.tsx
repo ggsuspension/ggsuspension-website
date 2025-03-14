@@ -2,10 +2,10 @@ import { dataListMotor } from "@/utils/dataListMotor";
 import { Wrench } from "lucide-react";
 import { useState } from "react";
 import { PiMoneyWavy } from "react-icons/pi";
+import SealPricePicker from "./SealPricePicker";
 
 export default function CekHargaSection() {
   const listMotor = dataListMotor.layanan;
-  const hargaSeal: any = dataListMotor.seal;
   const [layanan, setLayanan] = useState<any>(undefined);
   const [jenisMotor, setJenisMotor] = useState<any>(undefined);
   const [motor, setMotor] = useState<any>(undefined);
@@ -16,6 +16,7 @@ export default function CekHargaSection() {
   const [isMotor, setIsMotor] = useState<any>(undefined);
   const [isBagianMotor, setIsBagianMotor] = useState<any>(undefined);
   const [isJenisMotor, setisJenisMotor] = useState<any>(undefined);
+  const [hargaSeal, setHargaSeal] = useState<any>(undefined);
 
   const SEMUA_LAYANAN = [
     "REBOUND",
@@ -59,6 +60,7 @@ export default function CekHargaSection() {
     setIsBagianMotor("");
     setisJenisMotor("");
   }
+
   function setSelectJenisMotor(e: any) {
     setHarga(undefined);
     let res = listMotor?.filter((motor: any) => motor.category == textLayanan);
@@ -79,67 +81,8 @@ export default function CekHargaSection() {
     setIsBagianMotor(undefined);
   }
 
-  const [selectedCategoryIndex, setSelectedCategoryIndex] = useState<any>("");
-  const [selectedTipeSubIndex, setSelectedTipeSubIndex] = useState("");
-  const [selectedHargaIndex, setSelectedHargaIndex] = useState<any>("");
   const [textBagianMotor2, setTextBagianMotor2] = useState("");
   const [isTextBagianMotor2, setIsTextBagianMotor2] = useState(false);
-
-  const selectedItem =
-    selectedCategoryIndex !== "" ? hargaSeal[selectedCategoryIndex] : null;
-
-  let tipeSubOptions: any = [];
-  if (selectedItem) {
-    if (Array.isArray(selectedItem.tipe)) {
-      tipeSubOptions = selectedItem.tipe;
-    } else if (selectedItem.subkategori) {
-      tipeSubOptions = [selectedItem.subkategori];
-    }
-  }
-
-  const showTipeSubSelect = tipeSubOptions.length > 0;
-
-  let hargaData = selectedItem ? selectedItem.harga : 0;
-  let hargaOptions: any = [];
-  if (hargaData) {
-    if (Array.isArray(hargaData)) {
-      hargaOptions = hargaData.map((h) => {
-        const label = h.subkategori
-          ? `${h.subkategori} (${h.qty} - ${h.range})`
-          : `(${h.qty} - ${h.range})`;
-        return label;
-      });
-      if (selectedHargaIndex !== "") {
-        hargaData = hargaData[selectedHargaIndex];
-      }
-      //   if (selectedHargaIndex !== "") {
-      //     const selectedHargaObj = hargaData[selectedHargaIndex];
-      //     res = `Qty: ${selectedHargaObj.qty}, Range: ${selectedHargaObj.range}`;
-      //   }
-      // } else {
-      //   if (!showTipeSubSelect || selectedTipeSubIndex !== "") {
-      //     res = `Qty: ${hargaData.qty}, Range: ${hargaData.range}`;
-      //   }
-    }
-  }
-
-  // Handler untuk select Kategori
-  const handleCategoryChange = (e: any) => {
-    setSelectedCategoryIndex(e.target.value);
-    setSelectedTipeSubIndex("");
-    setSelectedHargaIndex("");
-  };
-
-  // Handler untuk select Tipe/Subkategori
-  const handleTipeSubChange = (e: any) => {
-    setSelectedTipeSubIndex(e.target.value);
-    setSelectedHargaIndex("");
-  };
-
-  // Handler untuk select Harga (jika harga array)
-  const handleHargaChange = (e: any) => {
-    setSelectedHargaIndex(e.target.value);
-  };
 
   function setSelectMotor(e: any) {
     setIsMotor(undefined);
@@ -172,10 +115,6 @@ export default function CekHargaSection() {
     setHarga(priceBasic);
   }
 
-  const hargaSealNumber =
-    hargaData.range && hargaData.range.length > 0
-      ? hargaData.range[1]
-      : hargaData.range;
   const hargaNumber = harga && Number(harga.replace(".", ""));
 
   return (
@@ -342,136 +281,30 @@ export default function CekHargaSection() {
                   />
                 )}
 
-                <div>
-                  <select
-                    id="kategoriSelect"
-                    className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
-                    value={selectedCategoryIndex}
-                    disabled={!harga ? true : false}
-                    onChange={handleCategoryChange}
-                  >
-                    <option disabled value="">
-                      Pilih Seal
-                    </option>
-                    <option value="">Batalkan</option>
-                    {hargaSeal &&
-                      hargaSeal.map((item: any, index: number) => (
-                        <option key={index} value={index}>
-                          {item.kategori}
-                        </option>
-                      ))}
-                  </select>
-                </div>
+                <SealPricePicker
+                  setHarga={(hargaSeal: any) => {
+                    setHargaSeal(hargaSeal);
+                  }}
+                />
 
-                {showTipeSubSelect && (
-                  <div>
-                    <select
-                      id="tipeSubSelect"
-                      required
-                      className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
-                      value={selectedTipeSubIndex}
-                      onChange={handleTipeSubChange}
-                    >
-                      <option disabled value="">
-                        Pilih Tipe / Subkategori
-                      </option>
-                      {tipeSubOptions.map((option: any, idx: any) => (
-                        <option key={idx} value={idx}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {(hargaData.length > 0 || selectedHargaIndex) && (
-                  <div>
-                    <select
-                      required
-                      id="hargaSelect"
-                      className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
-                      value={selectedHargaIndex}
-                      onChange={handleHargaChange}
-                    >
-                      <option value="">Pilih Harga</option>
-                      {hargaOptions.map((optionLabel: any, idx: any) => (
-                        <option key={idx} value={idx}>
-                          {optionLabel}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                <div>
-                  <select
-                    required
-                    className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent appearance-none transition-all"
-                    value={formData.gerai}
-                    onChange={(e) =>
-                      setFormData({ ...formData, gerai: e.target.value })
-                    }
-                  >
-                    <option value="" disabled className="bg-white text-black">
-                      Pilih Gerai
-                    </option>
-                    <option value="BEKASI" className="bg-white text-black">
-                      BEKASI (PUSAT)
-                    </option>
-                    <option value="TANGERANG" className="bg-white text-black">
-                      TANGERANG
-                    </option>
-                    <option value="DEPOK" className="bg-white text-black">
-                      DEPOK
-                    </option>
-                    <option value="JAKTIM" className="bg-white text-black">
-                      JAKTIM
-                    </option>
-                    <option value="CIKARANG" className="bg-white text-black">
-                      CIKARANG
-                    </option>
-                    <option value="BOGOR" className="bg-white text-black">
-                      BOGOR
-                    </option>
-                    <option value="JAKSEL" className="bg-white text-black">
-                      JAKSEL
-                    </option>
-                  </select>
-                </div>
-
-                <div>
-                  {/* <input
-              onChange={(e) =>
-                setFormData({ ...formData, info: e.target.value })
-              }
-              type="text"
-              required
-              placeholder="Dapat Info Dari Mana?"
-              className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent appearance-none transition-all"
-            /> */}
-                </div>
+                <div></div>
                 <div>
                   <span className="flex justify-center text-center font-bold text-lg text-white">
-                    {harga && hargaSealNumber && (
+                    {harga && hargaSeal && (
                       <span className="flex gap-1">
-                        <p>{Number(harga.replace(".", ""))}</p> <p>+</p>{" "}
-                        <p>{hargaSealNumber}</p>
+                        <p>{Number(harga.replace(".", ""))}</p> <p>+</p>
+                        <p>{hargaSeal}</p>
                       </span>
                     )}
                   </span>
                   {harga && (
                     <p className="text-center font-bold text-xl text-yellow-300">
-                      Total Harga : {" "}
-                      {!hargaSealNumber
+                      Total Harga :{" "}
+                      {!hargaSeal
                         ? harga
-                        : (hargaNumber + hargaSealNumber)
+                        : (hargaNumber + hargaSeal)
                             .toString()
                             .replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
-                    </p>
-                  )}
-                  {hargaData != 0 && (
-                    <p className="text-md text-yellow-300 font-semibold text-center italic">
-                      ( harga seal hanya estimasi )
                     </p>
                   )}
                 </div>

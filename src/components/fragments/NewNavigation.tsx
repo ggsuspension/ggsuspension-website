@@ -12,7 +12,7 @@ export default function NewNavigation() {
     { nama: "GERAI", link: "gerai" },
     { nama: "KONTAK", link: "footer" },
     { nama: "TESTIMONI", link: "testimoni" },
-    { nama: "ARTIKEL", link: "artikel" },
+    { nama: "VIDEO KAMI", link: "artikel" },
     { nama: "ANTRIAN GERAI", link: "antrian" },
     { nama: "KLAIM GARANSI", link: "klaim_garansi" },
     { nama: "SCAN QR", link: "scan" },
