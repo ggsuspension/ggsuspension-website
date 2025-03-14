@@ -21,7 +21,6 @@ const CustomerSupport: React.FC = () => {
     return savedChats ? JSON.parse(savedChats) : [];
   });
   const [loading, setLoading] = useState(false);
-  const [isWaiting, setIsWaiting] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [isCSActive, setIsCSActive] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -2223,13 +2222,11 @@ Bebek 110-135cc belakang aftermarket :
           )
         );
         setLoading(false);
-        setIsWaiting(false);
         setIsSending(false);
       }, Math.floor(Math.random() * 1000) + 1000);
     } catch (error) {
       console.error("Error:", error);
       setLoading(false);
-      setIsWaiting(false);
       setIsSending(false);
     }
   };
@@ -2253,7 +2250,6 @@ Bebek 110-135cc belakang aftermarket :
 
     setChatHistory((prev) => [...prev, newChat]);
     setInput("");
-    setIsWaiting(true);
     fetchBotResponse(newChat.id);
   };
 

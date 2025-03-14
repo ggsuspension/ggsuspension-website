@@ -124,69 +124,68 @@ const KlaimGaransi = () => {
     <div className="bg-gray-50 min-h-screen">
       <NewNavigation />
       <div className="container mx-auto p-6 mt-24">
-        <h1 className="text-3xl font-bold text-center mb-8 text-blue-600">
+        <h1 className="text-3xl font-bold text-center mb-8 text-dark">
           Cek Klaim Garansi
         </h1>
-        <div className="flex">
-          <div className="flex-1 w-64">
-            <div className="bg-white shadow-md rounded-lg p-6 space-y-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="plat"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Plat Kendaraan
-                  </label>
-                  <input
-                    id="plat"
-                    type="text"
-                    placeholder="Masukkan plat kendaraan"
-                    value={plat}
-                    onChange={(e) => setPlat(e.target.value)}
-                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="tanggalLayanan"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Tanggal Layanan
-                  </label>
-                  <input
-                    id="tanggalLayanan"
-                    type="date"
-                    value={tanggalLayanan}
-                    onChange={(e) => setTanggalLayanan(e.target.value)}
-                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium p-3 rounded-md mt-4"
-                  disabled={loading}
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Form Section */}
+          <div className="bg-white shadow-lg rounded-lg p-6 flex-1">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label
+                  htmlFor="plat"
+                  className="block text-sm font-medium text-gray-700"
                 >
-                  {loading ? "Mencari..." : "Cek Klaim"}
-                </button>
-              </form>
-              {error && (
-                <p className="text-center text-red-600 mt-4">{error}</p>
-              )}
-            </div>
+                  Plat Kendaraan
+                </label>
+                <input
+                  id="plat"
+                  type="text"
+                  placeholder="Masukkan plat kendaraan"
+                  value={plat}
+                  onChange={(e) => setPlat(e.target.value)}
+                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="tanggalLayanan"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Tanggal Layanan
+                </label>
+                <input
+                  id="tanggalLayanan"
+                  type="date"
+                  value={tanggalLayanan}
+                  onChange={(e) => setTanggalLayanan(e.target.value)}
+                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium p-3 rounded-md mt-4"
+                disabled={loading}
+              >
+                {loading ? "Mencari..." : "Cek Klaim"}
+              </button>
+            </form>
+            {error && <p className="text-center text-red-600 mt-4">{error}</p>}
           </div>
-          <div className="flex-1 w-32">
+
+          {/* Results Section */}
+          <div className="flex-1 bg-white shadow-lg rounded-lg p-6 space-y-6">
             {results.length > 0 && (
-              <div className="mt-8 space-y-4">
+              <div className="space-y-4">
                 {results.map((result) => (
                   <div
                     key={result.id}
-                    className="bg-green-100 text-green-800 p-4 rounded-md shadow-md"
+                    className="bg-gray-50 text-black p-4 rounded-md shadow-md"
                   >
-                    <h2 className="text-xl font-semibold">
+                    <h2 className="text-xl font-semibold mb-4">
                       Detail Klaim Garansi
                     </h2>
-                    <div className="space-y-2 mt-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <p>
                         <strong>Plat Kendaraan:</strong> {result.plat}
                       </p>
