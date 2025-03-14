@@ -9,7 +9,7 @@ export default function AntrianSemuaGerai() {
   let getCookiePelanggan: any = getCookie("pelangganGGSuspension");
   getCookiePelanggan = getCookiePelanggan ? JSON.parse(getCookiePelanggan) : "";
   useEffect(() => {
-    getDataLayananSemuaCabang().then((res: any) => {
+    getDataLayananSemuaCabang(null).then((res: any) => {
       const grouped = res.reduce((acc: any, cur: any) => {
         const key = cur.gerai;
         if (!acc[key]) {

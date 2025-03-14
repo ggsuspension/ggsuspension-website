@@ -7,10 +7,9 @@ import * as XLSX from "xlsx";
 import { Link } from "react-router-dom";
 import FinancePage from "../pages/FinancePage";
 
-
 export default function Layout() {
   const [data, setData] = useState<any>(undefined);
-  const url=window.location.hash;
+  const url = window.location.hash;
   function getFormattedDate(date: Date) {
     const day = ("0" + date.getDate()).slice(-2);
     const month = ("0" + (date.getMonth() + 1)).slice(-2);
@@ -18,12 +17,12 @@ export default function Layout() {
     return `${day}-${month}-${year}`;
   }
   const today = new Date();
-  
 
   useEffect(() => {
-    getDataLayananSemuaCabang().then((res: any) => {
+    getDataLayananSemuaCabang(getFormattedDate(today)).then((res: any) => {
       const grouped = res.reduce((acc: any, cur: any) => {
         const key = cur.gerai;
+        cur.data = { ...cur.data, id: cur.id };
         if (!acc[key]) {
           // Buat objek grup baru dengan struktur output yang diinginkan
           acc[key] = {
@@ -47,14 +46,41 @@ export default function Layout() {
   const handleExport = () => {
     const sheetData = data.flatMap((item: any) => [
       ["GERAI", item.gerai, ""], // Baris judul gerai
-      ["ANTRIAN", "NAMA", "NAMA LAYANAN", "NAMA MOTOR"], // Header kolom
+      [
+        "NO",
+        "NAMA",
+        "PLAT",
+        "NO WA",
+        "LAYANAN",
+        "JENIS MOTOR",
+        "BAGIAN MOTOR",
+        "BAGIAN MOTOR LAINNYA",
+        "MOTOR",
+        "SEAL",
+        "HARGA LAYANAN",
+        "HARGA SEAL",
+        "TOTAL HARGA",
+        "SUDAH CHAT?",
+        "SUMBER INFORMASI",
+        "STATUS",
+      ],
       ...item.data.map((row: any, i: number) => [
         i + 1,
         row.nama,
+        row.plat,
+        row.noWA,
         row.layanan,
-        row.motor,
+        row.jenisMotor,
         row.bagianMotor,
-        row.harga,
+        row.bagianMotor2,
+        row.motor,
+        row.seal,
+        row.hargaLayanan,
+        row.hargaSeal,
+        row.totalHarga,
+        row.info.toUpperCase(),
+        row.sumber_info.toUpperCase(),
+        item.status,
       ]),
       [""], // Baris kosong sebagai pemisah antar gerai
     ]);
@@ -88,7 +114,11 @@ export default function Layout() {
     //   icon: <BarChart4 className="h-4 w-4" />,
     //   path: "/analytics",
     // },
-    { name: "Finance", icon: <Wallet className="h-4 w-4" />, path: "/admin/finance" },
+    {
+      name: "Finance",
+      icon: <Wallet className="h-4 w-4" />,
+      path: "/admin/finance",
+    },
     // {
     //   name: "Settings",
     //   icon: <Settings className="h-4 w-4" />,
@@ -101,40 +131,44 @@ export default function Layout() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Top Bar */}
-        <header className="bg-orange-500 border-b py-4 pl-7 flex items-center justify-between fixed w-full">
-          <div className="flex items-center gap-4">
-            <h2 className=" text-xl font-bold text-white flex gap-2 items-center">
+        <header className="bg-orange-500 border-b py-4 pl-7 flex items-center justify-between fixed w-full z-10">
+          <div className="flex items-center gap-3">
               <img
                 src="./LOGO%20REMAKE.png"
                 className="w-8 p-1 bg-white rounded-full"
                 alt=""
               />{" "}
+            <h2 className=" text-2xl font-bold text-white flex gap-2 items-center">
               Dashboard Admin
             </h2>
           </div>
           <nav className="p-2">
-          {menuItems.map((item) => (
-            <Link
-              key={item.name}
-              to={item.path}
-              className="flex items-center gap-3 p-2 rounded hover:bg-muted transition-colors text-white"
-            >
-              {item.icon}
-              <span className="text-white">{item.name}</span>
-            </Link>
-          ))}
-        </nav>
+            {menuItems.map((item) => (
+              <Link
+                key={item.name}
+                to={item.path}
+                className="flex items-center gap-3 p-2 rounded hover:bg-muted transition-colors text-white"
+              >
+                {item.icon}
+                <span className="text-white">{item.name}</span>
+              </Link>
+            ))}
+          </nav>
         </header>
         <div className="flex items-center justify-center p-4 gap-4 mt-[8em]">
-          <h1 className="text-2xl font-bold flex">Tabel Data Antrian {getFormattedDate(today)}</h1>
+          <h1 className="text-2xl font-bold flex">
+            Tabel Data Antrian {getFormattedDate(today)}
+          </h1>
           <Button
             onClick={handleExport}
             className="w-fit text-xl bg-green-600 text-white"
-            >
+          >
             Download <DownloadIcon />
           </Button>
         </div>
-        {url=="#/admin"?<TabelAntrianHarian data={data && data} />:<FinancePage/>}
+        {url == "#/admin/edit" && <div>HALO GUYS</div>}
+        {url == "#/admin/finance" && <FinancePage />}
+        {url == "#/admin" && <TabelAntrianHarian data={data && data} />}
       </div>
     </div>
   );

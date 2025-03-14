@@ -6,14 +6,14 @@ import { AboutSection } from "./components/fragments/AboutSection";
 import { HeroSection } from "./components/fragments/HeroSection";
 import { Navigation } from "./components/fragments/Navigation";
 import WhyChooseUs from "./components/fragments/WhyChooseUs";
-import CekHargaSection from "./components/fragments/CekHargaSection";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { useEffect, useState } from "react";
-import ArticleSection from "./components/fragments/ArticleSection";
+import ArticleSection from "./components/fragments/VideoSection";
 import CustomerSupport from "./components/fragments/CustomerSupport";
 import { dataListMotor } from "./utils/dataListMotor";
 import { getCookie } from "./utils/getCookie";
+import PriceChecker from "./components/fragments/GeraiSection";
 
 // Komponen AnimatedSection untuk membungkus setiap section
 const AnimatedSection = ({ children, className = "" }: any) => {
@@ -41,6 +41,7 @@ const Home = () => {
   const [gerai, setGerai] = useState<any>(undefined);
   const [nomorWA, setNomorWA] = useState<any>(undefined);
   const geraiCookie = getCookie("geraiSelected");
+  console.log(nomorWA);
   const SEMUA_LAYANAN = [
     {
       nama: "REBOUND",
@@ -85,7 +86,6 @@ const Home = () => {
   function setGeraiSelected(geraiSelected: any) {
     setGerai(geraiSelected);
   }
-
   const handleWhatsAppClick = () => {
     const listGerai: any = {
       bekasi: 6282225232505,
@@ -136,10 +136,10 @@ const Home = () => {
       </AnimatedSection>
 
       <AnimatedSection>
-        <CekHargaSection
-          hargaSeal={listMotor && listMotor.seal}
-          hargaLayanan={listMotor && listMotor.layanan}
-          gerai={nomorWA && nomorWA}
+        <PriceChecker
+        // hargaSeal={listMotor && listMotor.seal}
+        // hargaLayanan={listMotor && listMotor.layanan}
+        // gerai={nomorWA && nomorWA}
         />
       </AnimatedSection>
 

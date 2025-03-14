@@ -13,7 +13,7 @@ export default function AntrianPage() {
   getCookiePelanggan = getCookiePelanggan ? JSON.parse(getCookiePelanggan) : "";
 
   useEffect(() => {
-    getDataLayananSemuaCabang().then((res) => {
+    getDataLayananSemuaCabang(null).then((res) => {
       const filteredData = res
         .filter((item) => item.gerai.toLowerCase() == gerai)
         .sort((a, b) => a.data.waktu - b.data.waktu);

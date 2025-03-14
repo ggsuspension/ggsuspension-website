@@ -9,6 +9,7 @@ const FormPelanggan = () => {
   const [layanan, setLayanan] = useState<any>(undefined);
   const [jenisMotor, setJenisMotor] = useState<any>(undefined);
   const [motor, setMotor] = useState<any>(undefined);
+  const [motorLainnya, setMotorLainnya] = useState<any>(undefined);
   const [textLayanan, setTextLayanan] = useState<any>(undefined);
   const [textJenisMotor, setTextJenisMotor] = useState<any>(undefined);
   const [textBagianMotor, setTextBagianMotor] = useState<any>(undefined);
@@ -16,6 +17,7 @@ const FormPelanggan = () => {
   const [isMotor, setIsMotor] = useState<any>(undefined);
   const [isBagianMotor, setIsBagianMotor] = useState<any>(undefined);
   const [isJenisMotor, setisJenisMotor] = useState<any>(undefined);
+  const [hasChatAdmin, setHasChatAdmin] = useState<boolean>(false);
 
   const SEMUA_LAYANAN = [
     "REBOUND",
@@ -39,6 +41,8 @@ const FormPelanggan = () => {
     totalHarga: "",
     seal: "",
     plat: "",
+    info: "",
+    bagianMotor2: "",
   });
 
   function setSelectLayanan(e: any) {
@@ -66,6 +70,7 @@ const FormPelanggan = () => {
     setisJenisMotor(undefined);
     setJenisMotor(res);
     setIsMotor("");
+    setIsTextBagianMotor2(false);
     setIsBagianMotor("");
   }
 
@@ -73,18 +78,19 @@ const FormPelanggan = () => {
     setHarga(undefined);
     setTextBagianMotor(e.target.value);
     setIsMotor("");
+    setIsTextBagianMotor2(false);
     setIsBagianMotor(undefined);
   }
 
   const [selectedCategoryIndex, setSelectedCategoryIndex] = useState<any>("");
   const [selectedTipeSubIndex, setSelectedTipeSubIndex] = useState("");
   const [selectedHargaIndex, setSelectedHargaIndex] = useState<any>("");
+  const [textBagianMotor2, setTextBagianMotor2] = useState("");
+  const [isTextBagianMotor2, setIsTextBagianMotor2] = useState(false);
 
-  // Objek "kategori" yang dipilih
   const selectedItem =
     selectedCategoryIndex !== "" ? hargaSeal[selectedCategoryIndex] : null;
 
-  // Menentukan apakah kita punya 'tipe' array atau 'subkategori'
   let tipeSubOptions: any = [];
   if (selectedItem) {
     if (Array.isArray(selectedItem.tipe)) {
@@ -94,7 +100,6 @@ const FormPelanggan = () => {
     }
   }
 
-  // Apakah perlu menampilkan select kedua
   const showTipeSubSelect = tipeSubOptions.length > 0;
 
   let hargaData = selectedItem ? selectedItem.harga : 0;
@@ -110,7 +115,6 @@ const FormPelanggan = () => {
       if (selectedHargaIndex !== "") {
         hargaData = hargaData[selectedHargaIndex];
       }
-
       //   if (selectedHargaIndex !== "") {
       //     const selectedHargaObj = hargaData[selectedHargaIndex];
       //     res = `Qty: ${selectedHargaObj.qty}, Range: ${selectedHargaObj.range}`;
@@ -143,54 +147,32 @@ const FormPelanggan = () => {
   function setSelectMotor(e: any) {
     setIsMotor(undefined);
     setMotor(e.target.value);
-    if (textLayanan && textJenisMotor && textBagianMotor) {
+    let res = listMotor?.filter((motor: any) => motor.category == textLayanan);
+    res = res?.filter((motor: any) => motor.subcategory == textJenisMotor);
+    res = res?.filter((motor: any) => motor.service == textBagianMotor);
+    let priceBasic = res[0]
+      ? res[0].price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+      : "";
+    if (textJenisMotor && textJenisMotor.includes("OHLINS")) {
+      const priceBasic = jenisMotor[0]
+        ? jenisMotor[0].price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+        : "";
+      setHarga(priceBasic);
+    }
+
+    if (textBagianMotor2) {
       let res = listMotor?.filter(
         (motor: any) => motor.category == textLayanan
       );
       res = res?.filter((motor: any) => motor.subcategory == textJenisMotor);
-      res = res?.filter((motor: any) => motor.service == textBagianMotor);
-      const priceBasic = res[0]
-        ? res[0].price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
-        : "";
-      if (textJenisMotor && textJenisMotor.includes("OHLINS")) {
-        const priceBasic = jenisMotor[0]
-          ? jenisMotor[0].price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
-          : "";
-        if (hargaData.range) {
-          if (!hargaData.range.length) {
-            let price = jenisMotor[0].price + hargaData.range;
-            price = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-            return setHarga(price);
-          }
-          let price = jenisMotor[0].price + hargaData.range[1];
-          price = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-          return setHarga(price);
-        }
-        setHarga(priceBasic);
-      }
-      if (hargaData.range) {
-        if (!hargaData.range.length) {
-          let price = res[0].price + hargaData.range;
-          price = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-          return setHarga(price);
-        }
-        let price = res[0].price + hargaData.range[1];
-        price = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        return setHarga(price);
-      }
-      setHarga(priceBasic);
+      res = res?.filter((motor: any) => motor.service == textBagianMotor2);
+      return setHarga(
+        (Number(priceBasic.replace(".", "")) + res[0].price)
+          .toString()
+          .replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+      );
     }
-
-    if (hargaData.range) {
-      if (!hargaData.range.length) {
-        let price = hargaData.range;
-        price = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        return setHarga(price);
-      }
-      let price = hargaData.range[1];
-      price = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-      return setHarga(price);
-    }
+    setHarga(priceBasic);
   }
 
   const hargaSealNumber =
@@ -206,20 +188,25 @@ const FormPelanggan = () => {
     formData.layanan = textLayanan;
     formData.jenisMotor = textJenisMotor;
     formData.bagianMotor = textBagianMotor;
-    formData.motor = motor;
-    formData.hargaLayanan = hargaSealNumber
-      ? hargaNumber - hargaSealNumber
-      : hargaNumber;
+    formData.motor = motorLainnya ?? motor;
+    formData.hargaLayanan = hargaNumber;
     formData.hargaSeal = hargaSealNumber ?? "0";
-    formData.totalHarga = hargaNumber;
+    formData.totalHarga = hargaSealNumber
+      ? hargaNumber + hargaSealNumber
+      : hargaNumber;
+    formData.bagianMotor2 =
+      textBagianMotor2.length > 0 ? textBagianMotor2 : "-";
     formData.seal = selectedItem ? selectedItem.kategori : "false";
-    setDataPelanggan(formData).then((res) => {
+    e.target.isChatAdmin.value == "sudah"
+      ? (formData.info = "Sudah Chat Admin dari " + e.target.sosmed.value)
+      : (formData.info = "Datang Langsung");
+    setDataPelanggan({...formData, sumber_info: e.target.sumber_info.value}).then((res) => {
       Cookies.set("pelangganGGSuspension", JSON.stringify(res), {
         expires: 12 / 24,
       });
-      setTimeout(()=>{
+      setTimeout(() => {
         window.location.href = `/#/antrian/${res?.gerai.toLowerCase()}`;
-      },1000)
+      }, 1000);
     });
   };
 
@@ -310,7 +297,7 @@ const FormPelanggan = () => {
             </select>
           </div>
 
-          <div>
+          <div className="flex justify-between gap-3">
             <select
               className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
               required
@@ -329,7 +316,45 @@ const FormPelanggan = () => {
                 </option>
               ))}
             </select>
+            <span
+              onClick={() => {
+                setIsTextBagianMotor2(!isTextBagianMotor2);
+                setTextBagianMotor2("");
+                if (isTextBagianMotor2) setIsMotor("");
+                setHarga(undefined);
+              }}
+              className="bg-orange-400 flex justify-center  w-10 h-10 rounded-full text-2xl text-white cursor-pointer font-bold"
+            >
+              {isTextBagianMotor2 ? "-" : "+"}
+            </span>
           </div>
+
+          {isTextBagianMotor2 && (
+            <div>
+              <select
+                className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
+                required
+                onChange={(e) => {
+                  setTextBagianMotor2(e.target.value);
+                  setFormData({ ...formData, bagianMotor2: e.target.value });
+                  setIsMotor("");
+                }}
+                id=""
+                disabled={jenisMotor ? false : true}
+                defaultValue={""}
+                value={textBagianMotor2 && textBagianMotor2}
+              >
+                <option disabled value="">
+                  Pilih Bagian Motor Lainnya
+                </option>
+                {jenisMotor?.map((motor: any, i: number) => (
+                  <option key={i} value={motor.service}>
+                    {motor.service}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <select
@@ -337,6 +362,7 @@ const FormPelanggan = () => {
               required
               onChange={setSelectMotor}
               id=""
+              disabled={jenisMotor ? false : true}
               defaultValue={""}
               value={isMotor && isMotor}
             >
@@ -354,11 +380,22 @@ const FormPelanggan = () => {
             </select>
           </div>
 
+          {motor == "Lainnya" && textBagianMotor != "OHLINS" && (
+            <input
+              required
+              onChange={(e) => setMotorLainnya(e.target.value)}
+              type="text"
+              placeholder="Tulis Nama Motor"
+              className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
+            />
+          )}
+
           <div>
             <select
               id="kategoriSelect"
               className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
               value={selectedCategoryIndex}
+              disabled={!harga ? true : false}
               onChange={handleCategoryChange}
             >
               <option disabled value="">
@@ -449,18 +486,169 @@ const FormPelanggan = () => {
               </option>
             </select>
           </div>
+
+          <div>
+            {/* <input
+              onChange={(e) =>
+                setFormData({ ...formData, info: e.target.value })
+              }
+              type="text"
+              required
+              placeholder="Dapat Info Dari Mana?"
+              className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent appearance-none transition-all"
+            /> */}
+          </div>
+          <div className="flex flex-col gap-1">
+            <p className="font-semibold">Sudah Chat Admin ?</p>
+            <span className="flex items-center">
+              <input
+                onChange={() => setHasChatAdmin(true)}
+                id="default-radio-2"
+                type="radio"
+                value="sudah"
+                name="isChatAdmin"
+                required
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+              />
+              <label
+                htmlFor="default-radio-2"
+                className="ms-2 text-sm text-gray-900 dark:text-gray-300"
+              >
+                Sudah
+              </label>
+            </span>
+            {hasChatAdmin && (
+              <div className="flex gap-5">
+                <span className="flex items-center">
+                  <input
+                    required
+                    id="IG"
+                    type="radio"
+                    value="IG"
+                    name="sosmed"
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <label
+                    htmlFor="IG"
+                    className="ms-2 text-sm text-gray-900 dark:text-gray-300"
+                  >
+                    IG
+                  </label>
+                </span>
+                <span className="flex items-center">
+                  <input
+                    required
+                    id="Tiktok"
+                    type="radio"
+                    value="Tiktok"
+                    name="sosmed"
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <label
+                    htmlFor="Tiktok"
+                    className="ms-2 text-sm text-gray-900 dark:text-gray-300"
+                  >
+                    Tiktok
+                  </label>
+                </span>
+                <span className="flex items-center">
+                  <input
+                    required
+                    id="WA"
+                    type="radio"
+                    value="WA"
+                    name="sosmed"
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <label
+                    htmlFor="WA"
+                    className="ms-2 text-sm text-gray-900 dark:text-gray-300"
+                  >
+                    WA
+                  </label>
+                </span>
+              </div>
+            )}
+
+            <span className="flex items-center">
+              <input
+                required
+                id="datang"
+                type="radio"
+                value="datang langsung"
+                name="isChatAdmin"
+                onChange={() => setHasChatAdmin(false)}
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+              />
+              <label
+                htmlFor="datang"
+                className="ms-2 text-sm text-gray-900 dark:text-gray-300"
+              >
+                Datang Langsung
+              </label>
+            </span>
+          </div>
+
+          <div>
+            <h2 className="text-lg font-semibold">Sumber Informasi</h2>
+            <div className="flex gap-4">
+              <span className="flex items-center gap-1">
+                <input
+                  required
+                  id="IG2"
+                  name="sumber_info"
+                  value={"IG"}
+                  type="radio"
+                />
+                <label htmlFor="IG2">IG</label>
+              </span>
+              <span className="flex items-center gap-1">
+                <input
+                  id="Tiktok2"
+                  name="sumber_info"
+                  value={"Tiktok"}
+                  type="radio"
+                />
+                <label htmlFor="Tiktok2">Tiktok</label>
+              </span>
+              <span className="flex items-center gap-1">
+                <input
+                  id="Facebook"
+                  name="sumber_info"
+                  value={"Facebook"}
+                  type="radio"
+                />
+                <label htmlFor="Facebook">Facebook</label>
+              </span>
+              <span className="flex items-center gap-1">
+                <input
+                  id="Youtube"
+                  name="sumber_info"
+                  value={"Youtube"}
+                  type="radio"
+                />
+                <label htmlFor="Youtube">Youtube</label>
+              </span>
+            </div>
+          </div>
+
           <div>
             <span className="flex justify-center text-center font-bold text-lg">
               {harga && hargaSealNumber && (
                 <span className="flex gap-1">
-                  <p>{hargaNumber - hargaSealNumber}</p> <p>+</p>{" "}
+                  <p>{Number(harga.replace(".", ""))}</p> <p>+</p>{" "}
                   <p>{hargaSealNumber}</p>
                 </span>
               )}
             </span>
             {harga && (
               <p className="text-center font-bold text-xl text-green-700">
-                Total Harga : {harga}
+                Total Harga :{" "}
+                {!hargaSealNumber
+                  ? harga
+                  : (hargaNumber + hargaSealNumber)
+                      .toString()
+                      .replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
               </p>
             )}
             {hargaData != 0 && (

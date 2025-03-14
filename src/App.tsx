@@ -1,16 +1,23 @@
-import { createHashRouter, Navigate, RouterProvider } from "react-router-dom";
+import { createHashRouter, RouterProvider } from "react-router-dom";
 import Home from "./Home";
 import Layout from "./components/dashboard";
 import ScanQR from "./components/fragments/ScanQR";
 import AntrianPage from "./components/pages/AntrianPage";
 import { getCookie } from "./utils/getCookie";
 import AntrianSemuaGerai from "./components/pages/AntrianSemuaGerai";
+import FormPelanggan from "./components/pages/FormPelanggan";
+import Nusantara from "./components/pages/Nusantara";
+import Sample from "./components/pages/Sample";
 
 let cookieDataPelanggan: any = getCookie("pelangganGGSuspension");
-cookieDataPelanggan = cookieDataPelanggan&&JSON.parse(cookieDataPelanggan);
+cookieDataPelanggan = cookieDataPelanggan && JSON.parse(cookieDataPelanggan);
 const router = createHashRouter([
   {
     path: "/",
+    element: <Sample />,
+  },
+  {
+    path: "/menu",
     element: <Home />,
   },
   {
@@ -18,20 +25,32 @@ const router = createHashRouter([
     element: <Layout />,
   },
   {
-    path: "/scan",
-    element: <ScanQR/>,
+    path: "/admin/edit",
+    element: <Layout />,
   },
   {
-  path: "/antrian",
-    element: <AntrianSemuaGerai/>,
+    path: "/scan",
+    element: <ScanQR />,
+  },
+  {
+    path: "/form-pelanggan",
+    element: <FormPelanggan />,
+  },
+  {
+    path: "/antrian",
+    element: <AntrianSemuaGerai />,
   },
   {
     path: "/antrian/:gerai",
-    element: cookieDataPelanggan?<AntrianPage />:<Navigate to="/scan"/>,
+    element: <AntrianPage />,
   },
   {
     path: "/admin/finance",
-    element: <Layout/>,
+    element: <Layout />,
+  },
+  {
+    path: "/nusantara",
+    element: <Nusantara />,
   },
 ]);
 const App = () => {

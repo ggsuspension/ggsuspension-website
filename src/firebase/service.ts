@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc } from "firebase/firestore";
 import { firestore } from "./init";
 
 function getFormattedDate(date: Date) {
@@ -9,9 +9,10 @@ function getFormattedDate(date: Date) {
 }
 const today = new Date();
 
-export async function getDataLayananSemuaCabang() {
+export async function getDataLayananSemuaCabang(date:any) {
+  date=date??getFormattedDate(today);
   const res = await getDocs(
-    collection(firestore, `data-layanan-${getFormattedDate(today)}`)
+    collection(firestore, `data-layanan-${date}`)
   );
   const result = res.docs.map((doc) => {
     return {
@@ -34,12 +35,14 @@ export async function setDataPelanggan(data: any) {
         layanan: data.layanan || data.data.layanan||"",
         motor: data.motor || data.data.motor,
         bagianMotor: data.bagianMotor || data.data.bagianMotor,
+        bagianMotor2: data.bagianMotor2 || data.data.bagianMotor2,
         jenisMotor: data.jenisMotor || data.data.jenisMotor,
         hargaLayanan: data.hargaLayanan || data.data.hargaLayanan,
         hargaSeal: data.hargaSeal || data.data.hargaSeal,
         totalHarga: data.totalHarga || data.data.totalHarga,
         noWA: data.noWA || data.data.noWA,
-        seal: data.seal || data.data.seal,waktu,plat: data.plat || data.data.plat
+        info: data.info || data.data.info,
+        seal: data.seal || data.data.seal,waktu,plat: data.plat || data.data.plat,sumber_info: data.sumber_info || data.data.sumber_info
       },
       gerai: data.gerai,
       status: data.status || false,
@@ -50,4 +53,17 @@ export async function setDataPelanggan(data: any) {
     doc(firestore, `data-layanan-${getFormattedDate(today)}`, data.id)
   );
   return result.data();
+}
+
+export async function setFinishNow(data:any){
+  await updateDoc(
+    doc(firestore, `data-layanan-${getFormattedDate(today)}`, data.id),{status:true})
+    window.location.reload();
+}
+
+export async function setCancelNow(id:any){
+  await deleteDoc(
+    doc(firestore, `data-layanan-${getFormattedDate(today)}`, id)
+  )
+    window.location.reload();
 }

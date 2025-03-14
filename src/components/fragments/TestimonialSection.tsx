@@ -26,7 +26,7 @@ export const TestimonialsSection = () => {
     },
   ];
   return (
-    <section id="testimoni" className="pt-[5em] pb-[10em] bg-gray-50">
+    <section id="testimoni" className=" pb-[10em] bg-gray-50">
       <div className="px-5">
         <span className="flex flex-col items-center">
           <h1 className="text-4xl tablet:text-6xl font-bold text-center text-red-600">

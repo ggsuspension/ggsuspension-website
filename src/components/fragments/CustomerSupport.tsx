@@ -65,7 +65,7 @@ export default function CustomerSupport() {
                   const objText = { isUser: text };
                   setArrayText([...arrayText, objText]);
                   console.log(arrayText);
-                  integrasiAPI(arrayText,text).then((res) => {
+                  integrasiAPI(arrayText, text).then((res) => {
                     setArrayText([...arrayText, objText, res]);
                     setIsSend(false);
                   });
@@ -81,7 +81,7 @@ export default function CustomerSupport() {
       )}
       <RiCustomerService2Fill
         onClick={() => setIsCSActive(!isCSActive)}
-        className={`fixed bg-orange-500 text-white w-8 h-8 bottom-[3.5em] right-4 p-2 z-30 rounded-full`}
+        className={`fixed bg-orange-500 text-white w-8 tablet:w-10 h-8 tablet:h-10 bottom-[2em] right-4 p-2 z-30 rounded-full`}
       />
     </>
   );
