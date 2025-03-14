@@ -8,6 +8,7 @@ import AntrianSemuaGerai from "./components/pages/AntrianSemuaGerai";
 import FormPelanggan from "./components/pages/FormPelanggan";
 import Nusantara from "./components/pages/Nusantara";
 import Sample from "./components/pages/Sample";
+import KlaimGaransi from "./components/pages/KlaimGaransi";
 
 let cookieDataPelanggan: any = getCookie("pelangganGGSuspension");
 cookieDataPelanggan = cookieDataPelanggan && JSON.parse(cookieDataPelanggan);
@@ -51,6 +52,10 @@ const router = createHashRouter([
   {
     path: "/nusantara",
     element: <Nusantara />,
+  },
+  {
+    path: "/klaim_garansi",
+    element: <KlaimGaransi />,
   },
 ]);
 const App = () => {

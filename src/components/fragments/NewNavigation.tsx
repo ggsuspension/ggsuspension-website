@@ -1,4 +1,4 @@
-import {  Facebook, Youtube } from "lucide-react";
+import { Facebook, Youtube } from "lucide-react";
 import { useState } from "react";
 import { BsInstagram, BsTiktok } from "react-icons/bs";
 import { Link } from "react-scroll";
@@ -60,7 +60,8 @@ export default function NewNavigation() {
                   >
                     ANTRIAN GERAI
                   </a>
-                  <a href="/#/klaim_garansi"
+                  <a
+                    href="/#/klaim_garansi"
                     className="hover:text-yellow-300 cursor-pointer"
                   >
                     KLAIM GARANSI
@@ -146,7 +147,9 @@ export default function NewNavigation() {
               KONTAK
             </Link>
 
-            <a href="./#/scan" className="px-2 py-6 cursor-pointer font-medium">SCAN QR</a>
+            <a href="./#/scan" className="px-2 py-6 cursor-pointer font-medium">
+              SCAN QR
+            </a>
           </nav>
         </div>
 
@@ -213,15 +216,24 @@ export default function NewNavigation() {
               {/* {item.link=="tentang_kami"&&<Link smooth={true}
                   duration={500}
                   to={item.link} className={`cursor-pointer py-3 px-4  hover:text-yellow-400 flex items-center gap-1`}><MdKeyboardArrowRight />{item.nama}</Link>} */}
-              {(item.link == "antrian"|| item.link == "klaim_garansi"||item.link == "scan") ? (
-                <a className="cursor-pointer block py-2 px-4  hover:text-yellow-400" href={`/#/${item.link}`}>{item.nama}</a>
+              {item.link == "antrian" ||
+              item.link == "klaim_garansi" ||
+              item.link == "scan" ? (
+                <a
+                  className="cursor-pointer block py-2 px-4  hover:text-yellow-400"
+                  href={`/#/${item.link}`}
+                >
+                  {item.nama}
+                </a>
               ) : (
                 <Link
                   smooth={true}
                   duration={500}
                   to={item.link}
-                  onClick={()=>setIsOpen(false)}
-                  className={`cursor-pointer block py-2 px-4  hover:text-yellow-400 ${item.link=="tentang_kami"?"hidden":""}`}
+                  onClick={() => setIsOpen(false)}
+                  className={`cursor-pointer block py-2 px-4  hover:text-yellow-400 ${
+                    item.link == "tentang_kami" ? "hidden" : ""
+                  }`}
                 >
                   {item.nama}
                 </Link>
