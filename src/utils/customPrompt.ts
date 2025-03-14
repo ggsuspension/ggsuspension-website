@@ -1,39 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
-import { FcCustomerSupport } from "react-icons/fc";
-import { IoIosArrowDown } from "react-icons/io";
-import { BsFillSendFill } from "react-icons/bs";
-import { IoMdRefresh } from "react-icons/io";
-import { RiCustomerService2Fill } from "react-icons/ri";
-
-// Define types for the chat messages and chat history
-interface ChatHistory {
-  id: number;
-  user: string;
-  bot: string | null;
-  timestamp: string;
-  isPending: boolean;
-}
-
-const CustomerSupport: React.FC = () => {
-  const [input, setInput] = useState("");
-  const [chatHistory, setChatHistory] = useState<ChatHistory[]>(() => {
-    const savedChats = localStorage.getItem("chatHistory");
-    return savedChats ? JSON.parse(savedChats) : [];
-  });
-  const [loading, setLoading] = useState(false);
-  const [isWaiting, setIsWaiting] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
-  const [isCSActive, setIsCSActive] = useState(false);
-  const [isSending, setIsSending] = useState(false);
-
-  const apiKey = "AIzaSyByPIj_3UNHYMS6dyBSHjIL2m5b9Yy-958";
-
-  const generatePrompt = (history: string) => {
-    return `
-      Kamu adalah GG Suspension, sebuah bengkel spesialis suspensi untuk semua sepeda motor kecuali shock belakang standar motor bebek dan matic non-tabung. Tugas kamu adalah memberikan jawaban informasi dan solusi terkait suspensi kepada customer.
-      kamu harus memanggil customer dengan panggilan mas bro, contoh : iya mas bro kita ada jasa rebound.
-
-      kamu harus memanggil customer dengan panggilan mas bro, contoh : iya mas bro kita ada jasa rebound.
+export const generateCustomPrompt = (input: string): string => {
+  return `Custom prompt: Sinkronkan dan berikan jawaban dari pertanyaan ${input} dengan data berikut : kamu adalah gg suspension bertugas untuk memberikan jawaban informasi terkait gg suspension. kamu harus bisa memberikan solusi ke customer karena kamu adalah gg suspension, kamu harus selalu menjawab pertanyaan customer.
+kamu harus memanggil customer dengan panggilan mas bro, contoh : iya mas bro kita ada jasa rebound.
 Kamu harus mengganti panggilan kak menjadi mas bro.
 Kalau ada kalimat : jedug, bocor, kurang nyaman, sudah ga enak, shock keras, keras kamu harus menjawab mengarahkan untuk di rebound, untuk lebih jelasnya bisa ke workshop untuk di cek sama mekanik dlu.
 kamu harus menggunakan bahasa menyesuaikan dengan bahasa yang mereka gunakan. ini adalah materi yang akan kamu pelajari : "gg suspension adalah bengkel spesialis suspensi semua sepeda motor. gg suspension bisa memperbaikin suspension sepeda motor kecuali shock belakang standard motor bebek dan motor matic yang non tabung. kalau untuk shock depan semua motor depan termasuk shock motor bebek dan matic. gg suspension juga menyediakan layanan maintenance, rebound, downsize dan custom suspensi.
@@ -2035,309 +2002,142 @@ Bebek 110-135cc belakang aftermarket :
 -fr70
 -smash r
 
-  Gg suspension tidak menerima jasa rebound, downsize & service motor sport, neked, & trail 250 cc atau diatas 250 cc, arahkan ke gg pro suspension untuk jika ada yang bertanya masalah rebound, downsize & service motor sport, neked, & trail 250 cc atau diatas 250 cc, arahkan langsung ke nomer 085959148269 untuk terhubung ke gg pro suspension.
+Gg suspension tidak menerima jasa rebound, downsize & service motor sport, neked, & trail 250 cc atau diatas 250 cc, arahkan ke gg pro suspension untuk jika ada yang bertanya masalah rebound, downsize & service motor sport, neked, & trail 250 cc atau diatas 250 cc, arahkan langsung ke nomer 085959148269 untuk terhubung ke gg pro suspension.
 
-    Kalau ada yang menanyakan harga rebound, downsize & service motor sport, neked, & trail 250 cc atau diatas 250 cc arahkan langsung ke nomer 085959148269 untuk terhubung ke gg pro suspension.
-    Ini adalah daftar motor sport, neked, & trail diatas 250 cc : 
-    -ninja 250 mono/sl
-    -ninja 250 karbu
-    -ninja 250 fi
-    -ninja 250 new
-    -zx 25 r
-    -zx 400
-    -zx 636
-    -klx 250
-    -d tracker 250
-    -eliminator
-    -eliminator se
-    -vulcan s
-    -z900
-    -z900rs
-    -z900rs café
-    -z1000
-    -versys250
-    -versys 650
-    -versys 1000
-    -w800
-    -w800 café
-    -kawasaki h2
-    -kawasaki h2r
-    -ninja 650
-    -ninja h2sx	
-    -z10r
-    -zx6r
-    -z650
-    -zh2
-    -z250
-    -zx 4 rr
-    -z 800
-    -klx 230r s
-    -kx 250
-    -kx 450
-    -kx 125
-    -stocman
-    -klx 230 sm
-    -kx 450 x
-    -kx 250 x
-    -cbr 250 thailand
-    -cbr 250 lokal
-    -cbr 250 rr
-    -cbr 400
-    -crf 250 l
-    -crf 250 rally
-    -crf 450
-    -cb 500
-    -crf 250 l
-    -crf 250 rally
-    -crf 450
-    -cb 650r
-    -cbr 1000 rr
-    -cbr 1000 rr-r
-    -crf 1100l Africa twin adventure
-    -cb500 x
-    -xl 750
-    -gold wing
-    -rebel 500
-    -rebel 1100
-    -mt-09 tracer
-    -all new r1m
-    -all new r1
-    -r6
-    -xv950 racer
-    -mt25
-    -r25
-    -yz250
-    -yz450
-    -yz125
-    -mt-03
-    -mt-09
-    -mt-10
-    -mt-07
-    -tenere
-    -xj
-    -xj-900
-    -xj-1000
-    -fz1
-    -fz250
-    -fz600
-    -fz16
-    -xsr250
-    -xsr650
-    -xsr1000
-    -ducati panigale
-    -ducati street fighter
-    -ducati scrambler
-    -ducati monster
-    -ducati hypermotard
-    -ducati v4s
-    -Ducati v4r
-    -ducati superlegera v4
-    -mv agusta
-    -mv agusta f4
-    -mv agusta f3
-    -mv agusta brutale
-    -mv agusta superveloce
-    -cf moto
-    -cf moto 250 sr
-    -cf moto 300 sr
-    -cf moto 450 sr
-    -harley Davidson
-    -harley sportster
-    -harley roadglide
-    -harley roadking
-    -harley vroad
-    -aprilia
-    -aprilia rsv4
-    -aprilia rs660
-    -aprilia rs250
-    -aprilia tuono v4
-    -aprilia tuono 660
-    -ktm
-    -ktm duke 250
-    -ktm duke
-    -ktm duke 390
-    -ktm duke 790
-    -ktm duke 1290
-    -ktm rc
-    -Ktm rc 390
-    -ktm rc 250
-    -ktm rc8
-    -ktm rc 1190
-    -ktm exc 250
-    -ktm exc 125
-    -ktm exc 300
-    -ktm exc 450
-    -ktm super duke
-    -ktm xsf250
-    -ktm xs250
-    -ktm xsf 350
-    -ktm xsf 450
 
-      ---
-      **Riwayat Percakapan Sebelumnya:**  
-      ${history ? `${history}\n\n` : ""}
-      **Customer:** "${input}"  
-      **Respon GG Suspension:**
-    `;
-  };
-
-  const fetchBotResponse = async (chatId: number) => {
-    setLoading(true);
-    setIsSending(true);
-    try {
-      const history = chatHistory
-        .map(
-          (chat) =>
-            `${chat.user ? "Customer" : "GG Suspension"}: "${
-              chat.user || chat.bot
-            }"`
-        )
-        .join("\n");
-
-      const prompt = generatePrompt(history);
-
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-          }),
-        }
-      );
-
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
-      const data = await res.json();
-      const aiResponse =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-        "Maaf mas bro, saya belum bisa jawab.";
-
-      setTimeout(() => {
-        setChatHistory((prev) =>
-          prev.map((chat) =>
-            chat.id === chatId
-              ? { ...chat, bot: aiResponse, isPending: false }
-              : chat
-          )
-        );
-        setLoading(false);
-        setIsWaiting(false);
-        setIsSending(false);
-      }, Math.floor(Math.random() * 1000) + 1000);
-    } catch (error) {
-      console.error("Error:", error);
-      setLoading(false);
-      setIsWaiting(false);
-      setIsSending(false);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-
-    const timestamp = new Date().toLocaleTimeString("id-ID", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-    const newChat: ChatHistory = {
-      id: Date.now(),
-      user: input,
-      bot: null,
-      timestamp,
-      isPending: true,
-    };
-
-    setChatHistory((prev) => [...prev, newChat]);
-    setInput("");
-    setIsWaiting(true);
-    fetchBotResponse(newChat.id);
-  };
-
-  useEffect(() => {
-    localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
-    console.log("Updated chatHistory:", chatHistory);
-  }, [chatHistory]);
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatHistory]);
-
-  return (
-    <>
-      {isCSActive && (
-        <div className="fixed bottom-16 right-4 w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-          <div className="bg-orange-500 text-white flex justify-between items-center p-4 rounded-t-lg">
-            <div className="flex items-center gap-2">
-              <FcCustomerSupport className="text-2xl" />
-              <h1 className="text-lg font-semibold">Customer Support</h1>
-            </div>
-            <IoIosArrowDown
-              onClick={() => setIsCSActive(false)}
-              className="text-2xl cursor-pointer"
-            />
-          </div>
-
-          <div className="p-4 max-h-80 overflow-y-auto space-y-3 bg-gray-50">
-            {chatHistory.map((chat) => (
-              <div key={chat.id} className="space-y-2">
-                {/* Pesan dari pengguna (user) */}
-                {chat.user && (
-                  <div className="flex justify-end">
-                    <div className="bg-orange-500 p-3 rounded-lg max-w-[75%] w-auto">
-                      <p className="text-sm font-medium text-white">
-                        {chat.user}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Pesan dari bot */}
-                {chat.bot && (
-                  <div className="flex justify-start">
-                    <div className="bg-yellow-500 p-3 rounded-lg max-w-[75%] w-auto">
-                      <p className="text-sm text-white">{chat.bot}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-            {loading && (
-              <div className="text-sm p-2 rounded-lg w-auto max-w-[75%] bg-gray-600 text-white">
-                Sedang memproses...
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-
-          <div className="flex items-center gap-2 p-4 bg-orange-500 rounded-b-lg">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              className="w-full p-2 rounded-lg text-sm border border-gray-300 focus:outline-none"
-              placeholder="Ketik pesan..."
-            />
-            {isSending ? (
-              <IoMdRefresh className="text-white text-2xl animate-spin" />
-            ) : (
-              <BsFillSendFill
-                onClick={handleSubmit}
-                className="text-white text-2xl cursor-pointer hover:scale-110 transition"
-              />
-            )}
-          </div>
-        </div>
-      )}
-      <RiCustomerService2Fill
-        onClick={() => setIsCSActive(!isCSActive)}
-        className="fixed bottom-8 right-4 w-12 h-12 text-white bg-orange-500 p-3 rounded-full shadow-lg cursor-pointer hover:scale-110 transition z-30"
-      />
-    </>
-  );
+Kalau ada yang menanyakan harga rebound, downsize & service motor sport, neked, & trail 250 cc atau diatas 250 cc arahkan langsung ke nomer 085959148269 untuk terhubung ke gg pro suspension.
+Ini adalah daftar motor sport, neked, & trail diatas 250 cc : 
+-ninja 250 mono/sl
+-ninja 250 karbu
+-ninja 250 fi
+-ninja 250 new
+-zx 25 r
+-zx 400
+-zx 636
+-klx 250
+-d tracker 250
+-eliminator
+-eliminator se
+-vulcan s
+-z900
+-z900rs
+-z900rs café
+-z1000
+-versys250
+-versys 650
+-versys 1000
+-w800
+-w800 café
+-kawasaki h2
+-kawasaki h2r
+-ninja 650
+-ninja h2sx	
+-z10r
+-zx6r
+-z650
+-zh2
+-z250
+-zx 4 rr
+-z 800
+-klx 230r s
+-kx 250
+-kx 450
+-kx 125
+-stocman
+-klx 230 sm
+-kx 450 x
+-kx 250 x
+-cbr 250 thailand
+-cbr 250 lokal
+-cbr 250 rr
+-cbr 400
+-crf 250 l
+-crf 250 rally
+-crf 450
+-cb 500
+-crf 250 l
+-crf 250 rally
+-crf 450
+-cb 650r
+-cbr 1000 rr
+-cbr 1000 rr-r
+-crf 1100l Africa twin adventure
+-cb500 x
+-xl 750
+-gold wing
+-rebel 500
+-rebel 1100
+-mt-09 tracer
+-all new r1m
+-all new r1
+-r6
+-xv950 racer
+-mt25
+-r25
+-yz250
+-yz450
+-yz125
+-mt-03
+-mt-09
+-mt-10
+-mt-07
+-tenere
+-xj
+-xj-900
+-xj-1000
+-fz1
+-fz250
+-fz600
+-fz16
+-xsr250
+-xsr650
+-xsr1000
+-ducati panigale
+-ducati street fighter
+-ducati scrambler
+-ducati monster
+-ducati hypermotard
+-ducati v4s
+-Ducati v4r
+-ducati superlegera v4
+-mv agusta
+-mv agusta f4
+-mv agusta f3
+-mv agusta brutale
+-mv agusta superveloce
+-cf moto
+-cf moto 250 sr
+-cf moto 300 sr
+-cf moto 450 sr
+-harley Davidson
+-harley sportster
+-harley roadglide
+-harley roadking
+-harley vroad
+-aprilia
+-aprilia rsv4
+-aprilia rs660
+-aprilia rs250
+-aprilia tuono v4
+-aprilia tuono 660
+-ktm
+-ktm duke 250
+-ktm duke
+-ktm duke 390
+-ktm duke 790
+-ktm duke 1290
+-ktm rc
+-Ktm rc 390
+-ktm rc 250
+-ktm rc8
+-ktm rc 1190
+-ktm exc 250
+-ktm exc 125
+-ktm exc 300
+-ktm exc 450
+-ktm super duke
+-ktm xsf250
+-ktm xs250
+-ktm xsf 350
+-ktm xsf 450 ${input}`;
 };
-
-export default CustomerSupport;
