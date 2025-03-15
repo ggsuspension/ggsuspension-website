@@ -44,6 +44,40 @@ const KlaimGaransi = () => {
     return formatDateForDisplay(date);
   };
 
+  const calculateWarrantyStatus = (
+    tanggalLayanan: string,
+    bagianMotor: string
+  ): string => {
+    const layananDate = new Date(tanggalLayanan);
+    const currentDate = new Date();
+    const diffTime = currentDate.getTime() - layananDate.getTime();
+    const diffDays = diffTime / (1000 * 3600 * 24);
+
+    if (
+      bagianMotor.includes("REBOUND DEPAN") ||
+      bagianMotor.includes("REBOUND BELAKANG")
+    ) {
+      return diffDays > 90 ? "Tidak Aktif" : "Aktif";
+    }
+    if (bagianMotor.includes("REBOUND DEPAN + BELAKANG")) {
+      return diffDays > 180 ? "Tidak Aktif" : "Aktif";
+    }
+    if (bagianMotor.includes("DOWNSIZE")) {
+      return diffDays > 7 ? "Tidak Aktif" : "Aktif";
+    }
+    if (bagianMotor.includes("PERGANTIAN SIL")) {
+      return diffDays > 14 ? "Tidak Aktif" : "Aktif";
+    }
+    if (
+      bagianMotor.includes("DEPAN STD") ||
+      bagianMotor.includes("BAGIAN MOTOR: DEPAN STD")
+    ) {
+      return diffDays > 90 ? "Tidak Aktif" : "Aktif";
+    }
+
+    return "Tidak ada status";
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -58,7 +92,11 @@ const KlaimGaransi = () => {
         const formattedData: LayananType[] = data.map((item) => {
           const data = item.data?.data || {};
           const gerai = item.data?.gerai || "Tidak ada gerai";
-          const status = item.data?.status ? "Aktif" : "Tidak ada status";
+          const bagianMotor = data.bagianMotor || "-";
+          const status = calculateWarrantyStatus(
+            item.collection?.replace("data-layanan-", "") || "",
+            bagianMotor
+          );
 
           return {
             id: item.id || "Tidak ada ID",
@@ -68,7 +106,7 @@ const KlaimGaransi = () => {
               "Tidak ada tanggal",
             gerai,
             status,
-            bagianMotor: data.bagianMotor || "-",
+            bagianMotor,
             bagianMotor2: data.bagianMotor2 || "-",
             hargaLayanan: data.hargaLayanan || 0,
             hargaSeal: data.hargaSeal || "0",
@@ -96,6 +134,10 @@ const KlaimGaransi = () => {
     fetchData();
   }, []);
 
+  const normalizeString = (str: string): string => {
+    return str.toLowerCase().replace(/\s+/g, ""); // lowercase + remove all spaces
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
@@ -105,13 +147,16 @@ const KlaimGaransi = () => {
       return;
     }
 
+    const normalizedPlat = normalizeString(plat);
     const formattedTanggal = formatDateForComparison(tanggalLayanan);
 
-    const filtered = allData.filter(
-      (item) =>
-        item.plat.toLowerCase() === plat.toLowerCase() &&
+    const filtered = allData.filter((item) => {
+      const normalizedPlatData = normalizeString(item.plat);
+      return (
+        normalizedPlat === normalizedPlatData &&
         item.tanggalLayanan === formattedTanggal
-    );
+      );
+    });
 
     if (filtered.length === 0) {
       setError("Data tidak ditemukan.");
@@ -121,20 +166,20 @@ const KlaimGaransi = () => {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen flex flex-col">
       <NewNavigation />
-      <div className="container mx-auto p-6 mt-24">
-        <h1 className="text-3xl font-bold text-center mb-8 text-dark">
+      <div className="container mx-auto p-6 mt-32 flex-1 flex flex-col gap-8">
+        <h1 className="text-4xl font-bold text-center mb-8 text-dark">
           Cek Klaim Garansi
         </h1>
-        <div className="flex flex-col md:flex-row gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Form Section */}
-          <div className="bg-white shadow-lg rounded-lg p-6 flex-1">
+          <div className="bg-white p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label
                   htmlFor="plat"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-gray-700 mb-2"
                 >
                   Plat Kendaraan
                 </label>
@@ -144,13 +189,13 @@ const KlaimGaransi = () => {
                   placeholder="Masukkan plat kendaraan"
                   value={plat}
                   onChange={(e) => setPlat(e.target.value)}
-                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
                 <label
                   htmlFor="tanggalLayanan"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-gray-700 mb-2"
                 >
                   Tanggal Layanan
                 </label>
@@ -159,12 +204,12 @@ const KlaimGaransi = () => {
                   type="date"
                   value={tanggalLayanan}
                   onChange={(e) => setTanggalLayanan(e.target.value)}
-                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <button
                 type="submit"
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium p-3 rounded-md mt-4"
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium p-3 rounded-lg mt-4"
                 disabled={loading}
               >
                 {loading ? "Mencari..." : "Cek Klaim"}
@@ -174,73 +219,77 @@ const KlaimGaransi = () => {
           </div>
 
           {/* Results Section */}
-          <div className="flex-1 bg-white shadow-lg rounded-lg p-6 space-y-6">
-            {results.length > 0 && (
-              <div className="space-y-4">
+          <div className="bg-white p-8 overflow-y-auto max-h-[600px]">
+            {results.length > 0 ? (
+              <div className="space-y-6">
                 {results.map((result) => (
-                  <div
-                    key={result.id}
-                    className="bg-gray-50 text-black p-4 rounded-md shadow-md"
-                  >
-                    <h2 className="text-xl font-semibold mb-4">
-                      Detail Klaim Garansi
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <p>
-                        <strong>Plat Kendaraan:</strong> {result.plat}
-                      </p>
-                      <p>
-                        <strong>Tanggal Layanan:</strong>{" "}
-                        {result.tanggalLayanan}
-                      </p>
-                      <p>
-                        <strong>Gerai:</strong> {result.gerai}
-                      </p>
-                      <p>
-                        <strong>Status:</strong> {result.status}
-                      </p>
-                      <p>
-                        <strong>Bagian Motor:</strong> {result.bagianMotor}
-                      </p>
-                      <p>
-                        <strong>Bagian Motor 2:</strong> {result.bagianMotor2}
-                      </p>
-                      <p>
-                        <strong>Harga Layanan:</strong> {result.hargaLayanan}
-                      </p>
-                      <p>
-                        <strong>Harga Seal:</strong> Rp.{result.hargaSeal}
-                      </p>
-                      <p>
-                        <strong>Info:</strong> {result.info}
-                      </p>
-                      <p>
-                        <strong>Jenis Motor:</strong> {result.jenisMotor}
-                      </p>
-                      <p>
-                        <strong>Layanan:</strong> {result.layanan}
-                      </p>
-                      <p>
-                        <strong>Motor:</strong> {result.motor}
-                      </p>
-                      <p>
-                        <strong>Nama:</strong> {result.nama}
-                      </p>
-                      <p>
-                        <strong>No WA:</strong> {result.noWA}
-                      </p>
-                      <p>
-                        <strong>Seal:</strong> {result.seal}
-                      </p>
-                      <p>
-                        <strong>Total Harga:</strong> {result.totalHarga}
-                      </p>
-                      <p>
-                        <strong>Waktu:</strong> {result.waktu}
-                      </p>
+                  <div key={result.id} className="border-b pb-4">
+                    <div className="text-lg font-semibold mb-2 flex justify-between items-center">
+                      <span>{result.nama}</span>
+                      <span
+                        className={`px-4 py-1 rounded-full text-sm font-bold ${
+                          result.status === "Aktif"
+                            ? "bg-green-500 text-white"
+                            : "bg-red-500 text-white"
+                        }`}
+                      >
+                        {result.status}
+                      </span>
                     </div>
+                    <table className="w-full text-sm text-left">
+                      <tbody>
+                        {[
+                          { label: "Plat Kendaraan", value: result.plat },
+                          {
+                            label: "Tanggal Layanan",
+                            value: result.tanggalLayanan,
+                          },
+                          { label: "Gerai", value: result.gerai },
+                          { label: "Bagian Motor", value: result.bagianMotor },
+                          {
+                            label: "Bagian Motor 2",
+                            value: result.bagianMotor2,
+                          },
+                          {
+                            label: "Harga Layanan",
+                            value: `Rp. ${result.hargaLayanan}`,
+                          },
+                          {
+                            label: "Harga Seal",
+                            value: `Rp. ${result.hargaSeal}`,
+                          },
+                          { label: "Info", value: result.info },
+                          { label: "Jenis Motor", value: result.jenisMotor },
+                          { label: "Layanan", value: result.layanan },
+                          { label: "Motor", value: result.motor },
+                          { label: "No WA", value: result.noWA },
+                          { label: "Seal", value: result.seal },
+                          {
+                            label: "Total Harga",
+                            value: `Rp. ${result.totalHarga}`,
+                          },
+                          { label: "Waktu", value: result.waktu },
+                        ].map((item, index) => (
+                          <tr key={index} className="border-t">
+                            <td className="py-2 font-medium text-gray-700">
+                              {item.label}
+                            </td>
+                            <td className="py-2 text-gray-600">{item.value}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 ))}
+              </div>
+            ) : (
+              <div className="text-center flex flex-col items-center">
+                <img
+                  src="./search_cbur.svg"
+                  alt="Please Scanning..."
+                  className="w-96 mb-4 text-orange-500"
+                />
+                <p className="text-gray-500">Belum ada hasil cek klaim.</p>
               </div>
             )}
           </div>
