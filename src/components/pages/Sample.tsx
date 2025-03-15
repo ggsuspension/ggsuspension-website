@@ -38,7 +38,6 @@ const Sample: React.FC = () => {
         "https://images.unsplash.com/photo-1558981806-ec527fa84c39?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
     },
   ];
-  
 
   return (
     <div className="bg-gray-50 overflow-hidden">
@@ -47,17 +46,17 @@ const Sample: React.FC = () => {
         {/* Navbar Section */}
         <NewNavigation />
         <video
-  src="./banner-mobile-fix.mov"
-  autoPlay
-  muted
-  loop
-  playsInline
-  preload="auto"
-  style={{ width: "100%", height: "100%" }}
-  className="bg-white desktop:hidden"
-/>
+          src="./banner-mobile-15detik.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          style={{ width: "100%", height: "100%" }}
+          className="bg-white desktop:hidden"
+        />
         <video
-          src="./banner.mov"
+          src="./banner-15detik.mp4"
           autoPlay
           muted
           loop

@@ -24,7 +24,9 @@ export default function NewNavigation() {
         <div className="flex items-center w-full justify-end">
           <div className="h-16 w-32 flex items-center justify-center">
             <span onClick={() => window.location.reload()}>
-              <img src="/LOGO%20REMAKE.png" alt="" className="h-12" />
+              <a href="/" className="cursor-pointer">
+                <img src="/LOGO%20REMAKE.png" alt="" className="h-12" />
+              </a>
             </span>
           </div>
           <nav className="hidden md:flex ml-6 space-x-6">
@@ -46,14 +48,14 @@ export default function NewNavigation() {
                   />
                 </svg>
                 <div className="group-hover:flex hidden flex-col absolute -bottom-[13em] right-0 pb-4 px-4 pt-2 bg-black/50 gap-5">
-                  <Link
-                    to="layanan_kami"
-                    smooth={true}
+                  {/* <Link
+                    to="/home"
                     duration={500}
                     className="hover:text-yellow-300 cursor-pointer"
-                  >
+                  ></Link> */}
+                  <a href="/" className="hover:text-yellow-300 cursor-pointer">
                     LAYANAN KAMI
-                  </Link>
+                  </a>
                   <a
                     href="/#/antrian"
                     className="hover:text-yellow-300 cursor-pointer"
