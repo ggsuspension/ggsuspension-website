@@ -73,6 +73,7 @@ const TabelAntrianHarian: React.FC<{ data: any }> = ({ data }) => {
                           key={i}
                           className="bg-white border-b block md:table-row text-center relative"
                         >
+                          <td>{row.id}</td>
                           <td
                             className="border p-2 text-center block md:table-cell"
                             data-label="Nomor"
@@ -83,7 +84,12 @@ const TabelAntrianHarian: React.FC<{ data: any }> = ({ data }) => {
                             className="border p-2 block md:table-cell"
                             data-label="Nama"
                           >
-                            {item.nama.toUpperCase()}
+                            <input
+                              type="text"
+                              name=""
+                              defaultValue={item.nama.toUpperCase()}
+                              id=""
+                            />
                           </td>
                           <td
                             className="border p-2 block md:table-cell"

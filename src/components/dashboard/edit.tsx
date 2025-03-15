@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Download, LayoutDashboard, Wallet } from "lucide-react";
-import TabelAntrianHarian from "../fragments/TabelAntrianHarian";
+import TabelAntrianHarianEdit from "../fragments/TabelAntrianHarian";
 import * as XLSX from "xlsx";
 import FinancePage from "../pages/FinancePage";
 import { collection, getDocs } from "firebase/firestore";
@@ -15,7 +15,7 @@ function getFormattedDate(date: Date): string {
   return `${day}-${month}-${year}`;
 }
 
-export default function Layout() {
+export default function EditAntrian() {
   const location = useLocation();
   const [data, setData] = useState<any>(undefined);
   const [geraiList, setGeraiList] = useState<string[]>([]);
@@ -166,7 +166,7 @@ export default function Layout() {
       {/* Konten */}
       <div className="mt-[5rem] w-full px-6">
         {/* Tabel Data Antrian */}
-        {location.pathname === "/admin" && (
+        {location.pathname === "/admin/edit" && (
           <>
             <h1 className="text-xl flex justify-center font-semibold text-gray-800 mt-10">
               Tabel Data Antrian ({getFormattedDate(new Date(selectedDate))})
@@ -198,7 +198,7 @@ export default function Layout() {
                 Download
               </button>
             </div>
-            <TabelAntrianHarian data={data} />
+            <TabelAntrianHarianEdit data={data} />
           </>
         )}
         {location.pathname === "/admin/finance" && <FinancePage />}

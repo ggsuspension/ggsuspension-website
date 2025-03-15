@@ -2265,26 +2265,28 @@ Bebek 110-135cc belakang aftermarket :
   return (
     <>
       {isCSActive && (
-        <div className="fixed bottom-16 right-4 w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-          <div className="bg-orange-500 text-white flex justify-between items-center p-4 rounded-t-lg">
+        <div className="fixed bottom-16 right-4 w-[90%] max-w-xs sm:max-w-sm bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+          <div className="bg-orange-500 text-white flex justify-between items-center p-3 sm:p-4 rounded-t-lg">
             <div className="flex items-center gap-2">
-              <FcCustomerSupport className="text-2xl" />
-              <h1 className="text-lg font-semibold">Customer Support</h1>
+              <FcCustomerSupport className="text-xl sm:text-2xl" />
+              <h1 className="text-sm sm:text-lg font-semibold">
+                Customer Support
+              </h1>
             </div>
             <IoIosArrowDown
               onClick={() => setIsCSActive(false)}
-              className="text-2xl cursor-pointer"
+              className="text-xl sm:text-2xl cursor-pointer"
             />
           </div>
 
-          <div className="p-4 max-h-80 overflow-y-auto space-y-3 bg-gray-50">
+          <div className="p-3 sm:p-4 max-h-64 sm:max-h-80 overflow-y-auto space-y-2 sm:space-y-3 bg-gray-50">
             {chatHistory.map((chat) => (
               <div key={chat.id} className="space-y-2">
                 {/* Pesan dari pengguna (user) */}
                 {chat.user && (
                   <div className="flex justify-end">
-                    <div className="bg-orange-500 p-3 rounded-lg max-w-[75%] w-auto">
-                      <p className="text-sm font-medium text-white">
+                    <div className="bg-orange-500 p-2 sm:p-3 rounded-lg max-w-[80%] sm:max-w-[75%] w-auto">
+                      <p className="text-xs sm:text-sm font-medium text-white">
                         {chat.user}
                       </p>
                     </div>
@@ -2294,43 +2296,46 @@ Bebek 110-135cc belakang aftermarket :
                 {/* Pesan dari bot */}
                 {chat.bot && (
                   <div className="flex justify-start">
-                    <div className="bg-yellow-500 p-3 rounded-lg max-w-[75%] w-auto">
-                      <p className="text-sm text-white">{chat.bot}</p>
+                    <div className="bg-yellow-500 p-2 sm:p-3 rounded-lg max-w-[80%] sm:max-w-[75%] w-auto">
+                      <p className="text-xs sm:text-sm text-white">
+                        {chat.bot}
+                      </p>
                     </div>
                   </div>
                 )}
               </div>
             ))}
             {loading && (
-              <div className="text-sm p-2 rounded-lg w-auto max-w-[75%] bg-gray-600 text-white">
+              <div className="text-xs sm:text-sm p-2 rounded-lg w-auto max-w-[80%] sm:max-w-[75%] bg-gray-600 text-white">
                 Sedang memproses...
               </div>
             )}
             <div ref={chatEndRef} />
           </div>
 
-          <div className="flex items-center gap-2 p-4 bg-orange-500 rounded-b-lg">
+          <div className="flex items-center gap-2 p-3 sm:p-4 bg-orange-500 rounded-b-lg">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              className="w-full p-2 rounded-lg text-sm border border-gray-300 focus:outline-none"
+              className="w-full p-2 text-xs sm:text-sm rounded-lg border border-gray-300 focus:outline-none"
               placeholder="Ketik pesan..."
             />
             {isSending ? (
-              <IoMdRefresh className="text-white text-2xl animate-spin" />
+              <IoMdRefresh className="text-white text-xl sm:text-2xl animate-spin" />
             ) : (
               <BsFillSendFill
                 onClick={handleSubmit}
-                className="text-white text-2xl cursor-pointer hover:scale-110 transition"
+                className="text-white text-xl sm:text-2xl cursor-pointer hover:scale-110 transition"
               />
             )}
           </div>
         </div>
       )}
+
       <RiCustomerService2Fill
         onClick={() => setIsCSActive(!isCSActive)}
-        className="fixed bottom-8 right-4 w-12 h-12 text-white bg-orange-500 p-3 rounded-full shadow-lg cursor-pointer hover:scale-110 transition z-30"
+        className="fixed bottom-8 right-4 w-10 h-10 sm:w-12 sm:h-12 text-white bg-orange-500 p-2 sm:p-3 rounded-full shadow-lg cursor-pointer hover:scale-110 transition z-30"
       />
     </>
   );

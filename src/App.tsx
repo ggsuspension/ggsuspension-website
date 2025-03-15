@@ -9,6 +9,7 @@ import FormPelanggan from "./components/pages/FormPelanggan";
 import Nusantara from "./components/pages/Nusantara";
 import Sample from "./components/pages/Sample";
 import KlaimGaransi from "./components/pages/KlaimGaransi";
+import EditAntrian from "./components/dashboard/edit";
 
 let cookieDataPelanggan: any = getCookie("pelangganGGSuspension");
 cookieDataPelanggan = cookieDataPelanggan && JSON.parse(cookieDataPelanggan);
@@ -27,7 +28,7 @@ const router = createHashRouter([
   },
   {
     path: "/admin/edit",
-    element: <Layout />,
+    element: <EditAntrian />,
   },
   {
     path: "/scan",

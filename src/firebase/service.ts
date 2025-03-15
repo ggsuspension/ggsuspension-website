@@ -75,6 +75,38 @@ export async function setDataPelanggan(data: any) {
   return result.data();
 }
 
+export async function updateDataPelanggan(data: any) {
+  await updateDoc(
+    doc(firestore, `data-layanan-${getFormattedDate(today)}`, data.id),
+    {
+      data: {
+        nama: data.nama || data.data?.nama,
+        layanan: data.layanan || data.data?.layanan || "",
+        motor: data.motor || data.data?.motor,
+        bagianMotor: data.bagianMotor || data.data?.bagianMotor,
+        bagianMotor2: data.bagianMotor2 || data.data?.bagianMotor2,
+        jenisMotor: data.jenisMotor || data.data?.jenisMotor,
+        hargaLayanan: data.hargaLayanan || data.data?.hargaLayanan,
+        hargaSeal: data.hargaSeal || data.data?.hargaSeal,
+        totalHarga: data.totalHarga || data.data?.totalHarga,
+        noWA: data.noWA || data.data?.noWA,
+        info: data.info || data.data?.info,
+        seal: data.seal || data.data?.seal,
+        waktu,
+        plat: data.plat || data.data?.plat,
+        sumber_info: data.sumber_info || data.data?.sumber_info,
+      },
+      gerai: data.gerai,
+      status: data.status || false,
+      id: data.id,
+    }
+  );
+  const result = await getDoc(
+    doc(firestore, `data-layanan-${getFormattedDate(today)}`, data.id)
+  );
+  return result.data();
+}
+
 export async function setFinishNow(data: any) {
   await updateDoc(
     doc(firestore, `data-layanan-${getFormattedDate(today)}`, data.id),
