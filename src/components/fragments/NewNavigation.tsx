@@ -5,6 +5,8 @@ import { Link } from "react-scroll";
 
 export default function NewNavigation() {
   const [isOpen, setIsOpen] = useState(false);
+  const url=window.location.href;
+
   const itemNav = [
     { nama: "LAYANAN KAMI", link: "layanan_kami" },
     { nama: "CEK HARGA", link: "cek_harga" },
@@ -21,7 +23,7 @@ export default function NewNavigation() {
   return (
     <header className="fixed top-0 z-50 w-full bg-black/50">
       <div className="flex items-center justify-between desktop:gap-32 px-4 py-2 shadow-md text-white">
-        <div className="flex items-center w-full justify-end">
+        <div className="flex items-center w-full desktop:justify-end">
           <div className="h-16 w-32 flex items-center justify-center">
             <span onClick={() => window.location.reload()}>
               <a href="/" className="cursor-pointer">
@@ -53,9 +55,9 @@ export default function NewNavigation() {
                     duration={500}
                     className="hover:text-yellow-300 cursor-pointer"
                   ></Link> */}
-                  <a href="/" className="hover:text-yellow-300 cursor-pointer">
+                  <Link to="/layanan_kami" className="hover:text-yellow-300 cursor-pointer">
                     LAYANAN KAMI
-                  </a>
+                  </Link>
                   <a
                     href="/#/antrian"
                     className="hover:text-yellow-300 cursor-pointer"
@@ -131,7 +133,7 @@ export default function NewNavigation() {
                     duration={500}
                     className="hover:text-yellow-300 cursor-pointer"
                   >
-                    ARTIKEL
+                    VIDEO KAMI
                   </Link>
                 </div>
               </div>
@@ -188,7 +190,7 @@ export default function NewNavigation() {
             </span>
           </div>
 
-          <button onClick={() => setIsOpen(!isOpen)} className="md:hidden p-4">
+          <button onClick={() => setIsOpen(!isOpen)} className={`md:hidden p-4 ${url!="/"?"hidden":"block"}`}>
             <svg
               className="h-6 w-6"
               fill="none"

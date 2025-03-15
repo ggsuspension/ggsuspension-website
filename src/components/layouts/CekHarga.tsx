@@ -272,7 +272,7 @@ export default function CekHargaSection() {
                   </select>
                 </div>
 
-                {motor == "Lainnya" && textBagianMotor != "OHLINS" && (
+                {motor == "Lainnya" && !textJenisMotor?.includes("OHLINS") && (
                   <input
                     required
                     type="text"
