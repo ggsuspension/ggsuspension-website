@@ -2008,6 +2008,7 @@ export const dataListMotor = {
         qty: "1 pcs",
         range: [50000, 80000], // "50-80 rb" -> 50000-80000
       },
+      
     },
     {
       kategori: "Sport, Naked, Trail 150-155 cc (Depan)",
