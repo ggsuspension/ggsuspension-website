@@ -1,8 +1,7 @@
 import { setDataPelanggan } from "@/firebase/service";
 import { dataListMotor } from "@/utils/dataListMotor";
 import Cookies from "js-cookie";
-import { useEffect, useState } from "react";
-import Location from "../layouts/Location";
+import { useState } from "react";
 
 const FormPelanggan = () => {
   const listMotor = dataListMotor.layanan;
@@ -214,36 +213,8 @@ const FormPelanggan = () => {
       }, 1000);
     });
   };
-
-  const SEMUA_GERAI = [
-    "BEKASI",
-    "TANGERANG",
-    "DEPOK",
-    "JAKARTA TIMUR",
-    "BOGOR",
-    "CIKARANG",
-    "JAKARTA SELATAN",
-    "JAKARTA BARAT",
-  ];
-
-  useEffect(() => {
-    if (!formData.gerai)
-      return alert("Aktifkan lokasi di perangkat dan Refresh halaman");
-  }, [formData.gerai]);
-
   return (
     <div>
-      {!formData.gerai && (
-        <Location
-          onLocationUpdate={(hasil) => {
-            const result = SEMUA_GERAI.filter((gerai: any) =>
-              hasil.toLowerCase().match(gerai.toLowerCase())
-            );
-            setFormData({ ...formData, gerai: result[0] });
-          }}
-        />
-      )}
-      {formData.gerai ? (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#e9d712] to-[#d38508]">
           {isSubmit && (
             <div className="h-full w-full fixed z-10 bg-black top-0 opacity-70"></div>
@@ -490,7 +461,6 @@ const FormPelanggan = () => {
               <div>
                 <select
                   required
-                  disabled
                   className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent appearance-none transition-all"
                   value={formData.gerai}
                   onChange={(e) =>
@@ -498,7 +468,7 @@ const FormPelanggan = () => {
                   }
                 >
                   <option value="" disabled className="bg-white text-black">
-                    Gerai Belum Ditemukan
+                    Pilih Lokasi Gerai
                   </option>
                   <option value="BEKASI" className="bg-white text-black">
                     BEKASI (PUSAT)
@@ -704,13 +674,6 @@ const FormPelanggan = () => {
             </form>
           </div>
         </div>
-      ) : (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#e9d712] to-[#d38508]">
-          <div className="text-red-500 text-2xl text-center bg-white w-1/2 h-fit p-3">
-            Aktifkan izin lokasi di HP dan Refresh Halaman Kembali
-          </div>
-        </div>
-      )}
     </div>
   );
 };
