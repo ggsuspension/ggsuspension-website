@@ -435,28 +435,28 @@ export const dataListMotor = {
 
     // REBOUND + DOWNSIZE PACKAGE
     {
-      category: "PAKET RB+DZ",
+      category: "PAKET REBOUND & DOWNSIZE",
       subcategory: "BEBEK MATIC 110-160cc",
       motor: ["Honda BeAT", "Honda Vario", "Yamaha Mio", "Honda Scoopy"],
       service: "DEPAN STD",
       price: 400000,
     },
     {
-      category: "PAKET RB+DZ",
+      category: "PAKET REBOUND & DOWNSIZE",
       subcategory: "BEBEK MATIC 110-160cc",
       motor: ["Honda BeAT", "Honda Vario", "Yamaha Mio", "Honda Scoopy"],
       service: "DEPAN USD",
       price: 500000,
     },
     {
-      category: "PAKET RB+DZ",
+      category: "PAKET REBOUND & DOWNSIZE",
       subcategory: "BEBEK MATIC 110-160cc",
       motor: ["Honda BeAT", "Honda Vario", "Yamaha Mio", "Honda Scoopy"],
       service: "BLKG SINGLE STD AM",
       price: 400000,
     },
     {
-      category: "PAKET RB+DZ",
+      category: "PAKET REBOUND & DOWNSIZE",
       subcategory: "BEBEK MATIC 110-160cc",
       motor: ["Honda BeAT", "Honda Vario", "Yamaha Mio", "Honda Scoopy"],
       service: "BLKG DOUBLE STD AM",
@@ -515,7 +515,7 @@ export const dataListMotor = {
 
     // PAKET RB+DZ - SPORT NAKED CRUISER
     {
-      category: "PAKET RB+DZ",
+      category: "PAKET REBOUND & DOWNSIZE",
       subcategory: "SPORT NAKED CRUISER 150-250cc",
       motor: [
         "Kawasaki Ninja 250",
@@ -527,7 +527,7 @@ export const dataListMotor = {
       price: 550000,
     },
     {
-      category: "PAKET RB+DZ",
+      category: "PAKET REBOUND & DOWNSIZE",
       subcategory: "SPORT NAKED CRUISER 150-250cc",
       motor: [
         "Kawasaki Ninja 250",
@@ -539,7 +539,7 @@ export const dataListMotor = {
       price: 650000,
     },
     {
-      category: "PAKET RB+DZ",
+      category: "PAKET REBOUND & DOWNSIZE",
       subcategory: "SPORT NAKED CRUISER 150-250cc",
       motor: [
         "Kawasaki Ninja 250",
@@ -551,7 +551,7 @@ export const dataListMotor = {
       price: 550000,
     },
     {
-      category: "PAKET RB+DZ",
+      category: "PAKET REBOUND & DOWNSIZE",
       subcategory: "SPORT NAKED CRUISER 150-250cc",
       motor: [
         "Kawasaki Ninja 250",
@@ -651,7 +651,7 @@ export const dataListMotor = {
 
     // PAKET RB+DZ - TRAIL ADV
     {
-      category: "PAKET RB+DZ",
+      category: "PAKET REBOUND & DOWNSIZE",
       subcategory: "TRAIL ADV 150-250cc",
       motor: [
         "Honda CRF150L",
@@ -664,7 +664,7 @@ export const dataListMotor = {
       price: 500000,
     },
     {
-      category: "PAKET RB+DZ",
+      category: "PAKET REBOUND & DOWNSIZE",
       subcategory: "TRAIL ADV 150-250cc",
       motor: [
         "Honda CRF150L",
@@ -677,7 +677,7 @@ export const dataListMotor = {
       price: 600000,
     },
     {
-      category: "PAKET RB+DZ",
+      category: "PAKET REBOUND & DOWNSIZE",
       subcategory: "TRAIL ADV 150-250cc",
       motor: [
         "Honda CRF150L",
@@ -690,7 +690,7 @@ export const dataListMotor = {
       price: 700000,
     },
     {
-      category: "PAKET RB+DZ",
+      category: "PAKET REBOUND & DOWNSIZE",
       subcategory: "TRAIL ADV 150-250cc",
       motor: [
         "Honda CRF150L",
@@ -703,7 +703,7 @@ export const dataListMotor = {
       price: 550000,
     },
     {
-      category: "PAKET RB+DZ",
+      category: "PAKET REBOUND & DOWNSIZE",
       subcategory: "TRAIL ADV 150-250cc",
       motor: [
         "Honda CRF150L",
