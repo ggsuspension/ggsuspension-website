@@ -5,7 +5,7 @@ import { Link } from "react-scroll";
 
 export default function NewNavigation() {
   const [isOpen, setIsOpen] = useState(false);
-  const url=window.location.href;
+  const url=window.location.hash;
 
   const itemNav = [
     { nama: "LAYANAN KAMI", link: "layanan_kami" },
@@ -190,7 +190,7 @@ export default function NewNavigation() {
             </span>
           </div>
 
-          <button onClick={() => setIsOpen(!isOpen)} className={`md:hidden p-4 ${url!="/"?"hidden":"block"}`}>
+          <button onClick={() => setIsOpen(!isOpen)} className={`md:hidden p-4 ${url!=""?"hidden":"block"}`}>
             <svg
               className="h-6 w-6"
               fill="none"

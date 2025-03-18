@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Download, LayoutDashboard, Wallet } from "lucide-react";
-import TabelAntrianHarianEdit from "../fragments/TabelAntrianHarian";
+import TabelAntrianHarianEdit from "../fragments/TabelAntrianHarianEdit";
 import * as XLSX from "xlsx";
 import FinancePage from "../pages/FinancePage";
 import { collection, getDocs } from "firebase/firestore";

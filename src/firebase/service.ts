@@ -96,9 +96,6 @@ export async function updateDataPelanggan(data: any) {
         plat: data.plat || data.data?.plat,
         sumber_info: data.sumber_info || data.data?.sumber_info,
       },
-      gerai: data.gerai,
-      status: data.status || false,
-      id: data.id,
     }
   );
   const result = await getDoc(
