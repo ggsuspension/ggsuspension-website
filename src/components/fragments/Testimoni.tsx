@@ -15,7 +15,7 @@ const PremiumTestimonials = () => {
       image: "/api/placeholder/100/100",
       text: "Mtor jdi kece hbs didownsize..",
       product: "Downsize",
-      vehicle: "Yamaha R1M",
+      vehicle: "CBR",
       background: "bg-gradient-to-r from-blue-900 to-black"
     },
     {
@@ -27,55 +27,55 @@ const PremiumTestimonials = () => {
       image: "/api/placeholder/100/100",
       text: "Pelayanan e ramah cpet, pasti langganan sini",
       product: "Paket Rebound & Downsize",
-      vehicle: "Ducati Panigale V4",
+      vehicle: "NMAX",
       background: "bg-gradient-to-r from-green-900 to-black"
     },
     {
       id: 4,
-      name: "Asep Setiawan",
+      name: "Randy",
       title: "Adventure Rider",
       location: "Melbourne, Australia",
       rating: 5,
       image: "/api/placeholder/100/100",
       text: "Mantul lah pokok e",
       product: "Maintenance",
-      vehicle: "BMW GS 1250",
+      vehicle: "Beat",
       background: "bg-gradient-to-r from-gray-700 to-black"
     },
     {
       id: 4,
-      name: "Muhammad Rizky",
+      name: "Dede",
       title: "Adventure Rider",
       location: "Melbourne, Australia",
       rating: 5,
       image: "/api/placeholder/100/100",
       text: "Kece abiss",
       product: "Rebound",
-      vehicle: "BMW GS 1250",
+      vehicle: "Vario 125",
       background: "bg-gradient-to-r from-blue-700 to-black"
     },
     {
       id: 4,
-      name: "Muhammad Rizky",
+      name: "Kevin",
       title: "Adventure Rider",
       location: "Melbourne, Australia",
       rating: 5,
       image: "/api/placeholder/100/100",
       text: "Bgus servis di sini",
       product: "Downsize",
-      vehicle: "BMW GS 1250",
+      vehicle: "KLX",
       background: "bg-gradient-to-r from-blue-700 to-black"
     },
     {
       id: 4,
-      name: "Muhammad Rizky",
+      name: "Jaya Putra",
       title: "Adventure Rider",
       location: "Melbourne, Australia",
       rating: 5,
       image: "/api/placeholder/100/100",
       text: "Bgus servis di sini",
       product: "Downsize",
-      vehicle: "BMW GS 1250",
+      vehicle: "Kawasaki Ninja",
       background: "bg-gradient-to-r from-blue-700 to-black"
     }
   ];
