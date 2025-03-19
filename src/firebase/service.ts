@@ -144,3 +144,94 @@ export async function getDocsFromDateRange(
   }
   return allDocs;
 }
+
+export async function getGeraiStatistics(start: Date, end: Date) {
+  const data = await getDocsFromDateRange(start, end);
+  const geraiMap: Record<
+    string,
+    {
+      today: number;
+      previousDay: number;
+      weekly: Record<string, number>;
+      monthly: Record<string, number>;
+      yearly: Record<string, number>;
+      totalPendapatan: number;
+    }
+  > = {};
+
+  const todayStr = getFormattedDate(end);
+  const yesterdayStr = getFormattedDate(new Date(end.getTime() - 86400000));
+
+  data.forEach(({ data, collection }) => {
+    const gerai = data.gerai || "unknown";
+    const totalHarga = Number(data.data?.totalHarga) || 0;
+    const dateStr = collection.replace("data-layanan-", "");
+    const monthStr = dateStr.slice(3); // Ambil "mm-yy" untuk bulan
+    const yearStr = `20${dateStr.slice(6)}`; // Ambil "yyyy" untuk tahun
+
+    if (!geraiMap[gerai]) {
+      geraiMap[gerai] = {
+        today: 0,
+        previousDay: 0,
+        weekly: {},
+        monthly: {},
+        yearly: {},
+        totalPendapatan: 0,
+      };
+    }
+
+    // Hitung pendapatan hari ini dan kemarin
+    if (dateStr === todayStr) {
+      geraiMap[gerai].today += totalHarga;
+    } else if (dateStr === yesterdayStr) {
+      geraiMap[gerai].previousDay += totalHarga;
+    }
+
+    // Pendapatan mingguan
+    geraiMap[gerai].weekly[dateStr] =
+      (geraiMap[gerai].weekly[dateStr] || 0) + totalHarga;
+
+    // Pendapatan bulanan
+    geraiMap[gerai].monthly[monthStr] =
+      (geraiMap[gerai].monthly[monthStr] || 0) + totalHarga;
+
+    // Pendapatan tahunan
+    geraiMap[gerai].yearly[yearStr] =
+      (geraiMap[gerai].yearly[yearStr] || 0) + totalHarga;
+
+    // Total pendapatan per gerai
+    geraiMap[gerai].totalPendapatan += totalHarga;
+  });
+
+  return Object.keys(geraiMap).map((gerai) => {
+    const { today, previousDay, weekly, monthly, yearly, totalPendapatan } =
+      geraiMap[gerai];
+    const change = previousDay
+      ? ((today - previousDay) / previousDay) * 100
+      : 0;
+
+    return {
+      name: gerai,
+      today,
+      change: parseFloat(change.toFixed(2)),
+      totalPendapatan,
+      monthly: Object.entries(monthly)
+        .sort(
+          ([a], [b]) =>
+            Date.parse(`20${a.split("-")[1]}-${a.split("-")[0]}-01`) -
+            Date.parse(`20${b.split("-")[1]}-${b.split("-")[0]}-01`)
+        )
+        .map(([key, value]) => ({ month: key, total: value })),
+      weekly: Object.entries(weekly)
+        .sort(
+          ([a], [b]) =>
+            Date.parse(`20${a.split("-")[1]}-${a.split("-")[0]}-01`) -
+            Date.parse(`20${b.split("-")[1]}-${b.split("-")[0]}-01`)
+        )
+        .map(([key, value]) => ({ date: key, total: value })),
+      yearly: Object.entries(yearly)
+        .sort(([a], [b]) => parseInt(a) - parseInt(b))
+        .map(([key, value]) => ({ year: key, total: value })),
+    };
+  });
+}

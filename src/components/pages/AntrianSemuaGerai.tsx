@@ -2,8 +2,9 @@ import { getDataLayananSemuaCabang } from "@/firebase/service";
 import { getCookie } from "@/utils/getCookie";
 import { useEffect, useState } from "react";
 import { FaMotorcycle } from "react-icons/fa";
-import NewNavigation from "../fragments/NewNavigation";
-
+import Navbar from "../fragments/Navbar";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 export default function AntrianSemuaGerai() {
   const [data, setData] = useState<any>(undefined);
@@ -34,12 +35,34 @@ export default function AntrianSemuaGerai() {
 
   return (
     <div className="w-full mx-auto min-h-screen bg-orange-500">
-       <NewNavigation/>
-      <div className="flex flex-col gap-3 p-2 pt-12 tablet:p-20">
+      {/* <NewNavigation/> */}
+      <Navbar />
+      <div className="container mx-auto flex flex-col gap-3 p-2 pt-12 tablet:p-20">
+        <Link
+          to="/"
+          className="flex items-center gap-2 text-white hover:text-gray-800 mt-14 sm:mt-14"
+        >
+          <ArrowLeft className="w-6 h-6" />
+          <span className="text-lg font-medium">Kembali</span>
+        </Link>
         <h1 className="tablet:text-5xl tablet:mb-5 text-xl font-bold text-center text-white mt-12 tracking-widest">
           LIST ANTRIAN SEMUA GERAI <FaMotorcycle className="inline" />
         </h1>
-       {getCookiePelanggan.gerai?<a className="bg-blue-600 w-fit px-4 py-1 text-white rounded-md text-xs tablet:text-lg self-center tablet:-mt-3 mb-3" href={`/#/antrian/${getCookiePelanggan.gerai.toLowerCase()}`}>Masuk Antrian Saya</a>:<a className="bg-blue-600 w-fit px-4 py-1 text-white rounded-md text-xs tablet:text-lg self-center tablet:-mt-3 mb-3" href="/#/scan">Scan Sekarang</a>}
+        {getCookiePelanggan.gerai ? (
+          <a
+            className="bg-orange-800 hover:bg-orange-600 w-fit px-4 py-1 text-white rounded-md text-xs tablet:text-lg self-center tablet:-mt-3 mb-3"
+            href={`/#/antrian/${getCookiePelanggan.gerai.toLowerCase()}`}
+          >
+            Masuk Antrian Saya
+          </a>
+        ) : (
+          <a
+            className="bg-orange-800 hover:bg-orange-600 w-fit px-4 py-1 text-white rounded-md text-xs tablet:text-lg self-center tablet:-mt-3 mb-3"
+            href="/#/scan"
+          >
+            Scan Sekarang
+          </a>
+        )}
         {data ? (
           data.map((row: any, index: number) => (
             <div className="bg-white rounded-lg shadow-xl p-2" key={index}>

@@ -1,7 +1,9 @@
-import NewNavigation from "../fragments/NewNavigation";
 import FooterSection from "../layouts/Footer";
 import { useState, useEffect } from "react";
 import { getDocsFromDateRange } from "@/firebase/service";
+import Navbar from "../fragments/Navbar";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 interface LayananType {
   id: string;
@@ -167,8 +169,17 @@ const KlaimGaransi = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col">
-      <NewNavigation />
+      {/* <NewNavigation /> */}
+      <Navbar />
       <div className="container mx-auto p-6 mt-32 flex-1 flex flex-col gap-8">
+        <Link
+          to="/"
+          className="flex items-center gap-2 text-orange-500 hover:text-orange-600"
+        >
+          <ArrowLeft className="w-6 h-6" />
+          <span className="text-lg font-normal">Kembali</span>
+        </Link>
+
         <h1 className="text-4xl font-bold text-center mb-8 text-dark">
           Cek Klaim Garansi
         </h1>
