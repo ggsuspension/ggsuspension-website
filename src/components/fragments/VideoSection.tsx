@@ -36,7 +36,7 @@ export default function VideoSection() {
   // ];
 
   return (
-    <section id="artikel" className="">
+    <section id="video" className="">
       {/* Article Section */}
       <section className="py-16 bg-orange-500">
         <div className="container mx-auto px-4">

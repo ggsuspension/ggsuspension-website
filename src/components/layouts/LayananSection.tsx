@@ -10,17 +10,17 @@ export default function LayananSection() {
     },
     {
       nama: "DOWNSIZE",
-      image:"./layanan/downsize.png",
+      image:"./layanan/downsize.jpg",
       desc: "Mengoptimalkan suspensi dengan mengganti shock absorber berat dengan model yang lebih ringan dan kompak, sehingga mengurangi total beban kendaraan",
     },
     {
       nama: "MAINTENANCE",
-      image:"./layanan/maintenance.png",
+      image:"./layanan/maintenance.jpg",
       desc: "Merupakan perawatan rutin untuk memastikan semua komponen suspensi, khususnya shock absorber, tetap bekerja optimal.",
     },
     {
       nama: "PAKET REBOUND & DOWNSIZE",
-      image:"./layanan/paket.png",
+      image:"./layanan/downsize.png",
       desc: "Kombinasi ini ideal bagi kendaraan yang ingin mendapatkan performa suspensi maksimal dengan respons cepat serta pengurangan berat total",
     },
   ];

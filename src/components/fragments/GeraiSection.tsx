@@ -478,7 +478,7 @@ const GeraiSection: React.FC = () => {
     {
       gerai: "JAKBAR",
       alamat: "Jl. Kapuk Kayu Besar, Cengkarang, Jakarta Barat",
-      foto: "./gerai/gerai-jakbar.png",
+      foto: "./gerai/gerai%20jakbar.png",
       link: "",
       WA: "6282225232505",
     },
@@ -577,7 +577,7 @@ const GeraiSection: React.FC = () => {
               "https://images.unsplash.com/photo-1504215680853-026ed2a45def?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
             }
             alt="Racing motorcycle on track"
-            className="w-full h-96 object-cover object-center z-10"
+            className={`w-full h-96 z-10 object-cover ${semuaGerai[indexGerai].gerai=="BOGOR"?"object-top":"object-center"}`} 
           />
         </div>
         <div className="w-full flex flex-col gap-3 tablet:flex-row desktop:gap-10 mt-4">
