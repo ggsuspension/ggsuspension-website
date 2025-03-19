@@ -480,7 +480,7 @@ const GeraiSection: React.FC = () => {
       alamat: "Jl. Kapuk Kayu Besar, Cengkarang, Jakarta Barat",
       foto: "./gerai/gerai-jakbar.png",
       link: "",
-      WA: "62822255232505",
+      WA: "6282225232505",
     },
   ];
 
