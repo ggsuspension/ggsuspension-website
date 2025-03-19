@@ -9,6 +9,7 @@ const TabelAntrianHarian: React.FC<{ data: any }> = ({ data }) => {
   function handleCancel(id: string) {
     setCancelNow(id);
   }
+  console.log(data)
 
   return (
     <div className="tablet:w-3/4 w-full mx-auto min-h-screen p-4 rounded-lg">
@@ -175,7 +176,7 @@ const TabelAntrianHarian: React.FC<{ data: any }> = ({ data }) => {
                             className="border p-2 block md:table-cell"
                             data-label="Status"
                           >
-                            {item.status == true ? (
+                            {row.status == true ? (
                               <span className="flex items-center font-semibold text-green-600 gap-1 justify-center">
                                 <span className="bg-green-500 w-5 h-5 rounded-full" />
                                 FINISH
@@ -187,7 +188,7 @@ const TabelAntrianHarian: React.FC<{ data: any }> = ({ data }) => {
                               </span>
                             )}
                           </td>
-                          {!item.status && (
+                          {!row.status && (
                             <div className="flex items-center  absolute top-1/2 -translate-y-1/2 ml-2 gap-2">
                               <span
                                 onClick={() => handleFinishNow(item)}
