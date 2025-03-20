@@ -2,10 +2,11 @@ import { setDataPelanggan } from "@/firebase/service";
 import { dataListMotor } from "@/utils/dataListMotor";
 import Cookies from "js-cookie";
 import { useState } from "react";
+import { motorcycles } from "../layouts/SealPricePicker";
 
 const FormPelanggan = () => {
   const listMotor = dataListMotor.layanan;
-  const hargaSeal: any = dataListMotor.seal;
+  const hargaSeal: any = motorcycles;
   const [layanan, setLayanan] = useState<any>(undefined);
   const [jenisMotor, setJenisMotor] = useState<any>(undefined);
   const [motor, setMotor] = useState<any>(undefined);

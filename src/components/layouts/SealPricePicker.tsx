@@ -9,7 +9,7 @@ interface Motorcycle {
 }
 
 // Data array
-const motorcycles: Motorcycle[] = [
+export const motorcycles: Motorcycle[] = [
   { ccRange: "110 - 125 CC", brand: "Honda", model: "Beat FI", price: 20000 },
   {
     ccRange: "110 - 125 CC",
