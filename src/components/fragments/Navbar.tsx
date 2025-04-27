@@ -251,11 +251,7 @@ export default function NewNavigation() {
       {!isHidden && isOpen && (
         <div className="md:hidden bg-black/40 shadow-md text-white pb-2">
           <span className="group block py-2 px-4 cursor-pointer">
-<<<<<<< HEAD
             LAYANAN <IoIosArrowDown className="inline" />
-=======
-            <IoIosArrowDown className="inline"/> LAYANAN
->>>>>>> 779958a45086e399c5e2a32852ec5007782f8021
             <Link
               smooth={true}
               duration={500}
@@ -275,11 +271,7 @@ export default function NewNavigation() {
           </span>
 
           <span className="group block py-2 px-4 cursor-pointer">
-<<<<<<< HEAD
             TENTANG KAMI <IoIosArrowDown className="inline" />
-=======
-          <IoIosArrowDown className="inline"/> TENTANG KAMI
->>>>>>> 779958a45086e399c5e2a32852ec5007782f8021
             <Link
               smooth={true}
               duration={500}
