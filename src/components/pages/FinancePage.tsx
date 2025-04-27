@@ -1,5 +1,9 @@
 import { useEffect, useState, useMemo } from "react";
-import { getGeraiStatistics } from "@/firebase/service";
+import {
+  getTotalPendapatan,
+  getPendapatanPerGerai,
+  formatDateForAPI,
+} from "@/utils/ggAPI";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +20,7 @@ import {
   TooltipItem,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
-import * as XLSX from "xlsx"; // Import XLSX library
+import * as XLSX from "xlsx";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa6";
 
 ChartJS.register(
@@ -31,94 +35,90 @@ ChartJS.register(
 
 interface RevenueData {
   date: string;
-  total: number;
+  total: number; // Pendapatan kotor
+  netTotal: number; // Pendapatan bersih setelah biaya
   gerai: string;
 }
 
 interface GeraiData {
   name: string;
-  totalPendapatan: number;
+  totalRevenue: number; // Total pendapatan kotor
+  netTotalRevenue: number; // Total pendapatan bersih
+  lastDayRevenue?: number; // Kotor hari terakhir
+  lastDayNetRevenue?: number; // Bersih hari terakhir
+  previousDayRevenue?: number; // Kotor hari sebelumnya
+  previousDayNetRevenue?: number; // Bersih hari sebelumnya
+  percentageChange?: number; // Perubahan persentase berdasarkan bersih
 }
+
+// Biaya harian per orang dan jumlah orang per gerai (contoh statis)
+const DAILY_COST_PER_PERSON: Record<string, number> = {
+  BEKASI: 30000, // Rp 30.000 per orang per hari untuk Bekasi
+  TANGERANG: 30000, // Default 0 untuk Tangerang sampai ada info
+};
+
+const PEOPLE_PER_GERAI: Record<string, number> = {
+  BEKASI: 8, // Asumsi 1 orang untuk Bekasi, sesuaikan jika lebih
+  TANGERANG: 5, // Asumsi 1 orang untuk Tangerang, sesuaikan jika lebih
+};
+
+// Hitung total biaya harian per gerai
+const DAILY_COSTS: Record<string, number> = Object.fromEntries(
+  Object.entries(DAILY_COST_PER_PERSON).map(([gerai, costPerPerson]) => [
+    gerai,
+    costPerPerson * (PEOPLE_PER_GERAI[gerai] || 1),
+  ])
+);
 
 type TimeRange = "day" | "week" | "month" | "year" | "total";
 
 export default function FinanceDashboard() {
   const [revenueData, setRevenueData] = useState<RevenueData[]>([]);
-  const [totalPendapatan, setTotalPendapatan] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState<number>(0); // Total bersih
   const [percentageChange, setPercentageChange] = useState(0);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState("");
   const [timeRange, setTimeRange] = useState<TimeRange>("day");
   const [geraiData, setGeraiData] = useState<GeraiData[]>([]);
 
-  const formatDateString = (date: string) => {
-    return new Date(date).toLocaleDateString("id-ID", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "2-digit",
-    });
-  };
-
-  const groupRevenueByGerai = (revenueData: RevenueData[]) => {
-    const groupedData: Record<string, number> = {};
-
-    revenueData.forEach((data) => {
-      if (!groupedData[data.gerai]) {
-        groupedData[data.gerai] = 0;
-      }
-      groupedData[data.gerai] += data.total; // Jumlahkan total pendapatan
-    });
-
-    return groupedData;
-  };
-
-  // const getAllGeraiNames = (revenueData: RevenueData[]) => {
-  //   return Array.from(new Set(revenueData.map((data) => data.gerai)));
+  // const formatDateString = (date: string) => {
+  //   return new Date(date).toLocaleDateString("id-ID", {
+  //     day: "2-digit",
+  //     month: "2-digit",
+  //     year: "2-digit",
+  //   });
   // };
 
-  const getDailyRevenueByGerai = (
-    revenueData: RevenueData[],
-    geraiName: string
-  ) => {
-    return revenueData
-      .filter((data) => data.gerai === geraiName) // Filter data berdasarkan nama gerai
-      .reduce((acc, data) => {
-        const existingData = acc.find((item) => item.date === data.date);
-        if (existingData) {
-          existingData.total += data.total; // Jumlahkan total pendapatan untuk tanggal yang sama
-        } else {
-          acc.push({ date: data.date, total: data.total }); // Tambahkan data baru
-        }
-        return acc;
-      }, [] as { date: string; total: number }[]);
-  };
-
   const chartData = useMemo(() => {
-    const groupedData = groupRevenueByGerai(revenueData); // Kelompokkan data
-    const geraiNames = Object.keys(groupedData); // Daftar nama gerai unik
     const uniqueDates = Array.from(
       new Set(revenueData.map((data) => data.date))
-    ); // Daftar tanggal unik
+    ).sort();
+    const geraiNames = Array.from(
+      new Set(revenueData.map((data) => data.gerai))
+    );
 
     return {
-      labels: uniqueDates, // Label untuk sumbu X (tanggal layanan)
+      labels: uniqueDates,
       datasets: geraiNames.map((geraiName) => {
-        const dailyRevenue = getDailyRevenueByGerai(revenueData, geraiName);
+        const dailyRevenue = revenueData
+          .filter((data) => data.gerai === geraiName)
+          .reduce((acc, data) => {
+            acc[data.date] = (acc[data.date] || 0) + data.netTotal; // Gunakan pendapatan bersih
+            return acc;
+          }, {} as Record<string, number>);
 
-        // Buat array pendapatan harian untuk setiap gerai
-        const revenueByDate = uniqueDates.map((date) => {
-          const revenue = dailyRevenue.find((data) => data.date === date);
-          return revenue ? revenue.total : 0; // Jika tidak ada data, kembalikan 0
-        });
+        const revenueByDate = uniqueDates.map(
+          (date) => dailyRevenue[date] || 0
+        );
 
         return {
-          label: geraiName, // Nama gerai sebagai label dataset
-          data: revenueByDate, // Data pendapatan harian
+          label: geraiName,
+          data: revenueByDate,
           backgroundColor: `rgba(${Math.floor(
             Math.random() * 255
           )}, ${Math.floor(Math.random() * 255)}, ${Math.floor(
             Math.random() * 255
-          )}, 0.6)`, // Warna acak untuk setiap gerai
+          )}, 0.6)`,
           borderColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(
             Math.random() * 255
           )}, ${Math.floor(Math.random() * 255)}, 1)`,
@@ -128,15 +128,11 @@ export default function FinanceDashboard() {
     };
   }, [revenueData]);
 
-  // Definisikan chartOptions di sini
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        display: true,
-        position: "top" as const, // Posisi legenda
-      },
+      legend: { display: true, position: "top" as const },
       tooltip: {
         callbacks: {
           label: (tooltipItem: TooltipItem<"line">) => {
@@ -148,13 +144,12 @@ export default function FinanceDashboard() {
       },
     },
     scales: {
+      x: { title: { display: true, text: "Tanggal" } },
       y: {
+        title: { display: true, text: "Pendapatan Bersih (Rp)" },
         ticks: {
-          callback: (value: string | number) => {
-            return `Rp ${
-              typeof value === "number" ? value.toLocaleString() : value
-            }`;
-          },
+          callback: (value: string | number) =>
+            `Rp ${typeof value === "number" ? value.toLocaleString() : value}`,
         },
       },
     },
@@ -164,73 +159,169 @@ export default function FinanceDashboard() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const endDate = new Date();
-        const startDate = new Date(endDate);
+        const now = new Date("2025-03-23"); // Ganti dengan new Date() di produksi
+        const endDate = new Date(now);
+        const startDate = new Date(now);
 
         switch (timeRange) {
           case "day":
-            startDate.setDate(startDate.getDate() - 1);
+            startDate.setHours(0, 0, 0, 0);
             break;
           case "week":
-            startDate.setDate(startDate.getDate() - 7);
+            const dayOfWeek = startDate.getDay();
+            startDate.setDate(
+              startDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)
+            );
+            startDate.setHours(0, 0, 0, 0);
             break;
           case "month":
-            startDate.setMonth(startDate.getMonth() - 1);
+            startDate.setDate(1);
+            startDate.setHours(0, 0, 0, 0);
             break;
           case "year":
-            startDate.setFullYear(startDate.getFullYear() - 1);
+            startDate.setMonth(0);
+            startDate.setDate(1);
+            startDate.setHours(0, 0, 0, 0);
             break;
           case "total":
-            startDate.setFullYear(startDate.getFullYear() - 5); // Ambil data selama 5 tahun terakhir
+            startDate.setFullYear(startDate.getFullYear() - 5);
+            startDate.setMonth(0);
+            startDate.setDate(1);
+            startDate.setHours(0, 0, 0, 0);
             break;
           default:
             startDate.setFullYear(startDate.getFullYear() - 5);
+            startDate.setMonth(0);
+            startDate.setDate(1);
+            startDate.setHours(0, 0, 0, 0);
             break;
         }
 
-        const statistics = await getGeraiStatistics(startDate, endDate);
-        let filteredData: RevenueData[] = [];
-        let geraiTotalPendapatan: { [key: string]: number } = {};
+        const formattedStartDate = formatDateForAPI(startDate);
+        const formattedEndDate = formatDateForAPI(endDate);
 
-        statistics.forEach((gerai) => {
-          const weeklyData =
-            gerai.weekly?.map((w) => ({
-              date: formatDateString(w.date), // Format tanggal ke DD-MM-YYYY
-              total: w.total,
-              gerai: gerai.name,
-            })) || [];
-          filteredData = [...filteredData, ...weeklyData];
-
-          const geraiTotal = weeklyData.reduce((acc, w) => acc + w.total, 0);
-          geraiTotalPendapatan[gerai.name] = geraiTotal;
+        console.log("Fetching data with:", {
+          formattedStartDate,
+          formattedEndDate,
         });
 
-        const totalPendapatanBaru = filteredData.reduce(
-          (acc, item) => acc + item.total,
+        const totalFromAPI = await getTotalPendapatan(
+          formattedStartDate,
+          formattedEndDate
+        );
+        console.log("Total from API (kotor):", totalFromAPI);
+
+        const geraiDataFromAPI = await getPendapatanPerGerai(
+          formattedStartDate,
+          formattedEndDate
+        );
+        console.log("Gerai data from API:", geraiDataFromAPI);
+
+        // Hitung pendapatan bersih dengan mengurangi biaya harian
+        const dailyRevenueData: RevenueData[] = geraiDataFromAPI.data.map(
+          (item) => {
+            const dailyCost = DAILY_COSTS[item.gerai] || 0;
+            const netTotal = Math.max(0, item.totalRevenue - dailyCost); // Pastikan tidak negatif
+            return {
+              date: item.date,
+              total: item.totalRevenue, // Kotor
+              netTotal, // Bersih
+              gerai: item.gerai,
+            };
+          }
+        );
+
+        // Hitung total pendapatan dan perubahan harian
+        const groupedGeraiData: Record<
+          string,
+          { total: number; netTotal: number }
+        > = {};
+        const lastDayRevenue: Record<
+          string,
+          { total: number; netTotal: number }
+        > = {};
+        const previousDayRevenue: Record<
+          string,
+          { total: number; netTotal: number }
+        > = {};
+
+        const uniqueDates = Array.from(
+          new Set(dailyRevenueData.map((d) => d.date))
+        ).sort();
+        const lastDate = uniqueDates[uniqueDates.length - 1];
+        const previousDate = uniqueDates[uniqueDates.length - 2];
+
+        dailyRevenueData.forEach((item) => {
+          groupedGeraiData[item.gerai] = groupedGeraiData[item.gerai] || {
+            total: 0,
+            netTotal: 0,
+          };
+          groupedGeraiData[item.gerai].total += item.total;
+          groupedGeraiData[item.gerai].netTotal += item.netTotal;
+
+          if (item.date === lastDate) {
+            lastDayRevenue[item.gerai] = {
+              total: item.total,
+              netTotal: item.netTotal,
+            };
+          }
+          if (item.date === previousDate) {
+            previousDayRevenue[item.gerai] = {
+              total: item.total,
+              netTotal: item.netTotal,
+            };
+          }
+        });
+
+        const uniqueGeraiData: GeraiData[] = Object.entries(
+          groupedGeraiData
+        ).map(([name, { total, netTotal }]) => {
+          const last = lastDayRevenue[name] || { total: 0, netTotal: 0 };
+          const prev = previousDayRevenue[name] || { total: 0, netTotal: 0 };
+          const change =
+            prev.netTotal > 0
+              ? ((last.netTotal - prev.netTotal) / prev.netTotal) * 100
+              : 0;
+          return {
+            name,
+            totalRevenue: total,
+            netTotalRevenue: netTotal,
+            lastDayRevenue: last.total,
+            lastDayNetRevenue: last.netTotal,
+            previousDayRevenue: prev.total,
+            previousDayNetRevenue: prev.netTotal,
+            percentageChange: change,
+          };
+        });
+
+        const totalNetRevenue = uniqueGeraiData.reduce(
+          (sum, gerai) => sum + gerai.netTotalRevenue,
           0
         );
-        const previousTotalPendapatan = totalPendapatan;
+        const previousTotalRevenue = totalRevenue || 0;
         const changePercentage =
-          previousTotalPendapatan > 0
-            ? ((totalPendapatanBaru - previousTotalPendapatan) /
-                previousTotalPendapatan) *
+          previousTotalRevenue > 0
+            ? ((totalNetRevenue - previousTotalRevenue) /
+                previousTotalRevenue) *
               100
             : 0;
 
-        setTotalPendapatan(totalPendapatanBaru);
+        setTotalRevenue(totalNetRevenue);
         setPercentageChange(changePercentage);
-        setRevenueData(filteredData);
+        setRevenueData(dailyRevenueData);
         setLastUpdated(new Date().toLocaleString("id-ID"));
+        setGeraiData(uniqueGeraiData);
 
-        const updatedGeraiData: GeraiData[] = Object.keys(
-          geraiTotalPendapatan
-        ).map((name) => ({
-          name,
-          totalPendapatan: geraiTotalPendapatan[name],
-        }));
-        setGeraiData(updatedGeraiData);
+        console.log("Updated state:", {
+          totalRevenue: totalNetRevenue,
+          geraiData: uniqueGeraiData,
+          revenueData: dailyRevenueData,
+        });
       } catch (error) {
         console.error("Fetching data failed:", error);
+        setTotalRevenue(0);
+        setGeraiData([]);
+        setRevenueData([]);
       } finally {
         setLoading(false);
       }
@@ -239,114 +330,49 @@ export default function FinanceDashboard() {
     fetchData();
   }, [timeRange]);
 
-  const calculatePercentageChange = (
-    current: number,
-    previous: number
-  ): number => {
-    if (previous === 0) return 0; // Hindari pembagian oleh nol
-    return ((current - previous) / previous) * 100;
-  };
-
-  // const processGeraiData = (geraiData: GeraiData[]) => {
-  //   return geraiData.map((gerai) => ({
-  //     name: gerai.name,
-  //     totalPendapatan: gerai.totalPendapatan,
-  //   }));
-  // };
-
-  // Komponen Card untuk setiap gerai
   const GeraiCard = ({ gerai }: { gerai: GeraiData }) => {
-    const dailyRevenue = revenueData
-      .filter((data) => data.gerai === gerai.name)
-      .map((data) => ({
-        date: data.date,
-        total: data.total,
-      }));
-
-    const todayRevenue = dailyRevenue[dailyRevenue.length - 1]?.total || 0;
-    const yesterdayRevenue = dailyRevenue[dailyRevenue.length - 2]?.total || 0;
-    const percentageChange = calculatePercentageChange(
-      todayRevenue,
-      yesterdayRevenue
-    );
-
-    const geraiChartData = {
-      labels: dailyRevenue.map((data) => data.date),
-      datasets: [
-        {
-          label: "Pendapatan Harian",
-          data: dailyRevenue.map((data) => data.total),
-          borderColor: "#ff6600",
-          fill: false,
-          borderWidth: 2,
-        },
-      ],
-    };
-
-    const chartOptionsGerai = {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: {
-          display: false,
-        },
-        x: {
-          display: false,
-        },
-      },
-      plugins: {
-        legend: {
-          display: false,
-        },
-        tooltip: {
-          enabled: false,
-        },
-      },
-    };
+    console.log("Rendering GeraiCard for:", gerai);
+    const isDecrease =
+      gerai.percentageChange !== undefined && gerai.percentageChange < 0;
+    const isIncrease =
+      gerai.percentageChange !== undefined && gerai.percentageChange > 0;
 
     return (
-      <Card
-        key={gerai.name}
-        className="w-full shadow-sm hover:shadow-md transition-shadow"
-      >
+      <Card className="w-full shadow-sm hover:shadow-md transition-shadow">
         <CardHeader>
-          <CardTitle className="text-gray-800 text-xs font-semibold flex justify-between">
-            {gerai.name} - Income
-            <Badge className="bg-white text-emerald-700 justify-end border-emerald-400/30">
-              <span
-                className={`font-semibold flex items-center ${
-                  percentageChange >= 0 ? "text-green-600" : "text-red-600"
-                }`}
-              >
-                {percentageChange >= 0 ? (
-                  <FaArrowUp className="text-green-600 mr-1" />
-                ) : (
-                  <FaArrowDown className="text-red-600 mr-1" />
-                )}
-                {Math.abs(percentageChange).toFixed(2)}%
-              </span>
-            </Badge>
+          <CardTitle className="text-gray-800 text-xs font-semibold">
+            {gerai.name}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-600">Net Income</div>
+          <div className="flex items-center space-x-2">
             <div className="text-xl sm:text-2xl font-bold text-gray-800">
-              Rp {gerai.totalPendapatan.toLocaleString("id-ID")}
+              Rp {(gerai.netTotalRevenue || 0).toLocaleString("id-ID")}
             </div>
-            <div className="w-1/3 h-16">
-              <Line data={geraiChartData} options={chartOptionsGerai} />
-            </div>
+            {gerai.percentageChange !== undefined && (
+              <Badge
+                className={`${
+                  isDecrease
+                    ? "bg-red-100 text-red-700"
+                    : "bg-green-100 text-green-700"
+                }`}
+              >
+                {isDecrease ? (
+                  <FaArrowDown className="mr-1" />
+                ) : isIncrease ? (
+                  <FaArrowUp className="mr-1" />
+                ) : null}
+                {Math.abs(gerai.percentageChange).toFixed(2)}%
+              </Badge>
+            )}
           </div>
-          <div className="mt-4 text-sm text-gray-600">
-            <div>
-              <span className="font-semibold">Pendapatan Hari Ini:</span> Rp{" "}
-              {todayRevenue.toLocaleString("id-ID")}
+          {gerai.lastDayNetRevenue !== undefined && (
+            <div className="text-xs text-gray-500 mt-1">
+              Hari ini (bersih): Rp{" "}
+              {(gerai.lastDayNetRevenue || 0).toLocaleString("id-ID")}
             </div>
-            <div>
-              <span className="font-semibold">Pendapatan Kemarin:</span> Rp{" "}
-              {yesterdayRevenue.toLocaleString("id-ID")}
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     );
@@ -354,11 +380,22 @@ export default function FinanceDashboard() {
 
   const handleExport = () => {
     const data = [
-      ["Laporan Pendapatan Gerai", "", ""],
-      ["Gerai", "Pendapatan"],
+      ["Laporan Pendapatan Gerai", "", "", ""],
+      [
+        "Gerai",
+        "Pendapatan Kotor",
+        "Pendapatan Bersih",
+        "Perubahan Harian (%)",
+      ],
       ...geraiData.map((gerai) => [
         gerai.name,
-        `Rp ${gerai.totalPendapatan.toLocaleString("id-ID")}`,
+        `Rp ${(gerai.totalRevenue || 0).toLocaleString("id-ID")}`,
+        `Rp ${(gerai.netTotalRevenue || 0).toLocaleString("id-ID")}`,
+        gerai.percentageChange !== undefined
+          ? `${
+              gerai.percentageChange >= 0 ? "+" : ""
+            }${gerai.percentageChange.toFixed(2)}%`
+          : "-",
       ]),
     ];
 
@@ -371,7 +408,6 @@ export default function FinanceDashboard() {
   return (
     <div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8 bg-slate-100 shadow-lg">
       <div className="flex flex-col justify-between">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
           <h1 className="text-2xl font-bold mb-4 sm:mb-0">Finance Dashboard</h1>
           <div className="flex flex-wrap sm:flex-nowrap gap-2 sm:space-x-4 w-full sm:w-auto justify-center">
@@ -383,7 +419,7 @@ export default function FinanceDashboard() {
                   : "bg-white text-zinc-800 hover:bg-orange-300"
               }`}
             >
-              Daily
+              Hari Ini
             </Button>
             <Button
               onClick={() => setTimeRange("week")}
@@ -393,7 +429,7 @@ export default function FinanceDashboard() {
                   : "bg-white text-zinc-800 hover:bg-orange-300"
               }`}
             >
-              Weekly
+              Minggu Ini
             </Button>
             <Button
               onClick={() => setTimeRange("month")}
@@ -403,7 +439,7 @@ export default function FinanceDashboard() {
                   : "bg-white text-zinc-800 hover:bg-orange-300"
               }`}
             >
-              Monthly
+              Bulan Ini
             </Button>
             <Button
               onClick={() => setTimeRange("year")}
@@ -413,7 +449,7 @@ export default function FinanceDashboard() {
                   : "bg-white text-zinc-800 hover:bg-orange-300"
               }`}
             >
-              Yearly
+              Tahun Ini
             </Button>
             <Button
               onClick={() => setTimeRange("total")}
@@ -434,7 +470,6 @@ export default function FinanceDashboard() {
           </div>
         </div>
 
-        {/* Loading State */}
         {loading ? (
           <div className="fixed inset-0 flex flex-col justify-center items-center bg-white z-50">
             <Clock className="animate-spin w-16 h-16 text-orange-600 mb-2" />
@@ -444,12 +479,11 @@ export default function FinanceDashboard() {
           </div>
         ) : (
           <>
-            {/* Revenue Card */}
             <Card className="bg-gradient-to-r from-orange-500 to-yellow-600 mb-6 mt-4 sm:mt-6 p-4 sm:p-6 rounded-xl shadow-md">
               <CardHeader>
                 <CardTitle className="text-white flex flex-col sm:flex-row items-center justify-between">
                   <span className="text-lg sm:text-xl mb-2 sm:mb-0">
-                    Total Overall Revenue
+                    Total Net Revenue
                   </span>
                   <Badge className="bg-white text-emerald-700 justify-end border-emerald-400/30">
                     <span
@@ -473,7 +507,7 @@ export default function FinanceDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-xl sm:text-2xl font-bold text-white">
-                  Rp. {totalPendapatan.toLocaleString("id-ID")}
+                  Rp {totalRevenue.toLocaleString("id-ID")}
                 </div>
                 <div className="flex items-center gap-2 mt-2 text-slate-100">
                   <Clock className="h-4 w-4 text-white" />
@@ -482,21 +516,22 @@ export default function FinanceDashboard() {
               </CardContent>
             </Card>
 
-            {/* Gerai Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {geraiData.map((gerai) => (
-                <GeraiCard key={gerai.name} gerai={gerai} />
-              ))}
+              {geraiData.length > 0 ? (
+                geraiData.map((gerai) => (
+                  <GeraiCard key={gerai.name} gerai={gerai} />
+                ))
+              ) : (
+                <p className="text-gray-600">Tidak ada data gerai tersedia.</p>
+              )}
             </div>
 
-            {timeRange === "total" && (
-              <div className="overflow-x-auto mt-4 sm:mt-6">
-                <h1>Pendapatan Harian per Gerai (Total)</h1>
-                <div className="min-w-[800px]">
-                  <Line data={chartData} options={chartOptions} height={400} />
-                </div>
+            <div className="overflow-x-auto mt-4 sm:mt-6">
+              <h1>Pendapatan Harian Bersih per Gerai</h1>
+              <div className="min-w-[800px]">
+                <Line data={chartData} options={chartOptions} height={400} />
               </div>
-            )}
+            </div>
           </>
         )}
       </div>

@@ -1,6 +1,7 @@
 import { Facebook, Youtube } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { BsInstagram, BsTiktok } from "react-icons/bs";
+import { IoIosArrowDown } from "react-icons/io";
 import { useLocation } from "react-router-dom";
 import { Link } from "react-scroll";
 
@@ -55,7 +56,7 @@ export default function NewNavigation() {
                     setDropdownOpen1(dropdownOpen1 === 0 ? null : 0)
                   }
                 >
-                  LAYANAN KAMI
+                  LAYANAN
                   <svg
                     className="w-4 h-4 ml-1"
                     fill="none"
@@ -121,7 +122,7 @@ export default function NewNavigation() {
                     setDropdownOpen2(dropdownOpen2 === 0 ? null : 0)
                   }
                 >
-                  TENTANG KAMI
+                  TENTANG
                   <svg
                     className="w-4 h-4 ml-1"
                     fill="none"
@@ -249,13 +250,57 @@ export default function NewNavigation() {
       {/* Mobile Menu */}
       {!isHidden && isOpen && (
         <div className="md:hidden bg-black/40 shadow-md text-white pb-2">
-          <a
-            href="/layanan_kami"
-            className="block py-2 px-4 hover:text-yellow-400 cursor-pointer"
-            onClick={() => setIsOpen(false)}
-          >
-            LAYANAN KAMI
-          </a>
+          <span className="group block py-2 px-4 cursor-pointer">
+            LAYANAN <IoIosArrowDown className="inline" />
+            <Link
+              smooth={true}
+              duration={500}
+              to="layanan_kami"
+              className="group-hover:block hidden py-2 px-4 cursor-pointer"
+              onClick={() => setIsOpen(false)}
+            >
+              LAYANAN KAMI
+            </Link>
+            <a
+              href="./#/klaim_garansi"
+              className="group-hover:block hidden py-2 px-4 cursor-pointer"
+              onClick={() => setIsOpen(false)}
+            >
+              KLAIM GARANSI
+            </a>
+          </span>
+
+          <span className="group block py-2 px-4 cursor-pointer">
+            TENTANG KAMI <IoIosArrowDown className="inline" />
+            <Link
+              smooth={true}
+              duration={500}
+              to="visi-misi"
+              className="group-hover:block hidden py-2 px-4  cursor-pointer"
+              onClick={() => setIsOpen(false)}
+            >
+              VISI & MISI
+            </Link>
+            <Link
+              smooth={true}
+              duration={500}
+              to="testimoni"
+              className="group-hover:block hidden py-2 px-4  cursor-pointer"
+              onClick={() => setIsOpen(false)}
+            >
+              TESTIMONI
+            </Link>
+            <Link
+              smooth={true}
+              duration={500}
+              to="video"
+              className="group-hover:block hidden py-2 px-4  cursor-pointer"
+              onClick={() => setIsOpen(false)}
+            >
+              VIDEO KAMI
+            </Link>
+          </span>
+
           <Link
             smooth={true}
             duration={500}
@@ -264,15 +309,6 @@ export default function NewNavigation() {
             onClick={() => setIsOpen(false)}
           >
             CEK HARGA
-          </Link>
-          <Link
-            smooth={true}
-            duration={500}
-            to="visi-misi"
-            className="block py-2 px-4 hover:text-yellow-400 cursor-pointer"
-            onClick={() => setIsOpen(false)}
-          >
-            VISI & MISI
           </Link>
           <Link
             smooth={true}
@@ -292,37 +328,12 @@ export default function NewNavigation() {
           >
             KONTAK
           </Link>
-          <Link
-            smooth={true}
-            duration={500}
-            to="testimoni"
-            className="block py-2 px-4 hover:text-yellow-400 cursor-pointer"
-            onClick={() => setIsOpen(false)}
-          >
-            TESTIMONI
-          </Link>
-          <Link
-            smooth={true}
-            duration={500}
-            to="artikel"
-            className="block py-2 px-4 hover:text-yellow-400 cursor-pointer"
-            onClick={() => setIsOpen(false)}
-          >
-            VIDEO KAMI
-          </Link>
           <a
             href="/#/antrian"
             className="block py-2 px-4 hover:text-yellow-400 cursor-pointer"
             onClick={() => setIsOpen(false)}
           >
             ANTRIAN GERAI
-          </a>
-          <a
-            href="/#/klaim_garansi"
-            className="block py-2 px-4 hover:text-yellow-400 cursor-pointer"
-            onClick={() => setIsOpen(false)}
-          >
-            KLAIM GARANSI
           </a>
           <a
             href="/#/scan"

@@ -1,0 +1,29 @@
+.custom-scrollbar {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* Scroll halus di iOS */
+}
+
+/* Styling untuk Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #9ca3af #f3f4f6; /* thumb: gray-400, track: gray-100 */
+}
+
+/* Styling untuk browser berbasis WebKit (Chrome, Safari, Edge) */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 8px; /* Lebar scrollbar horizontal */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f3f4f6; /* Warna track: gray-100 */
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #9ca3af; /* Warna thumb: gray-400 */
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #6b7280; /* Warna thumb saat hover: gray-500 */
+}

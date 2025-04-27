@@ -717,158 +717,234 @@ export const dataListMotor = {
     },
   ],
   seal: [
+    { ccRange: "110 - 125 CC", brand: "Honda", model: "Beat FI", price: 20000 },
     {
-      kategori: "Matic Honda 110-160 cc (Depan)",
-      tipe: ["Vario", "Beat", "Scoopy", "Stylo", "Vario 160"],
-      harga: {
-        qty: "2 pcs",
-        range: [60000, 80000], // "60-80 rb" -> 60000-80000
-      },
+      ccRange: "110 - 125 CC",
+      brand: "Honda",
+      model: "Beat Street",
+      price: 20000,
+    },
+    { ccRange: "110 - 125 CC", brand: "Honda", model: "Scoopy", price: 20000 },
+    {
+      ccRange: "110 - 125 CC",
+      brand: "Honda",
+      model: "Vario 125",
+      price: 20000,
+    },
+    { ccRange: "110 - 125 CC", brand: "Honda", model: "Genio", price: 20000 },
+    { ccRange: "110 - 125 CC", brand: "Honda", model: "Wave", price: 20000 },
+    { ccRange: "110 - 125 CC", brand: "Yamaha", model: "Mio", price: 20000 },
+    { ccRange: "110 - 125 CC", brand: "Yamaha", model: "Fino", price: 20000 },
+    { ccRange: "110 - 125 CC", brand: "Yamaha", model: "Gear", price: 20000 },
+    { ccRange: "110 - 125 CC", brand: "Yamaha", model: "Nouvo", price: 20000 },
+    { ccRange: "110 - 125 CC", brand: "Suzuki", model: "Nex", price: 25000 },
+    {
+      ccRange: "110 - 125 CC",
+      brand: "Suzuki",
+      model: "Skywave",
+      price: 25000,
+    },
+    { ccRange: "110 - 125 CC", brand: "Suzuki", model: "Axelo", price: 25000 },
+    {
+      ccRange: "110 - 125 CC",
+      brand: "Suzuki",
+      model: "Burgman 125",
+      price: 60000,
+    },
+    { ccRange: "110 - 125 CC", brand: "Vespa", model: "LX 125", price: 60000 },
+    { ccRange: "110 - 125 CC", brand: "Vespa", model: "S 125", price: 25000 },
+    {
+      ccRange: "110 - 125 CC",
+      brand: "Kymco",
+      model: "Like 125",
+      price: 50000,
     },
     {
-      kategori: "Matic Honda 110-160 cc (Belakang)",
-      tipe: "Aftermarket (YSS, KTC, RCB, DBS)",
-      harga: {
-        qty: "1 pcs",
-        range: [50000, 80000], // "50-80 rb" -> 50000-80000
-      },
+      ccRange: "110 - 125 CC",
+      brand: "Kymco",
+      model: "Downtown 125",
+      price: 50000,
+    },
+    { ccRange: "150 - 160 CC", brand: "Honda", model: "ADV", price: 20000 },
+    { ccRange: "150 - 160 CC", brand: "Honda", model: "PCX", price: 20000 },
+    { ccRange: "150 - 160 CC", brand: "Honda", model: "Vario", price: 20000 },
+    { ccRange: "150 - 160 CC", brand: "Yamaha", model: "Nmax", price: 20000 },
+    { ccRange: "150 - 160 CC", brand: "Yamaha", model: "Aerox", price: 20000 },
+    {
+      ccRange: "150 - 160 CC",
+      brand: "Suzuki",
+      model: "Burgman",
+      price: 20000,
+    },
+    { ccRange: "150 - 160 CC", brand: "Suzuki", model: "Access", price: 60000 },
+    { ccRange: "150 - 160 CC", brand: "Vespa", model: "LX 150", price: 20000 },
+    { ccRange: "150 - 160 CC", brand: "Vespa", model: "S 150", price: 25000 },
+    {
+      ccRange: "150 - 160 CC",
+      brand: "Kymco",
+      model: "Downtown 150",
+      price: 50000,
     },
     {
-      kategori: "Matic Honda 200-250 cc (STD)",
-      harga: {
-        qty: "2 pcs",
-        range: [150000, 180000], // "150-180 rb" -> 150000-180000
-      },
-    },
-    {
-      kategori: "Matic Honda 200-250 cc (USD)",
-      harga: {
-        qty: "2 pcs",
-        range: [160000, 200000], // "160-200 rb" -> 160000-200000
-      },
-    },
-    {
-      kategori: "Matic Yamaha 125-250 cc (Depan)",
-      tipe: ["Aerox", "Lexi", "Freego", "Fikano", "Fino", "Fazzio"],
-      harga: {
-        qty: "2 pcs",
-        range: [60000, 100000], // "60-100 rb" -> 60000-100000
-      },
-    },
-    {
-      kategori: "NMAX",
-      subkategori: "STD",
-      harga: {
-        qty: "1 pcs",
-        range: [80000, 120000], // "80-120 rb" -> 80000-120000
-      },
-    },
-    {
-      kategori: "NMAX",
-      subkategori: "USD",
-      harga: {
-        qty: "1 pcs",
-        range: [160000, 180000], // "160-180 rb" -> 160000-180000
-      },
-    },
-    {
-      kategori: "XMAX",
-      subkategori: "STD",
-      harga: {
-        qty: "1 pcs",
-        range: [120000, 160000], // "120-160 rb" -> 120000-160000
-      },
-    },
-    {
-      kategori: "XMAX",
-      subkategori: "USD",
-      harga: {
-        qty: "1 pcs",
-        range: [200000, 250000], // "200-250 rb" -> 200000-250000
-      },
-    },
-    {
-      kategori: "Matic Yamaha 125-250 cc (Belakang)",
-      subkategori: "STD",
-      harga: {
-        qty: "2 pcs",
-        range: [80000, 120000], // "80-120 rb" -> 80000-120000
-      },
-    },
-    {
-      kategori: "Matic Yamaha 125-250 cc (Belakang)",
-      subkategori: "Aftermarket",
-      harga: {
-        qty: "1 pcs",
-        range: [50000, 80000], // "50-80 rb" -> 50000-80000
-      },
-    },
-    {
-      kategori: "Sport, Naked, Trail 150-155 cc (Depan)",
-      tipe: [
-        "CB",
-        "CBR",
-        "Verza",
-        "Tiger",
-        "Vixion",
-        "CRF",
-        "R15",
-        "Bison",
-        "MT15",
-        "KLX",
-      ],
-      harga: [
-        {
-          subkategori: "STD",
-          qty: "2 pcs",
-          range: [100000, 150000], // "100-150 rb" -> 100000-150000
-        },
-        {
-          subkategori: "USD",
-          qty: "2 pcs",
-          range: [160000, 200000], // "160-200 rb" -> 160000-200000
-        },
-      ],
-    },
-    {
-      kategori: "Sport, Naked, Trail 150-155 cc (Belakang)",
-      subkategori: "STD",
-      harga: {
-        qty: "1 pcs",
-        range: [80000, 120000], // "80-120 rb" -> 80000-120000
-      },
-    },
-    {
-      kategori: "Sport, Naked, Trail 150-155 cc (Belakang)",
-      subkategori: "Aftermarket",
-      harga: {
-        qty: "1 pcs",
-        range: [80000, 150000], // "80-150 rb" -> 80000-150000
-      },
-    },
-    {
-      kategori: "Sport, Naked, Trail 200-250 cc (Depan)",
-      tipe: ["CBR 250", "R25", "MT25", "Ninja 250"],
-      harga: [
-        {
-          subkategori: "STD",
-          qty: "2 pcs",
-          range: 250000, // "250 rb" -> 250000
-        },
-        {
-          subkategori: "USD",
-          qty: "2 pcs",
-          range: 300000, // "300 rb" -> 300000
-        },
-      ],
-    },
-    {
-      kategori: "Sport, Naked, Trail 200-250 cc (Belakang)",
-      subkategori: "STD dan Aftermarket",
-      harga: {
-        qty: "1 pcs",
-        range: 50000, // "50 rb" -> 50000
-      },
+      ccRange: "150 - 160 CC",
+      brand: "Kymco",
+      model: "Like 150",
+      price: 50000,
     },
   ],
+  // seal: [
+  //   {
+  //     kategori: "Matic Honda 110-160 cc (Depan)",
+  //     tipe: ["Vario", "Beat", "Scoopy", "Stylo", "Vario 160"],
+  //     harga: {
+  //       qty: "2 pcs",
+  //       range: [60000, 80000], // "60-80 rb" -> 60000-80000
+  //     },
+  //   },
+  //   {
+  //     kategori: "Matic Honda 110-160 cc (Belakang)",
+  //     tipe: "Aftermarket (YSS, KTC, RCB, DBS)",
+  //     harga: {
+  //       qty: "1 pcs",
+  //       range: [50000, 80000], // "50-80 rb" -> 50000-80000
+  //     },
+  //   },
+  //   {
+  //     kategori: "Matic Honda 200-250 cc (STD)",
+  //     harga: {
+  //       qty: "2 pcs",
+  //       range: [150000, 180000], // "150-180 rb" -> 150000-180000
+  //     },
+  //   },
+  //   {
+  //     kategori: "Matic Honda 200-250 cc (USD)",
+  //     harga: {
+  //       qty: "2 pcs",
+  //       range: [160000, 200000], // "160-200 rb" -> 160000-200000
+  //     },
+  //   },
+  //   {
+  //     kategori: "Matic Yamaha 125-250 cc (Depan)",
+  //     tipe: ["Aerox", "Lexi", "Freego", "Fikano", "Fino", "Fazzio"],
+  //     harga: {
+  //       qty: "2 pcs",
+  //       range: [60000, 100000], // "60-100 rb" -> 60000-100000
+  //     },
+  //   },
+  //   {
+  //     kategori: "NMAX",
+  //     subkategori: "STD",
+  //     harga: {
+  //       qty: "1 pcs",
+  //       range: [80000, 120000], // "80-120 rb" -> 80000-120000
+  //     },
+  //   },
+  //   {
+  //     kategori: "NMAX",
+  //     subkategori: "USD",
+  //     harga: {
+  //       qty: "1 pcs",
+  //       range: [160000, 180000], // "160-180 rb" -> 160000-180000
+  //     },
+  //   },
+  //   {
+  //     kategori: "XMAX",
+  //     subkategori: "STD",
+  //     harga: {
+  //       qty: "1 pcs",
+  //       range: [120000, 160000], // "120-160 rb" -> 120000-160000
+  //     },
+  //   },
+  //   {
+  //     kategori: "XMAX",
+  //     subkategori: "USD",
+  //     harga: {
+  //       qty: "1 pcs",
+  //       range: [200000, 250000], // "200-250 rb" -> 200000-250000
+  //     },
+  //   },
+  //   {
+  //     kategori: "Matic Yamaha 125-250 cc (Belakang)",
+  //     subkategori: "STD",
+  //     harga: {
+  //       qty: "2 pcs",
+  //       range: [80000, 120000], // "80-120 rb" -> 80000-120000
+  //     },
+  //   },
+  //   {
+  //     kategori: "Matic Yamaha 125-250 cc (Belakang)",
+  //     subkategori: "Aftermarket",
+  //     harga: {
+  //       qty: "1 pcs",
+  //       range: [50000, 80000], // "50-80 rb" -> 50000-80000
+  //     },
+  //   },
+  //   {
+  //     kategori: "Sport, Naked, Trail 150-155 cc (Depan)",
+  //     tipe: [
+  //       "CB",
+  //       "CBR",
+  //       "Verza",
+  //       "Tiger",
+  //       "Vixion",
+  //       "CRF",
+  //       "R15",
+  //       "Bison",
+  //       "MT15",
+  //       "KLX",
+  //     ],
+  //     harga: [
+  //       {
+  //         subkategori: "STD",
+  //         qty: "2 pcs",
+  //         range: [100000, 150000], // "100-150 rb" -> 100000-150000
+  //       },
+  //       {
+  //         subkategori: "USD",
+  //         qty: "2 pcs",
+  //         range: [160000, 200000], // "160-200 rb" -> 160000-200000
+  //       },
+  //     ],
+  //   },
+  //   {
+  //     kategori: "Sport, Naked, Trail 150-155 cc (Belakang)",
+  //     subkategori: "STD",
+  //     harga: {
+  //       qty: "1 pcs",
+  //       range: [80000, 120000], // "80-120 rb" -> 80000-120000
+  //     },
+  //   },
+  //   {
+  //     kategori: "Sport, Naked, Trail 150-155 cc (Belakang)",
+  //     subkategori: "Aftermarket",
+  //     harga: {
+  //       qty: "1 pcs",
+  //       range: [80000, 150000], // "80-150 rb" -> 80000-150000
+  //     },
+  //   },
+  //   {
+  //     kategori: "Sport, Naked, Trail 200-250 cc (Depan)",
+  //     tipe: ["CBR 250", "R25", "MT25", "Ninja 250"],
+  //     harga: [
+  //       {
+  //         subkategori: "STD",
+  //         qty: "2 pcs",
+  //         range: 250000, // "250 rb" -> 250000
+  //       },
+  //       {
+  //         subkategori: "USD",
+  //         qty: "2 pcs",
+  //         range: 300000, // "300 rb" -> 300000
+  //       },
+  //     ],
+  //   },
+  //   {
+  //     kategori: "Sport, Naked, Trail 200-250 cc (Belakang)",
+  //     subkategori: "STD dan Aftermarket",
+  //     harga: {
+  //       qty: "1 pcs",
+  //       range: 50000, // "50 rb" -> 50000
+  //     },
+  //   },
+  // ],
 };

@@ -1,4 +1,4 @@
-import { getDataLayananSemuaCabang } from "@/firebase/service";
+import { getAllCustomers } from "@/utils/ggAPI";
 import { getCookie } from "@/utils/getCookie";
 import { useEffect, useState } from "react";
 import { FaMotorcycle } from "react-icons/fa";
@@ -10,32 +10,61 @@ export default function AntrianSemuaGerai() {
   const [data, setData] = useState<any>(undefined);
   let getCookiePelanggan: any = getCookie("pelangganGGSuspension");
   getCookiePelanggan = getCookiePelanggan ? JSON.parse(getCookiePelanggan) : "";
+
   useEffect(() => {
-    getDataLayananSemuaCabang(null).then((res: any) => {
-      const grouped = res.reduce((acc: any, cur: any) => {
-        const key = cur.gerai;
-        if (!acc[key]) {
-          // Buat objek grup baru dengan struktur output yang diinginkan
-          acc[key] = {
-            id: cur.id, // ambil id dari item pertama di grup
-            data: [cur.data], // masukkan data awal sebagai array
-            gerai: cur.gerai, // ambil gerai dari item pertama
-            status: cur.status, // ambil status dari item pertama
-          };
-        } else {
-          // Jika grup sudah ada, cukup tambahkan data-nya ke array
-          acc[key].data.push(cur.data);
+    const fetchData = async () => {
+      try {
+        const res = await getAllCustomers();
+        console.log("Data dari /api/customers:", res);
+
+        // Dapatkan tanggal hari ini dalam format yang sama dengan createdAt
+        const today = new Date();
+        const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime(); // Mulai hari ini
+        const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime(); // Akhir hari ini
+
+        // Filter data hanya untuk hari ini
+        const filteredData = res.filter((item: any) => {
+          const itemDate = new Date(item.createdAt).getTime();
+          return itemDate >= todayStart && itemDate <= todayEnd;
+        });
+
+        if (filteredData.length === 0) {
+          console.log("Tidak ada antrian untuk hari ini.");
+          setData([]); // Set data kosong jika tidak ada antrian hari ini
+          return;
         }
-        return acc;
-      }, {});
-      const output = Object.values(grouped);
-      setData(output);
-    });
+
+        // Kelompokkan data berdasarkan gerai
+        const grouped = filteredData.reduce((acc: any, cur: any) => {
+          const key = cur.gerai;
+          if (!acc[key]) {
+            acc[key] = {
+              id: cur.id,
+              data: [{ ...cur, waktu: new Date(cur.createdAt).getTime() }],
+              gerai: cur.gerai,
+              status: cur.status || false,
+            };
+          } else {
+            acc[key].data.push({
+              ...cur,
+              waktu: new Date(cur.createdAt).getTime(),
+            });
+          }
+          return acc;
+        }, {});
+
+        const output = Object.values(grouped);
+        setData(output);
+      } catch (error) {
+        console.error("Gagal mengambil data antrian:", error);
+        setData([]); // Set data kosong jika ada error
+      }
+    };
+    fetchData();
   }, []);
 
   return (
     <div className="w-full mx-auto min-h-screen bg-orange-500">
-      {/* <NewNavigation/> */}
       <Navbar />
       <div className="container mx-auto flex flex-col gap-3 p-2 pt-12 tablet:p-20">
         <Link
@@ -46,7 +75,7 @@ export default function AntrianSemuaGerai() {
           <span className="text-lg font-medium">Kembali</span>
         </Link>
         <h1 className="tablet:text-5xl tablet:mb-5 text-xl font-bold text-center text-white mt-12 tracking-widest">
-          LIST ANTRIAN SEMUA GERAI <FaMotorcycle className="inline" />
+          LIST ANTRIAN HARI INI SEMUA GERAI <FaMotorcycle className="inline" />
         </h1>
         {getCookiePelanggan.gerai ? (
           <a
@@ -63,7 +92,15 @@ export default function AntrianSemuaGerai() {
             Scan Sekarang
           </a>
         )}
-        {data ? (
+        {data === undefined ? (
+          <p className="text-center text-xl text-yellow-400 font-bold">
+            loading...
+          </p>
+        ) : data.length === 0 ? (
+          <p className="text-center text-xl text-yellow-400 font-bold">
+            Tidak ada antrian hari ini.
+          </p>
+        ) : (
           data.map((row: any, index: number) => (
             <div className="bg-white rounded-lg shadow-xl p-2" key={index}>
               <h2 className="text-xl sm:text-2xl font-bold italic mb-2 tablet:mb-3">
@@ -75,105 +112,47 @@ export default function AntrianSemuaGerai() {
                     <th className="border p-2">No</th>
                     <th className="border p-2">Nama</th>
                     <th className="border p-2">Motor</th>
+                    <th className="border p-2">Jenis Motor</th>
                     <th className="border p-2">Status</th>
                   </tr>
                 </thead>
-                {row ? (
-                  row.data
+                <tbody>
+                  {row.data
                     .sort((a: any, b: any) => a.waktu - b.waktu)
                     .map((item: any, index: number) => (
-                      <tbody key={index}>
-                        <tr className="font-semibold text-center text-sm tablet:text-lg">
-                          <td className="border p-2">{index + 1}</td>
-                          <td className="border p-2">
-                            {item.nama.toUpperCase()}
-                          </td>
-                          <td className="border p-2">
-                            {item.motor.toUpperCase()}
-                          </td>
-                          <td className="border p-2">
-                            {item.status ? (
-                              <span className="flex items-center font-bold text-green-600 gap-1 justify-center">
-                                <span className="bg-green-500 w-2 h-2 rounded-full" />
-                                Finish
-                              </span>
-                            ) : (
-                              <span className="flex items-center font-bold text-yellow-500 gap-1 justify-center">
-                                <span className="bg-yellow-500 w-2 h-2 rounded-full" />
-                                Progress
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      </tbody>
-                    ))
-                ) : (
-                  <tbody>
-                    <tr>
-                      <td className="self-center w-full font-bold">
-                        loading...
-                      </td>
-                    </tr>
-                  </tbody>
-                )}
+                      <tr
+                        key={index}
+                        className="font-semibold text-center text-sm tablet:text-lg"
+                      >
+                        <td className="border p-2">{index + 1}</td>
+                        <td className="border p-2">
+                          {item.nama.toUpperCase()}
+                        </td>
+                        <td className="border p-2">
+                          {item.motor.toUpperCase()}
+                        </td>
+                        <td className="border p-2">
+                          {item.subcategory.toUpperCase()}
+                        </td>
+                        <td className="border p-2">
+                          {item.status ? (
+                            <span className="flex items-center font-bold text-green-600 gap-1 justify-center">
+                              <span className="bg-green-500 w-2 h-2 rounded-full" />
+                              Finish
+                            </span>
+                          ) : (
+                            <span className="flex items-center font-bold text-yellow-500 gap-1 justify-center">
+                              <span className="bg-yellow-500 w-2 h-2 rounded-full" />
+                              Progress
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
               </table>
-              {/* Pembungkus untuk scroll horizontal jika diperlukan */}
-              {/* <div className="overflow-x-auto">
-              <div className="flex flex-col">
-                <div className="block md:table-header-group">
-                  
-                </div>
-                <div className="flex  md:table-row-group">
-                  {row.data.map((item: any, i: number) => (
-                    <tr
-                      key={i}
-                      className="bg-white border-b block md:table-row text-center"
-                    >
-                      <td
-                        className="border p-2 text-center block md:table-cell"
-                        data-label="Nomor"
-                      >
-                        {i + 1}
-                      </td>
-                      <td
-                        className="border p-2 block md:table-cell"
-                        data-label="Nama"
-                      >
-                        {item.nama.toUpperCase()}
-                      </td>
-                      <td
-                        className="border p-2 block md:table-cell"
-                        data-label="Layanan"
-                      >
-                        {item.layanan}
-                      </td>
-                      <td
-                        className="border p-2 block md:table-cell"
-                        data-label="Status"
-                      >
-                        {item.status==true ? (
-                          <span className="flex items-center font-semibold text-green-600 gap-1 justify-center">
-                            <span className="bg-green-500 w-5 h-5 rounded-full" />
-                            FINISH
-                          </span>
-                        ) : (
-                          <span className="flex items-center text-yellow-500 gap-1 font-semibold justify-center">
-                            <span className="bg-yellow-500 w-5 h-5 rounded-full" />
-                            PROGRESS
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </div>
-              </div>
-            </div> */}
             </div>
           ))
-        ) : (
-          <p className="text-center text-xl text-yellow-400 font-bold">
-            loading...
-          </p>
         )}
       </div>
     </div>

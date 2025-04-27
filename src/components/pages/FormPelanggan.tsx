@@ -1,228 +1,362 @@
-import { setDataPelanggan } from "@/firebase/service";
-import { dataListMotor } from "@/utils/dataListMotor";
+import { useEffect, useState, useMemo } from "react";
 import Cookies from "js-cookie";
-import { useState } from "react";
+import {
+  getServices,
+  getServiceTypes,
+  getMotors,
+  getMotorParts,
+  getAllSeals,
+  createServiceOrder,
+  getGerais,
+} from "@/utils/ggAPI";
+import {
+  Category,
+  Subcategory,
+  MotorPart,
+  Motor,
+  Seal,
+  Gerai,
+  ServiceOrderPayload,
+} from "@/types";
 
 const FormPelanggan = () => {
-  const listMotor = dataListMotor.layanan;
-  const hargaSeal: any = dataListMotor.seal;
-  const [layanan, setLayanan] = useState<any>(undefined);
-  const [jenisMotor, setJenisMotor] = useState<any>(undefined);
-  const [motor, setMotor] = useState<any>(undefined);
-  const [motorLainnya, setMotorLainnya] = useState<any>(undefined);
-  const [textLayanan, setTextLayanan] = useState<any>(undefined);
-  const [textJenisMotor, setTextJenisMotor] = useState<any>(undefined);
-  const [textBagianMotor, setTextBagianMotor] = useState<any>(undefined);
-  const [harga, setHarga] = useState<any>(undefined);
-  const [isMotor, setIsMotor] = useState<any>(undefined);
-  const [isBagianMotor, setIsBagianMotor] = useState<any>(undefined);
-  const [isJenisMotor, setisJenisMotor] = useState<any>(undefined);
-  const [hasChatAdmin, setHasChatAdmin] = useState<boolean>(false);
+  const [isSubmit, setIsSubmit] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const SEMUA_LAYANAN = [
-    "REBOUND",
-    "DOWNSIZE",
-    "MAINTENANCE",
-    "PAKET REBOUND & DOWNSIZE",
-  ];
-
-  const [isSubmit, setIsSubmit] = useState<boolean>(false);
   const [formData, setFormData] = useState({
-    id: "",
     nama: "",
     noWA: "",
     gerai: "",
+    plat: "",
     layanan: "",
     jenisMotor: "",
     bagianMotor: "",
-    motor: "",
-    hargaLayanan: 0,
-    hargaSeal: "",
-    totalHarga: "",
-    seal: "",
-    plat: "",
-    info: "",
     bagianMotor2: "",
+    motor: "",
+    motorLainnya: "",
+    seal: "",
   });
 
-  function setSelectLayanan(e: any) {
-    setHarga(undefined);
-    const res = listMotor?.filter(
-      (motor: any) => motor.category == e.target.value
-    );
-    let result: any = [];
-    res.forEach((item: any) => {
-      if (!result.find((u: any) => u.subcategory === item.subcategory)) {
-        result.push(item);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [allSubcategories, setAllSubcategories] = useState<Subcategory[]>([]);
+  const [allMotorParts, setAllMotorParts] = useState<MotorPart[]>([]);
+  const [motors, setMotors] = useState<Motor[]>([]);
+  const [allSeals, setAllSeals] = useState<Seal[]>([]);
+  const [gerais, setGerais] = useState<Gerai[]>([]);
+  const [selectedSeals, setSelectedSeals] = useState<Seal[]>([]);
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<
+    number | null
+  >(null);
+  const [hargaLayanan, setHargaLayanan] = useState(0);
+  const [hargaSeal, setHargaSeal] = useState(0);
+  const [hasChatAdmin, setHasChatAdmin] = useState(false);
+  const [showBagianMotor2, setShowBagianMotor2] = useState(false);
+
+  // Fetch semua data saat komponen dimuat
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [
+          categoriesData,
+          motorsData,
+          motorPartsData,
+          geraisData,
+          subcategoriesData,
+          sealsData,
+        ] = await Promise.all([
+          getServices(),
+          getMotors(),
+          getMotorParts(),
+          getGerais(),
+          getServiceTypes(),
+          getAllSeals(),
+        ]);
+        console.log("Categories Data:", categoriesData);
+        console.log("Motors Data:", motorsData);
+        console.log("MotorParts Data:", motorPartsData);
+        console.log("Gerais Data:", geraisData);
+        console.log("Subcategories Data:", subcategoriesData);
+        console.log("Seals Data:", sealsData);
+        setCategories(categoriesData);
+        setMotors(motorsData);
+        setAllMotorParts(motorPartsData);
+        setGerais(geraisData);
+        setAllSubcategories(subcategoriesData);
+        setAllSeals(sealsData);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Gagal memuat data";
+        setError(`Gagal memuat data: ${errorMessage}`);
+      } finally {
+        setIsLoading(false);
       }
+    };
+    fetchData();
+  }, []);
+
+  // Filter subkategori berdasarkan formData.layanan
+  const filteredSubcategories = useMemo(() => {
+    if (!formData.layanan) return [];
+    const category = categories.find((c) => c.name === formData.layanan);
+    if (!category) return [];
+    return allSubcategories.filter((sub) => {
+      // Cek category_id atau category.id
+      return (
+        (sub.category_id && sub.category_id === category.id) ||
+        (sub.category && sub.category.id === category.id)
+      );
     });
-    setLayanan(result);
-    setTextLayanan(e.target.value);
-    setIsMotor("");
-    setIsBagianMotor("");
-    setisJenisMotor("");
-  }
+  }, [formData.layanan, categories, allSubcategories]);
 
-  function setSelectJenisMotor(e: any) {
-    setHarga(undefined);
-    let res = listMotor?.filter((motor: any) => motor.category == textLayanan);
-    res = res.filter((motor: any) => motor.subcategory == e.target.value);
-    setTextJenisMotor(e.target.value);
-    setisJenisMotor(undefined);
-    setJenisMotor(res);
-    setIsMotor("");
-    setIsTextBagianMotor2(false);
-    setIsBagianMotor("");
-  }
+  // Filter bagian motor berdasarkan selectedSubcategoryId
+  const filteredMotorParts = useMemo(() => {
+    if (!selectedSubcategoryId) return allMotorParts;
+    return allMotorParts.filter(
+      (mp) => mp.subcategory.id === selectedSubcategoryId
+    );
+  }, [selectedSubcategoryId, allMotorParts]);
 
-  function setSelectBagianMotor(e: any) {
-    setHarga(undefined);
-    setTextBagianMotor(e.target.value);
-    setIsMotor("");
-    setIsTextBagianMotor2(false);
-    setIsBagianMotor(undefined);
-  }
+  // Filter seal berdasarkan formData.gerai dan formData.motor
+  const filteredSeals = useMemo(() => {
+    if (!formData.gerai || (!formData.motor && !formData.motorLainnya))
+      return [];
+    const gerai = gerais.find((g) => g.name === formData.gerai);
+    const selectedMotor = motors.find(
+      (m) => m.name === (formData.motorLainnya || formData.motor)
+    );
+    if (!gerai) return [];
+    return allSeals.filter(
+      (seal) =>
+        seal.gerai_id === gerai.id &&
+        (!selectedMotor || seal.motor_id === selectedMotor.id)
+    );
+  }, [
+    formData.gerai,
+    formData.motor,
+    formData.motorLainnya,
+    gerais,
+    motors,
+    allSeals,
+  ]);
 
-  const [selectedCategoryIndex, setSelectedCategoryIndex] = useState<any>("");
-  const [selectedTipeSubIndex, setSelectedTipeSubIndex] = useState("");
-  const [selectedHargaIndex, setSelectedHargaIndex] = useState<any>("");
-  const [textBagianMotor2, setTextBagianMotor2] = useState("");
-  const [isTextBagianMotor2, setIsTextBagianMotor2] = useState(false);
-
-  const selectedItem =
-    selectedCategoryIndex !== "" ? hargaSeal[selectedCategoryIndex] : null;
-
-  let tipeSubOptions: any = [];
-  if (selectedItem) {
-    if (Array.isArray(selectedItem.tipe)) {
-      tipeSubOptions = selectedItem.tipe;
-    } else if (selectedItem.subkategori) {
-      tipeSubOptions = [selectedItem.subkategori];
-    }
-  }
-
-  const showTipeSubSelect = tipeSubOptions.length > 0;
-
-  let hargaData = selectedItem ? selectedItem.harga : 0;
-  let hargaOptions: any = [];
-  if (hargaData) {
-    if (Array.isArray(hargaData)) {
-      hargaOptions = hargaData.map((h) => {
-        const label = h.subkategori
-          ? `${h.subkategori} (${h.qty} - ${h.range})`
-          : `(${h.qty} - ${h.range})`;
-        return label;
-      });
-      if (selectedHargaIndex !== "") {
-        hargaData = hargaData[selectedHargaIndex];
-      }
-      //   if (selectedHargaIndex !== "") {
-      //     const selectedHargaObj = hargaData[selectedHargaIndex];
-      //     res = `Qty: ${selectedHargaObj.qty}, Range: ${selectedHargaObj.range}`;
-      //   }
-      // } else {
-      //   if (!showTipeSubSelect || selectedTipeSubIndex !== "") {
-      //     res = `Qty: ${hargaData.qty}, Range: ${hargaData.range}`;
-      //   }
-    }
-  }
-
-  // Handler untuk select Kategori
-  const handleCategoryChange = (e: any) => {
-    setSelectedCategoryIndex(e.target.value);
-    setSelectedTipeSubIndex("");
-    setSelectedHargaIndex("");
+  const handleLayananChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setFormData({
+      ...formData,
+      layanan: value,
+      jenisMotor: "",
+      bagianMotor: "",
+      bagianMotor2: "",
+      motor: "",
+      motorLainnya: "",
+      seal: "",
+    });
+    setSelectedSubcategoryId(null);
+    setHargaLayanan(0);
+    setSelectedSeals([]);
+    setHargaSeal(0);
+    setShowBagianMotor2(false);
   };
 
-  // Handler untuk select Tipe/Subkategori
-  const handleTipeSubChange = (e: any) => {
-    setSelectedTipeSubIndex(e.target.value);
-    setSelectedHargaIndex("");
+  const handleJenisMotorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    const subcategory = filteredSubcategories.find((s) => s.name === value);
+    setFormData({
+      ...formData,
+      jenisMotor: value,
+      bagianMotor: "",
+      bagianMotor2: "",
+      motor: "",
+      motorLainnya: "",
+      seal: "",
+    });
+    setSelectedSubcategoryId(subcategory?.id || null);
+    setHargaLayanan(0);
+    setSelectedSeals([]);
+    setHargaSeal(0);
+    setShowBagianMotor2(false);
   };
 
-  // Handler untuk select Harga (jika harga array)
-  const handleHargaChange = (e: any) => {
-    setSelectedHargaIndex(e.target.value);
+  const handleBagianMotorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setFormData({
+      ...formData,
+      bagianMotor: value,
+      bagianMotor2: "",
+      motor: "",
+      motorLainnya: "",
+      seal: "",
+    });
+    updateHarga(value, "");
+    setShowBagianMotor2(false);
+    setSelectedSeals([]);
+    setHargaSeal(0);
   };
 
-  function setSelectMotor(e: any) {
-    setIsMotor(undefined);
-    setMotor(e.target.value);
-    let res = listMotor?.filter((motor: any) => motor.category == textLayanan);
-    res = res?.filter((motor: any) => motor.subcategory == textJenisMotor);
-    res = res?.filter((motor: any) => motor.service == textBagianMotor);
-    let priceBasic = res[0]
-      ? res[0].price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
-      : "";
-    if (textJenisMotor && textJenisMotor.includes("OHLINS")) {
-      const priceBasic = jenisMotor[0]
-        ? jenisMotor[0].price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
-        : "";
-      setHarga(priceBasic);
+  const handleBagianMotor2Change = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const value = e.target.value;
+    setFormData({ ...formData, bagianMotor2: value });
+    updateHarga(formData.bagianMotor, value);
+  };
+
+  const handleMotorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setFormData({ ...formData, motor: value, motorLainnya: "", seal: "" });
+    setSelectedSeals([]);
+    setHargaSeal(0);
+  };
+
+  const handleSealChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setFormData({ ...formData, seal: value });
+    const selectedSeal = filteredSeals.find((s) => s.cc_range === value);
+    if (selectedSeal && selectedSeal.qty > 0) {
+      setHargaSeal(selectedSeal.price);
+      setSelectedSeals([selectedSeal]);
+    } else {
+      setHargaSeal(0);
+      setSelectedSeals([]);
+    }
+  };
+
+  const updateHarga = (bagianMotor: string, bagianMotor2: string) => {
+    let totalPrice = 0;
+
+    if (bagianMotor) {
+      const part = allMotorParts.find((mp) => mp.service === bagianMotor);
+      totalPrice += part?.price || 0;
     }
 
-    if (textBagianMotor2) {
-      let res = listMotor?.filter(
-        (motor: any) => motor.category == textLayanan
-      );
-      res = res?.filter((motor: any) => motor.subcategory == textJenisMotor);
-      res = res?.filter((motor: any) => motor.service == textBagianMotor2);
-      return setHarga(
-        (Number(priceBasic.replace(".", "")) + res[0].price)
-          .toString()
-          .replace(/\B(?=(\d{3})+(?!\d))/g, ".")
-      );
+    if (bagianMotor2) {
+      const part2 = allMotorParts.find((mp) => mp.service === bagianMotor2);
+      totalPrice += part2?.price || 0;
     }
-    setHarga(priceBasic);
-  }
 
-  const hargaSealNumber =
-    hargaData.range && hargaData.range.length > 0
-      ? hargaData.range[1]
-      : hargaData.range;
-  const hargaNumber = harga && Number(harga.replace(".", ""));
+    setHargaLayanan(totalPrice);
+  };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmit(true);
-    formData.id = formData.nama + Math.random().toString().substring(3, 8);
-    formData.layanan = textLayanan;
-    formData.jenisMotor = textJenisMotor;
-    formData.bagianMotor = textBagianMotor;
-    formData.motor = motorLainnya ?? motor;
-    formData.hargaLayanan = hargaNumber;
-    formData.hargaSeal = hargaSealNumber ?? "0";
-    formData.totalHarga = hargaSealNumber
-      ? hargaNumber + hargaSealNumber
-      : hargaNumber;
-    formData.bagianMotor2 =
-      textBagianMotor2.length > 0 ? textBagianMotor2 : "-";
-    formData.seal = selectedItem ? selectedItem.kategori : "false";
-    e.target.isChatAdmin.value == "sudah"
-      ? (formData.info = "Sudah Chat Admin dari " + e.target.sosmed.value)
-      : (formData.info = "Datang Langsung");
-    setDataPelanggan({
-      ...formData,
-      sumber_info: e.target.sumber_info.value,
-    }).then((res) => {
-      Cookies.set("pelangganGGSuspension", JSON.stringify(res), {
-        expires: 12 / 24,
+    setError(null);
+
+    try {
+      const form = e.currentTarget;
+      const formDataValues = new FormData(form);
+      const isChatAdmin = formDataValues.get("isChatAdmin") as string;
+      const sosmed = formDataValues.get("sosmed") as string;
+      const sumberInfo = formDataValues.get("sumber_info") as string;
+
+      // Validasi input
+      if (
+        !formData.nama ||
+        !formData.noWA ||
+        !formData.plat ||
+        !formData.gerai
+      ) {
+        throw new Error("Harap lengkapi semua kolom wajib.");
+      }
+      if (!formData.layanan || !formData.jenisMotor || !formData.bagianMotor) {
+        throw new Error("Harap pilih layanan, jenis motor, dan bagian motor.");
+      }
+      if (!formData.motor && !formData.motorLainnya) {
+        throw new Error("Harap pilih motor atau masukkan nama motor.");
+      }
+
+      const gerai = gerais.find((g) => g.name === formData.gerai);
+      const selectedMotor = motors.find((m) => m.name === formData.motor);
+      const motorPart = allMotorParts.find(
+        (mp) => mp.service === formData.bagianMotor
+      );
+
+      if (!gerai || !motorPart) {
+        throw new Error("Data gerai atau bagian motor tidak valid.");
+      }
+
+      const payload: ServiceOrderPayload = {
+        nama: formData.nama,
+        no_wa: formData.noWA,
+        plat: formData.plat,
+        gerai_id: gerai.id,
+        motor_id: selectedMotor?.id || 0,
+        motor_part_id: motorPart.id,
+        seal_ids: selectedSeals.map((s) => s.id),
+        total_harga: hargaLayanan + hargaSeal,
+        waktu: new Date().toISOString(),
+        status: "PROGRESS",
+        info: formData.bagianMotor2
+          ? `${
+              isChatAdmin === "sudah"
+                ? `Sudah Chat Admin dari ${sosmed}`
+                : "Datang Langsung"
+            }, Bagian Motor Kedua: ${formData.bagianMotor2}`
+          : isChatAdmin === "sudah"
+          ? `Sudah Chat Admin dari ${sosmed}`
+          : "Datang Langsung",
+        sumber_info: sumberInfo || "Unknown",
+        warranty_claimed: false,
+        layanan: formData.layanan,
+        subcategory: formData.jenisMotor,
+        motor: formData.motorLainnya || formData.motor,
+        bagian_motor: formData.bagianMotor,
+        harga_layanan: hargaLayanan,
+        harga_seal: hargaSeal,
+        seal: formData.seal,
+      };
+
+      if (formData.motorLainnya) {
+        payload.motor_name = formData.motorLainnya;
+      }
+
+      // Log payload untuk debugging
+      console.log("Payload dikirim:", JSON.stringify(payload, null, 2));
+
+      const response = await createServiceOrder(payload);
+
+      // Log respons untuk debugging
+      console.log("Respons diterima:", response);
+
+      // Simpan semua data pelanggan ke cookie
+      Cookies.set("pelangganGGSuspension", JSON.stringify(response), {
+        expires: 12 / 24, // Cookie berlaku selama 12 jam
       });
+
       setTimeout(() => {
-        window.location.href = `/#/antrian/${res?.gerai.toLowerCase()}`;
+        window.location.href = `/#/antrian/${formData.gerai.toLowerCase()}`;
       }, 1000);
-    });
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Gagal mengirim pesanan";
+      console.error("Error saat mengirim pesanan:", err);
+      setIsSubmit(false);
+      setError(errorMessage);
+    }
   };
+
   return (
     <div>
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#e9d712] to-[#d38508]">
         {isSubmit && (
           <div className="h-full w-full fixed z-10 bg-black top-0 opacity-70"></div>
         )}
+        {isLoading && (
+          <div className="fixed inset-0 flex items-center justify-center z-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-orange-400"></div>
+          </div>
+        )}
         <div className="glass-container bg-white backdrop-blur-lg rounded-2xl p-8 md:p-10 shadow-2xl border border-white/20 w-full max-w-md mx-4">
           <h1 className="text-black text-2xl md:text-3xl font-bold text-center mb-6 drop-shadow-md">
             Form Pelanggan
           </h1>
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+              {error}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="flex gap-2 tablet:gap-4">
               <input
@@ -252,6 +386,8 @@ const FormPelanggan = () => {
                 type="text"
                 placeholder="No WA"
                 required
+                pattern="\+62[0-9]{9,12}"
+                title="Nomor WA harus diawali +62 dan memiliki 9-12 digit"
                 className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
                 value={formData.noWA}
                 onChange={(e) =>
@@ -262,103 +398,148 @@ const FormPelanggan = () => {
 
             <div>
               <select
-                className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
-                onChange={setSelectLayanan}
-                name="nama_layanan"
-                id=""
                 required
-                defaultValue={""}
+                className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
+                value={formData.gerai}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    gerai: e.target.value,
+                    layanan: "",
+                    jenisMotor: "",
+                    bagianMotor: "",
+                    bagianMotor2: "",
+                    motor: "",
+                    motorLainnya: "",
+                    seal: "",
+                  })
+                }
               >
-                <option disabled value="">
-                  Pilih Layanan
+                <option value="" disabled>
+                  Pilih Lokasi Gerai
                 </option>
-                {SEMUA_LAYANAN.map((layanan, i) => (
-                  <option key={i} value={layanan}>
-                    {layanan}
+                {gerais.map((gerai) => (
+                  <option key={gerai.id} value={gerai.name}>
+                    {gerai.name}
                   </option>
                 ))}
               </select>
             </div>
+
             <div>
-              {" "}
+              <select
+                className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
+                onChange={handleLayananChange}
+                required
+                value={formData.layanan}
+                disabled={!formData.gerai || categories.length === 0}
+              >
+                <option disabled value="">
+                  Pilih Layanan
+                </option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.name}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              {categories.length === 0 && (
+                <p className="text-red-500 mt-2">
+                  Tidak ada layanan tersedia. Silakan coba lagi.
+                </p>
+              )}
+            </div>
+
+            <div>
               <select
                 className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
                 required
-                defaultValue={""}
-                onChange={setSelectJenisMotor}
-                value={isJenisMotor && isJenisMotor}
-                disabled={layanan ? false : true}
-                id=""
+                onChange={handleJenisMotorChange}
+                value={formData.jenisMotor}
+                disabled={
+                  !formData.layanan || filteredSubcategories.length === 0
+                }
               >
                 <option disabled value="">
                   Pilih Jenis Motor
                 </option>
-                {layanan?.map((motor: any, i: number) => (
-                  <option key={i} value={motor.subcategory}>
-                    {motor.subcategory}
+                {filteredSubcategories.map((subcategory) => (
+                  <option key={subcategory.id} value={subcategory.name}>
+                    {subcategory.name}
                   </option>
                 ))}
               </select>
+              {formData.layanan && filteredSubcategories.length === 0 && (
+                <p className="text-yellow-600 mt-2">
+                  Tidak ada jenis motor tersedia untuk layanan ini.
+                </p>
+              )}
             </div>
 
             <div className="flex justify-between gap-3">
               <select
                 className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
                 required
-                onChange={setSelectBagianMotor}
-                id=""
-                disabled={jenisMotor ? false : true}
-                defaultValue={""}
-                value={isBagianMotor && isBagianMotor}
+                onChange={handleBagianMotorChange}
+                disabled={
+                  !formData.jenisMotor || filteredMotorParts.length === 0
+                }
+                value={formData.bagianMotor}
               >
                 <option disabled value="">
                   Pilih Bagian Motor
                 </option>
-                {jenisMotor?.map((motor: any, i: number) => (
-                  <option key={i} value={motor.service}>
-                    {motor.service}
+                {filteredMotorParts.map((part) => (
+                  <option key={part.id} value={part.service}>
+                    {part.service}
                   </option>
                 ))}
+                {filteredMotorParts.length === 0 && formData.jenisMotor && (
+                  <option disabled value="">
+                    Tidak ada bagian motor tersedia
+                  </option>
+                )}
               </select>
               <span
                 onClick={() => {
-                  setIsTextBagianMotor2(!isTextBagianMotor2);
-                  setTextBagianMotor2("");
-                  if (isTextBagianMotor2) setIsMotor("");
-                  setHarga(undefined);
+                  setShowBagianMotor2(!showBagianMotor2);
+                  setFormData({ ...formData, bagianMotor2: "" });
+                  updateHarga(formData.bagianMotor, "");
                 }}
-                className="bg-orange-400 flex justify-center  w-10 h-10 rounded-full text-2xl text-white cursor-pointer font-bold"
+                className="bg-orange-400 flex justify-center w-10 h-10 rounded-full text-2xl text-white cursor-pointer font-bold"
               >
-                {isTextBagianMotor2 ? "-" : "+"}
+                {showBagianMotor2 ? "-" : "+"}
               </span>
             </div>
 
-            {isTextBagianMotor2 && (
+            {showBagianMotor2 && (
               <div>
                 <select
                   className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
-                  required
-                  onChange={(e) => {
-                    setTextBagianMotor2(e.target.value);
-                    setFormData({
-                      ...formData,
-                      bagianMotor2: e.target.value,
-                    });
-                    setIsMotor("");
-                  }}
-                  id=""
-                  disabled={jenisMotor ? false : true}
-                  defaultValue={""}
-                  value={textBagianMotor2 && textBagianMotor2}
+                  onChange={handleBagianMotor2Change}
+                  disabled={
+                    !formData.jenisMotor || filteredMotorParts.length === 0
+                  }
+                  value={formData.bagianMotor2}
                 >
                   <option disabled value="">
                     Pilih Bagian Motor Lainnya
                   </option>
-                  {jenisMotor?.map((motor: any, i: number) => (
-                    <option key={i} value={motor.service}>
-                      {motor.service}
-                    </option>
-                  ))}
+                  {filteredMotorParts
+                    .filter((mp) => mp.service !== formData.bagianMotor)
+                    .map((part) => (
+                      <option key={part.id} value={part.service}>
+                        {part.service}
+                      </option>
+                    ))}
+                  {filteredMotorParts.filter(
+                    (mp) => mp.service !== formData.bagianMotor
+                  ).length === 0 &&
+                    formData.jenisMotor && (
+                      <option disabled value="">
+                        Tidak ada bagian motor lain tersedia
+                      </option>
+                    )}
                 </select>
               </div>
             )}
@@ -367,146 +548,72 @@ const FormPelanggan = () => {
               <select
                 className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
                 required
-                onChange={setSelectMotor}
-                id=""
-                disabled={jenisMotor ? false : true}
-                defaultValue={""}
-                value={isMotor && isMotor}
+                onChange={handleMotorChange}
+                disabled={!formData.bagianMotor || motors.length === 0}
+                value={formData.motor}
               >
                 <option disabled value="">
                   Pilih Motor
                 </option>
-                {!textJenisMotor?.includes("OHLINS") &&
-                  jenisMotor?.length > 0 &&
-                  jenisMotor[0].motor.map((motor: any, i: number) => (
-                    <option key={i} value={motor}>
-                      {motor}
-                    </option>
-                  ))}
+                {motors.map((motor) => (
+                  <option key={motor.id} value={motor.name}>
+                    {motor.name}
+                  </option>
+                ))}
                 <option value="Lainnya">Lainnya</option>
               </select>
+              {formData.bagianMotor && motors.length === 0 && (
+                <p className="text-yellow-600 mt-2">
+                  Tidak ada motor tersedia. Silakan pilih "Lainnya".
+                </p>
+              )}
             </div>
 
-            {motor == "Lainnya" && !textJenisMotor?.includes("OHLINS") && (
+            {formData.motor === "Lainnya" && (
               <input
                 required
-                onChange={(e) => setMotorLainnya(e.target.value)}
+                onChange={(e) =>
+                  setFormData({ ...formData, motorLainnya: e.target.value })
+                }
                 type="text"
                 placeholder="Tulis Nama Motor"
                 className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
+                value={formData.motorLainnya}
               />
             )}
 
             <div>
               <select
-                id="kategoriSelect"
                 className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
-                value={selectedCategoryIndex}
-                disabled={!harga ? true : false}
-                onChange={handleCategoryChange}
-              >
-                <option disabled value="">
-                  Pilih Seal
-                </option>
-                <option value="">Batalkan</option>
-                {hargaSeal &&
-                  hargaSeal.map((item: any, index: number) => (
-                    <option key={index} value={index}>
-                      {item.kategori}
-                    </option>
-                  ))}
-              </select>
-            </div>
-
-            {showTipeSubSelect && (
-              <div>
-                <select
-                  id="tipeSubSelect"
-                  required
-                  className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
-                  value={selectedTipeSubIndex}
-                  onChange={handleTipeSubChange}
-                >
-                  <option disabled value="">
-                    Pilih Tipe / Subkategori
-                  </option>
-                  {tipeSubOptions.map((option: any, idx: any) => (
-                    <option key={idx} value={idx}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {(hargaData.length > 0 || selectedHargaIndex) && (
-              <div>
-                <select
-                  required
-                  id="hargaSelect"
-                  className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 placeholder:text-black/70 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all"
-                  value={selectedHargaIndex}
-                  onChange={handleHargaChange}
-                >
-                  <option value="">Pilih Harga</option>
-                  {hargaOptions.map((optionLabel: any, idx: any) => (
-                    <option key={idx} value={idx}>
-                      {optionLabel}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div>
-              <select
-                required
-                className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent appearance-none transition-all"
-                value={formData.gerai}
-                onChange={(e) =>
-                  setFormData({ ...formData, gerai: e.target.value })
+                onChange={handleSealChange}
+                value={formData.seal}
+                disabled={
+                  !formData.gerai ||
+                  (!formData.motor && !formData.motorLainnya) ||
+                  filteredSeals.length === 0
                 }
               >
-                <option value="" disabled className="bg-white text-black">
-                  Pilih Lokasi Gerai
-                </option>
-                <option value="BEKASI" className="bg-white text-black">
-                  BEKASI (PUSAT)
-                </option>
-                <option value="TANGERANG" className="bg-white text-black">
-                  TANGERANG
-                </option>
-                <option value="DEPOK" className="bg-white text-black">
-                  DEPOK
-                </option>
-                <option value="JAKTIM" className="bg-white text-black">
-                  JAKTIM
-                </option>
-                <option value="CIKARANG" className="bg-white text-black">
-                  CIKARANG
-                </option>
-                <option value="BOGOR" className="bg-white text-black">
-                  BOGOR
-                </option>
-                <option value="JAKSEL" className="bg-white text-black">
-                  JAKSEL
-                </option>
+                <option value="">Pilih Seal (Opsional)</option>
+                {filteredSeals
+                  .filter((seal) => seal.qty > 0)
+                  .map((seal) => (
+                    <option key={seal.id} value={seal.cc_range}>
+                      {seal.cc_range} (Rp. {seal.price.toLocaleString("id-ID")},
+                      Stok: {seal.qty})
+                    </option>
+                  ))}
               </select>
+              {formData.gerai &&
+                (formData.motor || formData.motorLainnya) &&
+                filteredSeals.length === 0 && (
+                  <p className="text-yellow-600 mt-2">
+                    Tidak ada seal tersedia untuk motor dan gerai ini.
+                  </p>
+                )}
             </div>
 
-            <div>
-              {/* <input
-              onChange={(e) =>
-                setFormData({ ...formData, info: e.target.value })
-              }
-              type="text"
-              required
-              placeholder="Dapat Info Dari Mana?"
-              className="w-full px-4 py-3 bg-slate-100 backdrop-blur-sm rounded-lg border border-white/20 text-black focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent appearance-none transition-all"
-            /> */}
-            </div>
             <div className="flex flex-col gap-1">
-              <p className="font-semibold">Sudah Chat Admin ?</p>
+              <p className="font-semibold">Sudah Chat Admin?</p>
               <span className="flex items-center">
                 <input
                   onChange={() => setHasChatAdmin(true)}
@@ -515,11 +622,11 @@ const FormPelanggan = () => {
                   value="sudah"
                   name="isChatAdmin"
                   required
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
                 />
                 <label
                   htmlFor="default-radio-2"
-                  className="ms-2 text-sm text-gray-900 dark:text-gray-300"
+                  className="ms-2 text-sm text-gray-900"
                 >
                   Sudah
                 </label>
@@ -533,12 +640,9 @@ const FormPelanggan = () => {
                       type="radio"
                       value="IG"
                       name="sosmed"
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
                     />
-                    <label
-                      htmlFor="IG"
-                      className="ms-2 text-sm text-gray-900 dark:text-gray-300"
-                    >
+                    <label htmlFor="IG" className="ms-2 text-sm text-gray-900">
                       IG
                     </label>
                   </span>
@@ -549,11 +653,11 @@ const FormPelanggan = () => {
                       type="radio"
                       value="Tiktok"
                       name="sosmed"
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
                     />
                     <label
                       htmlFor="Tiktok"
-                      className="ms-2 text-sm text-gray-900 dark:text-gray-300"
+                      className="ms-2 text-sm text-gray-900"
                     >
                       Tiktok
                     </label>
@@ -565,18 +669,14 @@ const FormPelanggan = () => {
                       type="radio"
                       value="WA"
                       name="sosmed"
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
                     />
-                    <label
-                      htmlFor="WA"
-                      className="ms-2 text-sm text-gray-900 dark:text-gray-300"
-                    >
+                    <label htmlFor="WA" className="ms-2 text-sm text-gray-900">
                       WA
                     </label>
                   </span>
                 </div>
               )}
-
               <span className="flex items-center">
                 <input
                   required
@@ -585,12 +685,9 @@ const FormPelanggan = () => {
                   value="datang langsung"
                   name="isChatAdmin"
                   onChange={() => setHasChatAdmin(false)}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
                 />
-                <label
-                  htmlFor="datang"
-                  className="ms-2 text-sm text-gray-900 dark:text-gray-300"
-                >
+                <label htmlFor="datang" className="ms-2 text-sm text-gray-900">
                   Datang Langsung
                 </label>
               </span>
@@ -604,8 +701,9 @@ const FormPelanggan = () => {
                     required
                     id="IG2"
                     name="sumber_info"
-                    value={"IG"}
+                    value="IG"
                     type="radio"
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
                   />
                   <label htmlFor="IG2">IG</label>
                 </span>
@@ -613,8 +711,9 @@ const FormPelanggan = () => {
                   <input
                     id="Tiktok2"
                     name="sumber_info"
-                    value={"Tiktok"}
+                    value="Tiktok"
                     type="radio"
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
                   />
                   <label htmlFor="Tiktok2">Tiktok</label>
                 </span>
@@ -622,8 +721,9 @@ const FormPelanggan = () => {
                   <input
                     id="Facebook"
                     name="sumber_info"
-                    value={"Facebook"}
+                    value="Facebook"
                     type="radio"
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
                   />
                   <label htmlFor="Facebook">Facebook</label>
                 </span>
@@ -631,43 +731,81 @@ const FormPelanggan = () => {
                   <input
                     id="Youtube"
                     name="sumber_info"
-                    value={"Youtube"}
+                    value="Youtube"
                     type="radio"
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
                   />
                   <label htmlFor="Youtube">Youtube</label>
                 </span>
               </div>
             </div>
 
-            <div>
-              <span className="flex justify-center text-center font-bold text-lg">
-                {harga && hargaSealNumber && (
-                  <span className="flex gap-1">
-                    <p>{Number(harga.replace(".", ""))}</p> <p>+</p>{" "}
-                    <p>{hargaSealNumber}</p>
-                  </span>
-                )}
-              </span>
-              {harga && (
-                <p className="text-center font-bold text-xl text-green-700">
-                  Total Harga :{" "}
-                  {!hargaSealNumber
-                    ? harga
-                    : (hargaNumber + hargaSealNumber)
-                        .toString()
-                        .replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
-                </p>
-              )}
-              {hargaData != 0 && (
-                <p className="text-md text-red-500 text-center">
-                  ( harga seal hanya estimasi )
-                </p>
-              )}
-            </div>
+            {(hargaLayanan > 0 || hargaSeal > 0) && (
+              <div className="bg-gray-800/80 backdrop-blur-md rounded-xl p-4 shadow-lg border border-orange-600/50 transition-all duration-300 hover:shadow-xl">
+                <div className="flex flex-col items-center gap-2">
+                  {hargaLayanan > 0 && (
+                    <div className="w-full flex justify-between items-center text-orange-100 font-semibold text-lg">
+                      <span className="flex items-center gap-2">
+                        <svg
+                          className="w-5 h-5 text-orange-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13 10V3L4 14h7v7l9-11h-7z"
+                          />
+                        </svg>
+                        Layanan
+                      </span>
+                      <p className="text-orange-300">
+                        Rp. {hargaLayanan.toLocaleString("id-ID")}
+                      </p>
+                    </div>
+                  )}
+                  {hargaSeal > 0 && (
+                    <div className="w-full flex justify-between items-center text-orange-100 font-semibold text-lg">
+                      <span className="flex items-center gap-2">
+                        <svg
+                          className="w-5 h-5 text-orange-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0-4c-3.86 0-7 3.14-7 7s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7z"
+                          />
+                        </svg>
+                        Seal
+                      </span>
+                      <p className="text-orange-300">
+                        Rp. {hargaSeal.toLocaleString("id-ID")}
+                      </p>
+                    </div>
+                  )}
+                  <div className="w-full h-px bg-gradient-to-r from-transparent via-orange-400/50 to-transparent my-2" />
+                  <div className="flex justify-between items-center w-full">
+                    <span className="text-orange-100 font-bold text-xl">
+                      Total Harga
+                    </span>
+                    <p className="text-2xl font-extrabold bg-gradient-to-r from-yellow-300 to-orange-600 text-transparent bg-clip-text">
+                      Rp. {(hargaLayanan + hargaSeal).toLocaleString("id-ID")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <button
               type="submit"
-              className="w-full py-3 bg-orange-400 text-white font-bold rounded-lg transition-all duration-300 uppercase tracking-wider cursor-pointer"
+              className="w-full py-3 bg-orange-400 text-white font-bold rounded-lg transition-all duration-300 uppercase tracking-wider cursor-pointer hover:bg-orange-500"
+              disabled={isSubmit || isLoading}
             >
               KIRIM
             </button>
