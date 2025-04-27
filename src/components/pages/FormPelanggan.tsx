@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import Cookies from "js-cookie";
+<<<<<<< HEAD
 import {
   getServices,
   getServiceTypes,
@@ -23,6 +24,26 @@ const FormPelanggan = () => {
   const [isSubmit, setIsSubmit] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+=======
+import { useState } from "react";
+import { motorcycles } from "../layouts/SealPricePicker";
+
+const FormPelanggan = () => {
+  const listMotor = dataListMotor.layanan;
+  const hargaSeal: any = motorcycles;
+  const [layanan, setLayanan] = useState<any>(undefined);
+  const [jenisMotor, setJenisMotor] = useState<any>(undefined);
+  const [motor, setMotor] = useState<any>(undefined);
+  const [motorLainnya, setMotorLainnya] = useState<any>(undefined);
+  const [textLayanan, setTextLayanan] = useState<any>(undefined);
+  const [textJenisMotor, setTextJenisMotor] = useState<any>(undefined);
+  const [textBagianMotor, setTextBagianMotor] = useState<any>(undefined);
+  const [harga, setHarga] = useState<any>(undefined);
+  const [isMotor, setIsMotor] = useState<any>(undefined);
+  const [isBagianMotor, setIsBagianMotor] = useState<any>(undefined);
+  const [isJenisMotor, setisJenisMotor] = useState<any>(undefined);
+  const [hasChatAdmin, setHasChatAdmin] = useState<boolean>(false);
+>>>>>>> 779958a45086e399c5e2a32852ec5007782f8021
 
   const [formData, setFormData] = useState({
     nama: "",

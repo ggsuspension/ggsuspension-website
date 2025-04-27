@@ -64,7 +64,7 @@ const PremiumTestimonials = () => {
       text: "Bgus servis di sini",
       product: "Downsize",
       vehicle: "KLX",
-      background: "bg-gradient-to-r from-blue-700 to-black"
+      background: "bg-gradient-to-r from-gray-700 to-black"
     },
     {
       id: 4,
@@ -76,7 +76,7 @@ const PremiumTestimonials = () => {
       text: "Bgus servis di sini",
       product: "Downsize",
       vehicle: "Kawasaki Ninja",
-      background: "bg-gradient-to-r from-blue-700 to-black"
+      background: "bg-gradient-to-r from-green-900 to-black"
     }
   ];
   

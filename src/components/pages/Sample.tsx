@@ -60,7 +60,7 @@ const Sample: React.FC = () => {
           className="bg-white desktop:hidden"
         />
         <video
-          src="./banner-dekstop.mov"
+          src="./banner-15detik.mp4"
           autoPlay
           muted
           loop
