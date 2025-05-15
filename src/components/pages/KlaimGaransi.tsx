@@ -123,9 +123,9 @@ const KlaimGaransi = () => {
     }
   };
 
-  const normalizeString = (str: string): string => {
-    return str.toLowerCase().replace(/\s+/g, "");
-  };
+  // const normalizeString = (str: string): string => {
+  //   return str.toLowerCase().replace(/\s+/g, "");
+  // };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

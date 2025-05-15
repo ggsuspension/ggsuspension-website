@@ -41,7 +41,9 @@ export interface StockRequest {
   rejected_at?: string | null;
   warehouse_seal?: {
     id: number;
-    cc_range: string;
+    category: string;
+    type: string;
+    size: string;
     price: number;
     qty: number;
     motor_id: number;
@@ -64,6 +66,7 @@ export interface StockRequest {
 export interface Category {
   id: number;
   name: string;
+  img_path?: string;
 }
 
 export interface Subcategory {
@@ -71,12 +74,14 @@ export interface Subcategory {
   name: string;
   category_id?: number;
   category?: { id: number; name: string };
+  img_path: string;
 }
 
 export interface MotorPart {
   id: number;
-  service: string;
+  name: string;
   price: number;
+  subcategory_id: number | string;
   subcategory: {
     id: number;
     name: string;
@@ -84,6 +89,7 @@ export interface MotorPart {
   };
   motors?: string[];
   orders?: { id: number; nama: string }[];
+  img_path: string;
 }
 
 export interface Motor {
@@ -101,9 +107,11 @@ export interface Gerai {
   updated_at?: string;
 }
 
-export interface Seal {
+export interface Sparepart {
   id: number;
-  cc_range: string;
+  category: string;
+  type: string;
+  size: string;
   price: number;
   qty: number;
   gerai_id: number;
@@ -149,7 +157,7 @@ export interface Antrian {
   waktu: string;
   geraiId: number;
   totalHarga: number;
-  status: "PROGRESS" | "FINISHED" | "CANCELLED";
+  status: string;
   createdAt: string;
   updatedAt?: string;
   nama?: string;
@@ -162,6 +170,7 @@ export interface Antrian {
     created_at?: string;
     updated_at?: string;
   };
+  layanan: string;
   motor?: {
     id: number;
     name: string;
@@ -208,11 +217,13 @@ export interface TransformedAntrian {
   id: number;
   nama: string;
   plat: string;
+  noWA: string;
   no_wa: string;
-  layanan: string;
+  layanan?: string;
   subcategory: string;
   motor: string;
   bagianMotor: string;
+  bagianMotor2: string;
   hargaLayanan: number;
   hargaSeal: number;
   totalHarga: number;
@@ -230,7 +241,7 @@ export interface GroupedAntrian {
 
 export interface WarehouseSeal {
   id: number;
-  cc_range: string;
+  type: string;
   price: number;
   qty: number;
   motor_id: number;
@@ -238,11 +249,15 @@ export interface WarehouseSeal {
   updated_at: string;
   motor?: Motor;
   gerai_id?: number;
+  size: string;
+  category: string;
 }
 
 export interface CreateSealPayload {
   motor_id: number;
-  cc_range: string;
   price: number;
   qty: number;
+  type: string;
+  size: string;
+  category: string;
 }

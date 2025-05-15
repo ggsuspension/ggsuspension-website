@@ -49,7 +49,7 @@ export default function NavbarDashboard({ userRole }: NavbarProps) {
         name: "Finance",
         icon: <Wallet className="h-4 w-4" />,
         path: "/finance",
-      },
+      }
     ],
     gudang: [
       {
@@ -83,6 +83,10 @@ export default function NavbarDashboard({ userRole }: NavbarProps) {
         name: "Finance",
         icon: <Wallet className="h-4 w-4" />,
         path: "/ceo-finance",
+      }, {
+        name: "Spareparts",
+        icon: <PackageCheck className="h-4 w-4" />,
+        path: "/spareparts",
       },
     ],
     cs: [
@@ -99,8 +103,6 @@ export default function NavbarDashboard({ userRole }: NavbarProps) {
     ],
   };
 
-  // Debugging: Periksa nilai userRole
-  console.log("User Role in Navbar:", userRole);
 
   // Normalisasi userRole ke huruf kecil agar case-insensitive
   const normalizedRole =

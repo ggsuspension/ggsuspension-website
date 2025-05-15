@@ -1,18 +1,18 @@
 import axios from "axios";
 import {
   Motor,
-  MotorPart,
   ServiceOrderPayload,
-  Seal,
   WarehouseSeal,
   CreateSealPayload,
   StockRequest,
   Antrian,
+  Sparepart,
 } from "@/types";
 import { getAuthToken, setAuthToken } from "./auth";
+import { API_BASE_URL } from "./ggsAPI";
 
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000/api",
+  baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -20,7 +20,7 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = getAuthToken(); // Gunakan getAuthToken dari auth.ts
+    const token = getAuthToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log("Interceptor: Menambahkan token ke header", {
@@ -60,14 +60,20 @@ export const formatDateForAPI = (date: Date): string => {
   const year = date.getFullYear().toString().slice(-2);
   return `${day}-${month}-${year}`;
 };
+export const formatDateIncomeExpense = (date: Date): string => {
+  const day = ("0" + date.getDate()).slice(-2);
+  const month = ("0" + (date.getMonth() + 1)).slice(-2);
+  const year = date.getFullYear().toString().slice(-2);
+  return `${year}-${month}-${day}`;
+};
 
 // Fungsi untuk register
 export const registerUser = async (data: {
   username: string;
   password: string;
-  gerai?: string;
+  gerai_id: string;
   role?: string;
-}): Promise<{ message: string; userId: number }> => {
+}) => {
   try {
     const response = await api.post("/auth/register", data);
     return response.data;
@@ -79,7 +85,7 @@ export const registerUser = async (data: {
         }`
       );
     }
-    throw new Error(`Failed to register user: ${(error as Error).message}`);
+    throw new Error(`Failed to register: ${(error as Error).message}`);
   }
 };
 
@@ -158,53 +164,20 @@ export const getMotors = async ({
   }
 };
 
-export const getMotorParts = async ({
-  signal,
-}: { signal?: AbortSignal } = {}): Promise<MotorPart[]> => {
+export async function getMotorParts(options: any = {}) {
   try {
-    const response = await api.get("/motorParts", {
-      signal,
-      headers: {
-        "Cache-Control": "no-cache",
-      },
+    const response = await api.get(`/motorParts`, {
+      signal: options.signal,
     });
-    console.log("getMotorParts - Status:", response.status);
-    console.log("getMotorParts - Raw Data:", response.data);
-    const data = Array.isArray(response.data)
-      ? response.data.map((item: any) => ({
-          id: item.id,
-          service: item.service,
-          price: item.price || 0,
-          subcategory: {
-            id: item.subcategory.id,
-            name: item.subcategory.name,
-            category: {
-              id: item.subcategory.category.id || item.subcategory.category,
-              name: item.subcategory.category.name || item.subcategory.category,
-            },
-          },
-          motors: Array.isArray(item.motors) ? item.motors : [],
-          orders: item.orders || [],
-        }))
-      : [];
-    console.log("getMotorParts - Processed Data:", data);
-    return data;
-  } catch (error) {
-    console.error("getMotorParts - Error:", error);
-    if (axios.isAxiosError(error)) {
-      throw new Error(
-        `Failed to fetch motor parts: ${
-          error.response?.data?.error || error.message
-        }`
-      );
-    }
-    throw new Error(`Failed to fetch motor parts: ${(error as Error).message}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(`Failed to fetch motor parts: ${error.message}`);
   }
-};
+}
 
 export const getAllSeals = async ({
   signal,
-}: { signal?: AbortSignal } = {}): Promise<Seal[]> => {
+}: { signal?: AbortSignal } = {}): Promise<Sparepart[]> => {
   try {
     const response = await api.get(`/seals/getAll`, {
       signal,
@@ -213,39 +186,7 @@ export const getAllSeals = async ({
       },
     });
     console.log("getAllSeals - Raw Data:", response.data);
-
-    const data = Array.isArray(response.data)
-      ? response.data.map((item: any) => ({
-          id: item.id,
-          cc_range: item.cc_range,
-          price: item.price || 0,
-          qty: item.qty || 0,
-          gerai_id: item.gerai_id,
-          motor_id: item.motor_id,
-          created_at: item.created_at,
-          updated_at: item.updated_at,
-          motor: item.motor
-            ? {
-                id: item.motor.id,
-                name: item.motor.name,
-                created_at: item.motor.created_at,
-                updated_at: item.motor.updated_at,
-              }
-            : undefined,
-          gerai: item.gerai
-            ? {
-                id: item.gerai.id,
-                name: item.gerai.name,
-                location: item.gerai.location,
-                created_at: item.gerai.created_at,
-                updated_at: item.gerai.updated_at,
-              }
-            : undefined,
-        }))
-      : [];
-
-    console.log("getAllSeals - Processed Data:", data);
-    return data;
+    return response.data;
   } catch (error) {
     console.error("getAllSeals - Error:", error);
     if (axios.isAxiosError(error)) {
@@ -266,7 +207,7 @@ export const getSealsByGerai = async ({
   geraiId: number;
   motorId?: number;
   signal?: AbortSignal;
-}): Promise<Seal[]> => {
+}): Promise<Sparepart[]> => {
   try {
     const seals = await getAllSeals({ signal });
     console.log(`getSealsByGerai - All Seals:`, seals);
@@ -301,7 +242,7 @@ export const getSealsByGerai = async ({
 // Fungsi untuk mengirim permintaan seal baru
 export const requestSeal = async (payload: {
   gerai_id: number;
-  warehouse_seal_id: number;
+  sparepart_id: number;
   qty_requested: number;
 }) => {
   try {
@@ -322,6 +263,7 @@ export const requestSeal = async (payload: {
 export const approveStockRequest = async (id: number) => {
   try {
     const response = await api.post(`/seals/stock-requests/${id}/approve`);
+    console.log("Response from approveStockRequest:", response.data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
@@ -339,9 +281,7 @@ export const approveStockRequest = async (id: number) => {
 
 export const rejectStockRequest = async (id: number) => {
   try {
-    console.log(`Rejecting stock request with id: ${id}`);
     const response = await api.post(`/seals/stock-requests/${id}/rejected`);
-    console.log("Reject Stock Request Response:", response.data);
     return response.data.data;
   } catch (error: any) {
     console.error("Error rejecting stock request:", {
@@ -358,10 +298,7 @@ export const rejectStockRequest = async (id: number) => {
 
 export const getStockRequestsByGerai = async (geraiId: number) => {
   try {
-    console.log(`Fetching stock requests for geraiId: ${geraiId}`);
     const response = await api.get(`/seals/stock-requests/gerai/${geraiId}`);
-    console.log("Raw Stock Requests Response:", response);
-    console.log("Response Data:", response.data);
     if (!response.data || !response.data.data) {
       console.warn("No data found in response:", response.data);
       return [];
@@ -415,11 +352,9 @@ export const createPelanggan = async (data: any): Promise<any> => {
 export const getAntrianByDateAndGerai = async ({
   geraiId,
   date,
-  signal,
 }: {
   geraiId: number | string;
   date: string;
-  signal?: AbortSignal;
 }): Promise<{ data: Antrian[] }> => {
   try {
     const response = await api.get("/antrian", {
@@ -427,7 +362,6 @@ export const getAntrianByDateAndGerai = async ({
         gerai_id: geraiId,
         date,
       },
-      signal,
     });
     return {
       data: Array.isArray(response.data.data) ? response.data.data : [],
@@ -455,20 +389,47 @@ export const getAntrianByDateAndGerai = async ({
   }
 };
 
-export const updateAntrian = async (
-  id: number,
-  data: {
-    nama?: string;
-    plat?: string;
-    no_wa?: string;
-    waktu?: string;
-    total_harga?: number;
-    status?: string;
-    motor_id?: number;
-    motor_part_id?: number;
-    seal_ids?: number[];
+export const getAntrian = async ({
+  geraiId,
+  date,
+}: {
+  geraiId: number | string;
+  date: string;
+}): Promise<{ data: Antrian[] }> => {
+  try {
+    const response = await api.get("/antrian", {
+      params: {
+        gerai_id: geraiId,
+        date,
+      },
+    });
+    return {
+      data: Array.isArray(response.data.data) ? response.data.data : [],
+    };
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      const { status, data } = error.response;
+      let message = data?.error || error.message;
+      if (status === 401) {
+        message = "Sesi telah berakhir. Silakan login ulang.";
+        localStorage.removeItem("token");
+        window.location.href = "/auth/login";
+      } else if (status === 403) {
+        message = "Akses ditolak. Anda tidak memiliki izin untuk gerai ini.";
+      } else if (status === 422) {
+        message = data?.details
+          ? Object.values(data.details).join(", ")
+          : "Input tidak valid.";
+      } else if (status === 404) {
+        message = "Data antrian tidak ditemukan.";
+      }
+      throw new Error(message);
+    }
+    throw new Error(`Gagal mengambil antrian: ${(error as Error).message}`);
   }
-): Promise<any> => {
+};
+
+export const updateAntrian = async (id: number, data: any) => {
   try {
     const token = getAuthToken();
     console.log(
@@ -537,8 +498,8 @@ export const cancelOrder = async (id: number): Promise<any> => {
 
 export const getAntrianSemuaGerai = async (): Promise<any> => {
   try {
-    const response = await api.get("/customers/getAll");
-    return Array.isArray(response.data) ? response.data : [];
+    const response = await api.get("/antrian/all");
+    return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new Error(
@@ -583,31 +544,35 @@ export const getCustomersByGerai = async (gerai: string): Promise<any> => {
   }
 };
 
-export const getAntrianByGeraiAndDate = async (
-  date: string,
-  gerai: string | number
-): Promise<Antrian[]> => {
+export const getAntrianByGeraiAndDate = async (date: string, gerai: any) => {
   try {
-    let geraiId: number;
+    let semua_antrian = await getAntrianCustomer();
+    semua_antrian = semua_antrian.filter(
+      (item: any) => item.gerai.toLowerCase() == gerai.toLowerCase()
+    );
+    semua_antrian = semua_antrian.filter(
+      (item: any) => item.created_at.split("T")[0] == date.split("T")[0]
+    );
+    return semua_antrian;
 
-    if (typeof gerai === "string") {
-      const gerais = await getGerais();
-      const selectedGerai = gerais.find(
-        (g) => g.name.toLowerCase() === gerai.toLowerCase()
-      );
-      if (!selectedGerai) {
-        throw new Error(`Gerai ${gerai} tidak ditemukan`);
-      }
-      geraiId = selectedGerai.id;
-    } else {
-      geraiId = gerai;
-    }
-
-    const response = await api.get("/antrian", {
-      params: { date, gerai_id: geraiId },
-    });
-    console.log("getAntrianByGeraiAndDate - Response:", response.data);
-    return Array.isArray(response.data.data) ? response.data.data : [];
+    // let geraiId: number;
+    // if (typeof gerai === "string") {
+    //   const gerais = await getGerais();
+    //   const selectedGerai = gerais.find(
+    //     (g) => g.name.toLowerCase() === gerai.toLowerCase()
+    //   );
+    //   if (!selectedGerai) {
+    //     throw new Error(`Gerai ${gerai} tidak ditemukan`);
+    //   }
+    //   geraiId = selectedGerai.id;
+    // } else {
+    //   geraiId = gerai;
+    // }
+    // const response = await api.get("/antrian", {
+    //   params: { date, gerai_id: geraiId },
+    // });
+    // console.log("getAntrianByGeraiAndDate - Response:", response.data);
+    // return Array.isArray(response.data.data) ? response.data.data : [];
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new Error(
@@ -718,14 +683,13 @@ export const getTotalPendapatan = async (
   endDate?: string
 ): Promise<number> => {
   try {
-    const response = await api.get("/finance/total", {
+    const response = await api.get("/daily-net-revenue/total-revenue", {
       params: {
         startDate: startDate || formatDateForAPI(new Date()),
         endDate: endDate || formatDateForAPI(new Date()),
       },
     });
-    console.log("Raw Total Pendapatan Response:", response.data);
-    return response.data.totalRevenue || 0;
+    return response.data.data || 0;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       throw new Error(
@@ -780,7 +744,6 @@ export const getGerais = async ({
 > => {
   try {
     const response = await api.get("/gerais/getAll", { signal });
-    console.log("getGerais - Data:", response.data);
     return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.error("getGerais - Error:", error);
@@ -816,6 +779,17 @@ export const getDailyTrend = async (
     throw new Error(`Failed to fetch daily trend: ${(error as Error).message}`);
   }
 };
+
+export async function getDailyIncomeExpense(
+  date: string,
+  gerai_id: number | string
+) {
+  const result = await api.post("/daily-net-revenue/daily-income-expense", {
+    date,
+    gerai_id,
+  });
+  return result.data.data[0];
+}
 
 export const getDailyTrendTotal = async (
   startDate: string,
@@ -865,6 +839,41 @@ export const calculateDailyNetRevenue = async (
   }
 };
 
+export async function antrianSemuaGerai() {
+  try {
+    const response = await api.get("/antrian/getAll");
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(
+        `Failed to fetch antrian: ${
+          error.response.data?.error || error.message
+        }`
+      );
+    }
+    throw new Error(`Failed to fetch antrian: ${(error as Error).message}`);
+  }
+}
+export async function totalPendapatan(id: number) {
+  try {
+    let pendapatan = await api.get("/antrian/getAll");
+    pendapatan = pendapatan.data.data
+      .filter((item: any) => item.gerai_id == id)
+      .filter((item: any) => item.status === "FINISHED")
+      .reduce((total: number, item: any) => total + item.harga_layanan, 0);
+    return pendapatan;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(
+        `Failed to fetch antrian: ${
+          error.response.data?.error || error.message
+        }`
+      );
+    }
+    throw new Error(`Failed to fetch antrian: ${(error as Error).message}`);
+  }
+}
+
 // export const getAllExpenses = async (
 //   geraiId?: number,
 //   startDate?: string,
@@ -911,34 +920,17 @@ export const calculateDailyNetRevenue = async (
 // };
 
 export const getAllExpenses = async (
-  geraiId: number,
-  startDate: string,
-  endDate: string
+  gerai_id: number | undefined,
+  start_date: string,
+  end_date: string
 ) => {
-  console.log("Calling getAllExpenses with:", {
-    geraiId,
-    startDate,
-    endDate,
-  });
-
   try {
-    const response = await api.get("/expenses", {
-      params: {
-        geraiId,
-        startDate,
-        endDate,
-      },
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
+    const response = await api.post("/expenses/all", {
+      gerai_id,
+      start_date,
+      end_date,
     });
-    console.log("getAllExpenses response:", {
-      status: response.status,
-      headers: response.headers,
-      data: response.data,
-    });
-    return response;
+    return response.data;
   } catch (error: any) {
     console.error("getAllExpenses error:", {
       message: error.message,
@@ -1005,7 +997,7 @@ export const getTotalRevenue = async (
 
 export const createExpense = async (data: {
   geraiId: number;
-  expenseCategoryId: number;
+  category: string;
   amount: number;
   description: string;
   date: string;
@@ -1045,25 +1037,21 @@ export const getAllExpenseCategories = async (): Promise<
   }
 };
 
-export const createWarehouseSeal = async (
-  data: CreateSealPayload
-): Promise<WarehouseSeal> => {
+export const createWarehouseSeal = async (data: CreateSealPayload) => {
   try {
-    const response = await api.post("/warehouse-seals/create", {
-      cc_range: data.cc_range,
-      price: data.price,
-      qty: data.qty,
-      motor_id: data.motor_id,
+    await api.post("/warehouse-seals/create", {
+      ...data,
+      motor_id: data.motor_id != 0 ? data.motor_id : null,
     });
-    return response.data;
+    return "BERHASIL";
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(
-        `Failed to create warehouse seal: ${
-          error.response.data?.error || error.message
-        }`
-      );
-    }
+    // if (axios.isAxiosError(error) && error.response) {
+    //   throw new Error(
+    //     `Failed to create warehouse seal: ${
+    //       error.response.data?.error || error.message
+    //     }`
+    //   );
+    // }
     throw new Error(
       `Failed to create warehouse seal: ${(error as Error).message}`
     );
@@ -1103,10 +1091,12 @@ export const updateWarehouseSeal = async (
 ): Promise<WarehouseSeal> => {
   try {
     const response = await api.put(`/warehouse-seals/${id}`, {
-      cc_range: data.cc_range,
+      category: data.category,
+      type: data.type,
+      size: data.size,
       price: data.price,
       qty: data.qty,
-      motor_id: data.motor_id,
+      motor_id: data.motor_id == 0 ? null : data.motor_id,
     });
     return response.data;
   } catch (error) {
@@ -1143,7 +1133,6 @@ export const deleteWarehouseSeal = async (id: number): Promise<void> => {
 
 export const getAllStockRequests = async (): Promise<StockRequest[]> => {
   try {
-    console.log("Calling API: /seals/stock-requests/getAll");
     const response = await api.get("/seals/stock-requests/getAll");
     console.log("Raw API response for stock requests:", response.data);
     const requests = response.data.data || response.data;
@@ -1167,3 +1156,30 @@ export const getAllStockRequests = async (): Promise<StockRequest[]> => {
     );
   }
 };
+
+export async function addCustomer(data: any) {
+  const result = await api.post("/customer", data);
+  return result.data;
+}
+
+export async function updateCustomer(data: any) {
+  const result = await api.put(`/customer/${data.id}`, data);
+  return result.data;
+}
+
+export async function getAntrianCustomer() {
+  const result = await api.get("/customer");
+  return result.data;
+}
+export async function getImages() {
+  const result = await api.get("/image");
+  return result.data.data;
+}
+export async function postImages(data: any) {
+  const result = await api.post("/image", data, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return result.data;
+}

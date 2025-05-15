@@ -5,7 +5,7 @@ import NavbarDashboard from "../fragments/NavbarDashboard";
 import { getAuthToken, decodeToken, removeAuthToken } from "@/utils/auth";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
-import { type DecodedToken, type Seal } from "@/types";
+import { type DecodedToken, type Sparepart } from "@/types";
 import { getAllSeals, getSealsByGerai } from "@/utils/ggAPI";
 
 // Format waktu WIB
@@ -76,7 +76,7 @@ export default function AllGeraiSpareparts() {
   const navigate = useNavigate();
   const [geraiList, setGeraiList] = useState<GeraiOption[]>([]);
   const [selectedGeraiId, setSelectedGeraiId] = useState<string>("");
-  const [selectedGeraiSeals, setSelectedGeraiSeals] = useState<Seal[]>([]);
+  const [selectedGeraiSeals, setSelectedGeraiSeals] = useState<Sparepart[]>([]);
   const [selectedGeraiName, setSelectedGeraiName] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingSeals, setLoadingSeals] = useState<boolean>(false);
@@ -174,7 +174,7 @@ export default function AllGeraiSpareparts() {
     console.log("Decoded Token:", validDecoded);
     setUserRole(validDecoded.role);
 
-    if (validDecoded.role !== "CS") {
+    if (validDecoded.role !== "CS"&&validDecoded.role !== "CEO") {
       Swal.fire({
         icon: "error",
         title: "Akses Ditolak",
@@ -216,7 +216,7 @@ export default function AllGeraiSpareparts() {
     }
   };
 
-  if (userRole !== "CS") return null;
+  if (userRole !== "CS"&&userRole !== "CEO") return null;
 
   const totalStock = selectedGeraiSeals.reduce(
     (sum, seal) => sum + seal.qty,
@@ -304,7 +304,13 @@ export default function AllGeraiSpareparts() {
                         <thead>
                           <tr className="bg-orange-100">
                             <th className="p-3 text-left text-gray-700 font-semibold">
-                              CC Range
+                              Kategori
+                            </th>
+                            <th className="p-3 text-left text-gray-700 font-semibold">
+                              Tipe
+                            </th>
+                            <th className="p-3 text-left text-gray-700 font-semibold">
+                              Size
                             </th>
                             <th className="p-3 text-left text-gray-700 font-semibold">
                               Motor
@@ -334,7 +340,13 @@ export default function AllGeraiSpareparts() {
                                 className="border-b hover:bg-gray-50 transition-colors duration-150"
                               >
                                 <td className="p-3 text-gray-700">
-                                  {seal.cc_range}
+                                  {seal.category.toUpperCase()}
+                                </td>
+                                <td className="p-3 text-gray-700">
+                                  {seal.type}
+                                </td>
+                                <td className="p-3 text-gray-700">
+                                  {seal.size}
                                 </td>
                                 <td className="p-3 text-gray-700">
                                   {seal.motor?.name || "-"}

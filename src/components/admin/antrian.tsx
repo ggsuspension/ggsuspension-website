@@ -1,17 +1,16 @@
 import { useEffect, useState } from "react";
-import { Download } from "lucide-react";
 import TabelAntrianHarianEdit from "../fragments/TabelAntrianHarianEdit";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   cancelOrder,
   finishOrder,
-  getAntrianByDateAndGerai,
+  getAllSeals,
+  getAntrianCustomer,
   updateAntrian,
 } from "@/utils/ggAPI";
 import { getAuthToken, decodeToken, removeAuthToken } from "@/utils/auth";
 import Swal from "sweetalert2";
 import NavbarDashboard from "../fragments/NavbarDashboard";
-import Papa from "papaparse";
 import type { Antrian, GroupedAntrian, TransformedAntrian } from "@/types";
 
 function getFormattedDate(date: Date): string {
@@ -29,11 +28,52 @@ export default function Antrian() {
   const [selectedDate, setSelectedDate] = useState<string>(
     getFormattedDate(new Date())
   );
-  const [userGeraiName, setUserGeraiName] = useState<string | null>(null);
+  // const [userGeraiName, setUserGeraiName] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [editItem, setEditItem] = useState<TransformedAntrian | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [dataSeal, setDataSeal] = useState<any>([]);
+  const token = getAuthToken();
+  if (!token) {
+    Swal.fire({
+      icon: "warning",
+      title: "Login Diperlukan",
+      text: "Silakan login terlebih dahulu.",
+      timer: 1500,
+      showConfirmButton: false,
+    }).then(() => {
+      navigate("/auth/login", { replace: true });
+    });
+    return;
+  }
+
+  const decoded = decodeToken(token);
+
+  useEffect(() => {
+    async function getSeal() {
+      const seal = await getAllSeals();
+      setDataSeal(seal);
+    }
+    getSeal();
+
+    if (!decoded) {
+      removeAuthToken();
+      Swal.fire({
+        icon: "error",
+        title: "Token Tidak Valid",
+        text: "Silakan login ulang.",
+        timer: 1500,
+        showConfirmButton: false,
+      }).then(() => {
+        navigate("/auth/login", { replace: true });
+      });
+      return;
+    }
+    setUserRole(decoded.role);
+    // setUserGeraiName(decoded.gerai?.name || null);
+    setSelectedGeraiId(decoded.geraiId?.toString() || "");
+  }, [navigate]);
 
   useEffect(() => {
     const token = getAuthToken();
@@ -51,29 +91,8 @@ export default function Antrian() {
     }
 
     const decoded = decodeToken(token);
-    console.log("Decoded token:", decoded);
-    if (!decoded) {
-      removeAuthToken();
-      Swal.fire({
-        icon: "error",
-        title: "Token Tidak Valid",
-        text: "Silakan login ulang.",
-        timer: 1500,
-        showConfirmButton: false,
-      }).then(() => {
-        navigate("/auth/login", { replace: true });
-      });
-      return;
-    }
-
-    setUserRole(decoded.role);
-    setUserGeraiName(decoded.gerai?.name || null);
-    setSelectedGeraiId(decoded.geraiId?.toString() || "");
-  }, [navigate]);
-
-  useEffect(() => {
     if (userRole && userRole !== "CEO" && selectedDate && selectedGeraiId) {
-      fetchData(selectedDate);
+      fetchData(selectedDate, decoded);
     } else if (userRole === "CEO") {
       setData([]);
       setErrorMessage("Akses ke halaman edit tidak diizinkan untuk CEO.");
@@ -81,25 +100,14 @@ export default function Antrian() {
     }
   }, [selectedDate, selectedGeraiId, userRole]);
 
-  const fetchData = async (date: string) => {
+  const fetchData = async (date: string, decoded: any) => {
     try {
       setIsLoading(true);
       setData([]);
       setErrorMessage(null);
-
-      console.log(
-        "Fetching data for date:",
-        date,
-        "Gerai ID:",
-        selectedGeraiId
-      );
-      const response = await getAntrianByDateAndGerai({
-        date,
-        geraiId: selectedGeraiId,
-      });
-      const rawData = response.data; // Akses response.data
-      console.log("Raw data from API:", rawData);
-
+      const response = await getAntrianCustomer();
+      let rawData = response;
+      rawData = rawData.filter((data:any)=> data.created_at.substring(2, 10).split('-').reverse().join('-') == date).filter((item: any) => item.gerai == decoded.gerai.name);
       if (!Array.isArray(rawData) || rawData.length === 0) {
         setData([]);
         setErrorMessage(`Tidak ada data antrian untuk tanggal ${date}.`);
@@ -108,12 +116,10 @@ export default function Antrian() {
       }
 
       const geraiName = rawData[0].gerai?.name || "Unknown Gerai";
-      setUserGeraiName(geraiName);
-
-      const transformedData: TransformedAntrian[] = rawData.map(
-        (item: Antrian, _index: number, _array: Antrian[]) => {
+      const transformedData: any = rawData.map(
+        (item: any, _index: number, _array: Antrian[]) => {
           // Validasi properti wajib
-          if (!item.id || !item.waktu || !item.geraiId || !item.createdAt) {
+          if (!item.id || !item.created_at) {
             console.warn("Data antrian tidak lengkap:", item);
             return {
               id: 0,
@@ -133,65 +139,33 @@ export default function Antrian() {
             };
           }
 
-          // Log untuk debugging hargaSeal
-          console.log(`Processing item ID ${item.id}:`, {
-            seals: item.seals,
-            customerHargaSeal: item.customer?.harga_seal,
-          });
-
-          const totalHargaSeal =
-            Array.isArray(item.seals) && item.seals.length > 0
-              ? item.seals.reduce(
-                  (
-                    sum: number,
-                    sealItem: NonNullable<Antrian["seals"]>[number]
-                  ) => {
-                    const price = sealItem.seal?.price || 0;
-                    console.log(
-                      `Seal ID ${sealItem.seal?.id}: price = ${price}`
-                    );
-                    return sum + price;
-                  },
-                  0
-                )
-              : item.customer?.harga_seal || 0;
-
-          console.log(
-            `Total harga seal untuk item ID ${item.id}: ${totalHargaSeal}`
-          );
-
           return {
             id: item.id,
             nama: item.customer?.nama || item.nama || "N/A",
-            plat: item.customer?.plat || item.plat || "N/A",
+            plat: item.customer?.plat || item.plat_motor || "N/A",
             no_wa: item.customer?.no_wa || item.noWA || "N/A",
-            layanan:
-              item.motorPart?.subcategory?.category?.name ||
-              item.customer?.layanan ||
-              "N/A",
+            layanan: item.layanan || "N/A",
             subcategory:
-              item.motorPart?.subcategory?.name ||
-              item.customer?.subcategory ||
-              "N/A",
-            motor: item.motor?.name || item.customer?.motor || "N/A",
+              item.jenis_motor || item.customer?.subcategory || "N/A",
+            motor: item.motor || item.customer?.motor || "N/A",
             bagianMotor:
-              item.motorPart?.service || item.customer?.bagian_motor || "N/A",
+              item.bagian_motor || item.customer?.bagian_motor || "N/A",
+            bagianMotor2:
+              item.bagian_motor2 || item.customer?.bagian_motor || "N/A",
             hargaLayanan:
-              item.motorPart?.price || item.customer?.harga_layanan || 0,
-            hargaSeal: totalHargaSeal,
+              item.harga_service || item.customer?.harga_layanan || 0,
+            sparepart: item.sparepart,
+            hargaSparepart: item.harga_sparepart ?? 0,
             totalHarga: item.totalHarga || item.customer?.total_harga || 0,
             status: item.status,
-            waktu: item.waktu,
-            gerai: geraiName,
+            gerai: item.gerai,
           };
         }
       );
 
-      console.log("Transformed data:", transformedData);
-
       if (
         transformedData.length === 0 ||
-        transformedData.every((item) => item.id === 0)
+        transformedData.every((item: any) => item.id === 0)
       ) {
         setData([]);
         setErrorMessage(
@@ -200,14 +174,16 @@ export default function Antrian() {
         setIsLoading(false);
         return;
       }
+      const filteredCancelled = transformedData.filter(
+        (item: any) => item.status !== "CANCEL"
+      );
 
       const grouped: GroupedAntrian = {
         id: transformedData[0].id,
         gerai: geraiName,
         status: transformedData[0].status,
-        data: transformedData.filter((item) => item.id !== 0),
+        data: filteredCancelled,
       };
-
       setData([grouped]);
       setIsLoading(false);
     } catch (error: any) {
@@ -232,52 +208,49 @@ export default function Antrian() {
     }
   };
 
-  const handleExport = () => {
-    if (data.length === 0) {
-      Swal.fire({
-        icon: "warning",
-        title: "Tidak Ada Data",
-        text: "Tidak ada data antrian untuk diekspor.",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-      return;
-    }
+  // const handleExport = () => {
+  //   if (data.length === 0) {
+  //     Swal.fire({
+  //       icon: "warning",
+  //       title: "Tidak Ada Data",
+  //       text: "Tidak ada data antrian untuk diekspor.",
+  //       timer: 1500,
+  //       showConfirmButton: false,
+  //     });
+  //     return;
+  //   }
 
-    const csvData = data.flatMap((group) =>
-      group.data.map((item: TransformedAntrian) => ({
-        Nama: item.nama,
-        Plat: item.plat,
-        "No WA": item.no_wa,
-        Layanan: item.layanan,
-        Subkategori: item.subcategory,
-        Motor: item.motor,
-        "Bagian Motor": item.bagianMotor,
-        "Harga Layanan": item.hargaLayanan,
-        "Harga Seal": item.hargaSeal,
-        "Total Harga": item.totalHarga,
-        Status: item.status,
-        Waktu: new Date(item.waktu).toLocaleString(),
-        Gerai: group.gerai,
-      }))
-    );
+  //   const csvData = data.flatMap((group) =>
+  //     group.data.map((item: TransformedAntrian) => ({
+  //       Nama: item.nama,
+  //       Plat: item.plat,
+  //       "No WA": item.no_wa,
+  //       Layanan: item.layanan,
+  //       Subkategori: item.subcategory,
+  //       Motor: item.motor,
+  //       "Bagian Motor": item.bagianMotor,
+  //       "Harga Layanan": item.hargaLayanan,
+  //       "Harga Seal": item.hargaSeal,
+  //       "Total Harga": item.totalHarga,
+  //       Status: item.status,
+  //       Waktu: new Date(item.waktu).toLocaleString(),
+  //       Gerai: group.gerai,
+  //     }))
+  //   );
 
-    const csv = Papa.unparse(csvData);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `antrian_${selectedDate}_${userGeraiName || "gerai"}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  //   const csv = Papa.unparse(csvData);
+  //   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  //   const url = URL.createObjectURL(blob);
+  //   const link = document.createElement("a");
+  //   link.href = url;
+  //   link.download = `antrian_${selectedDate}_${userGeraiName || "gerai"}.csv`;
+  //   document.body.appendChild(link);
+  //   link.click();
+  //   document.body.removeChild(link);
+  //   URL.revokeObjectURL(url);
+  // };
 
-    console.log("Data diekspor ke CSV:", csvData);
-  };
-
-  const handleEdit = (item: TransformedAntrian) => {
-    console.log("Mengedit item:", item);
+  const handleEdit = (item: any) => {
     setEditItem({ ...item });
   };
 
@@ -295,11 +268,16 @@ export default function Antrian() {
     try {
       await updateAntrian(editItem.id, {
         nama: editItem.nama,
-        plat: editItem.plat,
-        no_wa: editItem.no_wa,
+        plat_motor: editItem.plat,
+        noWA: editItem.no_wa,
         waktu: editItem.waktu,
-        total_harga: editItem.totalHarga,
         status: editItem.status,
+        layanan: editItem.layanan,
+        jenis_motor: editItem.subcategory,
+        motor: editItem.motor,
+        bagian_motor: editItem.bagianMotor,
+        bagian_motor2: editItem.bagianMotor2,
+        harga_service: editItem.hargaLayanan,
       });
       Swal.fire({
         icon: "success",
@@ -309,7 +287,7 @@ export default function Antrian() {
         showConfirmButton: false,
       });
       setEditItem(null);
-      fetchData(selectedDate);
+      fetchData(selectedDate, decoded);
     } catch (error: any) {
       console.error("Error updating antrian:", error);
       if (error.message.includes("Sesi telah berakhir")) {
@@ -341,20 +319,19 @@ export default function Antrian() {
       });
       return;
     }
-
-    console.log("Finishing order with ID:", id);
     try {
       const response = await finishOrder(id);
-      console.log("Finish order response:", response);
-      Swal.fire({
-        icon: "success",
-        title: "Berhasil!",
-        text: "Antrian berhasil diselesaikan.",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      if (response.message) {
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil!",
+          text: "Antrian berhasil diselesaikan.",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      }
       setEditItem(null);
-      fetchData(selectedDate);
+      fetchData(selectedDate, decoded);
     } catch (error: any) {
       console.error("Error finishing antrian:", error);
       if (error.message.includes("Sesi telah berakhir")) {
@@ -386,20 +363,20 @@ export default function Antrian() {
       });
       return;
     }
-
-    console.log("Cancelling order with ID:", id);
     try {
-      const response = await cancelOrder(id);
-      console.log("Cancel order response:", response);
-      Swal.fire({
-        icon: "success",
-        title: "Berhasil!",
-        text: "Antrian berhasil dibatalkan.",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      cancelOrder(id).then(
+        (response) =>
+          response &&
+          Swal.fire({
+            icon: "success",
+            title: "Berhasil!",
+            text: "Antrian berhasil dibatalkan.",
+            timer: 1500,
+            showConfirmButton: false,
+          })
+      );
       setEditItem(null);
-      fetchData(selectedDate);
+      fetchData(selectedDate, decoded);
     } catch (error: any) {
       console.error("Error cancelling antrian:", error);
       if (error.message.includes("Sesi telah berakhir")) {
@@ -446,21 +423,20 @@ export default function Antrian() {
                 onChange={(e) => {
                   const date = new Date(e.target.value);
                   const formattedDate = getFormattedDate(date);
-                  console.log("Tanggal dipilih:", formattedDate);
                   setSelectedDate(formattedDate);
                 }}
                 className="border p-2 rounded-md shadow-sm"
               />
-              <span className="border p-2 bg-gray-200 rounded-md shadow-sm">
+              {/* <span className="border p-2 bg-gray-200 rounded-md shadow-sm">
                 {userGeraiName || "Gerai Tidak Diketahui"}
-              </span>
-              <button
+              </span> */}
+              {/* <button
                 onClick={handleExport}
                 className="flex items-center bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition shadow-md"
                 disabled={userRole === "CEO" || data.length === 0}
               >
                 <Download className="w-5 h-5 mr-2" /> Download
-              </button>
+              </button> */}
             </div>
             {isLoading && (
               <p className="text-center text-gray-600 mt-4">Memuat data...</p>
@@ -476,6 +452,7 @@ export default function Antrian() {
             {userRole !== "CEO" && data.length > 0 && (
               <TabelAntrianHarianEdit
                 data={data}
+                dataSeal={dataSeal}
                 isLoading={isLoading}
                 onEdit={handleEdit}
                 onFinish={handleFinish}

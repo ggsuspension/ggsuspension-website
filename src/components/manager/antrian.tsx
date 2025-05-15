@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Download } from "lucide-react";
 import TabelAntrianHarian from "../fragments/TabelAntrianHarian";
-import * as XLSX from "xlsx";
+// import { Download } from "lucide-react";
+// import * as XLSX from "xlsx";
 import { useLocation, useNavigate } from "react-router-dom";
-import { getAntrianByDateAndGerai } from "@/utils/ggAPI";
+import { getAntrianCustomer } from "@/utils/ggAPI";
 import { decodeToken, getAuthToken, removeAuthToken } from "@/utils/auth";
 import Swal from "sweetalert2";
 import NavbarDashboard from "../fragments/NavbarDashboard";
@@ -18,13 +18,24 @@ function getFormattedDate(date: Date): string {
 export default function LayoutManager() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [data, setData] = useState<any[]>([]);
-  const [geraiList, setGeraiList] = useState<string[]>([]);
+  const [data, setData] = useState<any>([]);
+  // const geraiList = [
+  //   "BEKASI",
+  //   "JAKSEL",
+  //   "JAKTIM",
+  //   "JAKBAR",
+  //   "DEPOK",
+  //   "TANGERANG",
+  //   "BOGOR",
+  //   "CIKARANG",
+  // ];
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [selectedGerai, setSelectedGerai] = useState<string>("");
-  const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
-  );
+  // const [selectedGerai, setSelectedGerai] = useState<string>("");
+  // const [selectedDate, setSelectedDate] = useState<string>(
+  //   new Date().toISOString().split("T")[0]
+  // );
+  const selectedGerai: any = "";
+  const selectedDate = new Date().toISOString().split("T")[0];
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -78,17 +89,21 @@ export default function LayoutManager() {
       setErrorMessage("Silakan pilih tanggal atau login sebagai CEO.");
       return;
     }
-
     fetchData(getFormattedDate(new Date(selectedDate)));
-  }, [selectedDate, selectedGerai, userRole]);
+  }, [selectedDate, userRole]);
 
   const fetchData = async (date: string) => {
     try {
       setData([]);
       setErrorMessage(null);
-
-      const rawData = await getAntrianByDateAndGerai(date, selectedGerai);
-      console.log("Raw data dari API:", rawData);
+      let rawData = await getAntrianCustomer();
+      console.log("rawData = ", rawData);
+      rawData = rawData.filter(
+        (item: any) => item.created_at.substring(0, 10) == selectedDate
+      );
+      if (rawData.length > 0) {
+        return setData({ data: rawData });
+      }
 
       if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
         setData([]);
@@ -103,8 +118,6 @@ export default function LayoutManager() {
           .split("T")[0];
         return itemDate === selectedDateISO;
       });
-
-      console.log("Filtered data:", filteredData);
 
       if (filteredData.length === 0) {
         setData([]);
@@ -159,9 +172,6 @@ export default function LayoutManager() {
       );
 
       const output = Object.values(grouped);
-      console.log("Grouped data (sebelum dikirim ke tabel):", output);
-
-      setGeraiList([...new Set(filteredData.map((item: any) => item.gerai))]);
       setData(
         selectedGerai
           ? output.filter((item: any) => item.gerai === selectedGerai)
@@ -174,62 +184,62 @@ export default function LayoutManager() {
     }
   };
 
-  const handleExport = () => {
-    if (!data || !Array.isArray(data) || data.length === 0) {
-      Swal.fire({
-        icon: "warning",
-        title: "Tidak Ada Data",
-        text: "Tidak ada data untuk diekspor.",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-      return;
-    }
+  // const handleExport = () => {
+  //   if (!data || !Array.isArray(data) || data.length === 0) {
+  //     Swal.fire({
+  //       icon: "warning",
+  //       title: "Tidak Ada Data",
+  //       text: "Tidak ada data untuk diekspor.",
+  //       timer: 1500,
+  //       showConfirmButton: false,
+  //     });
+  //     return;
+  //   }
 
-    const formattedDate = getFormattedDate(new Date(selectedDate));
-    const geraiName = selectedGerai
-      ? selectedGerai.replace(/\s+/g, "_")
-      : "Semua_Gerai";
+  //   const formattedDate = getFormattedDate(new Date(selectedDate));
+  //   const geraiName = selectedGerai
+  //     ? selectedGerai.replace(/\s+/g, "_")
+  //     : "Semua_Gerai";
 
-    const sheetData = data.flatMap((item: any) => [
-      ["GERAI", item.gerai, ""],
-      [
-        "NO",
-        "NAMA",
-        "PLAT",
-        "NO WA",
-        "LAYANAN",
-        "JENIS MOTOR",
-        "BAGIAN MOTOR",
-        "BAGIAN MOTOR LAINNYA",
-        "MOTOR",
-        "TOTAL HARGA",
-        "STATUS",
-      ],
-      ...item.data.map((row: any, i: number) => [
-        i + 1,
-        row.nama,
-        row.plat,
-        row.noWA,
-        row.layanan,
-        row.jenisMotor,
-        row.bagianMotor,
-        row.bagianMotor2,
-        row.motor,
-        `Rp ${row.totalHarga.toLocaleString("id-ID")}`,
-        row.status,
-      ]),
-      [""],
-    ]);
+  //   const sheetData = data.flatMap((item: any) => [
+  //     ["GERAI", item.gerai, ""],
+  //     [
+  //       "NO",
+  //       "NAMA",
+  //       "PLAT",
+  //       "NO WA",
+  //       "LAYANAN",
+  //       "JENIS MOTOR",
+  //       "BAGIAN MOTOR",
+  //       "BAGIAN MOTOR LAINNYA",
+  //       "MOTOR",
+  //       "TOTAL HARGA",
+  //       "STATUS",
+  //     ],
+  //     ...item.data.map((row: any, i: number) => [
+  //       i + 1,
+  //       row.nama,
+  //       row.plat,
+  //       row.noWA,
+  //       row.layanan,
+  //       row.jenisMotor,
+  //       row.bagianMotor,
+  //       row.bagianMotor2,
+  //       row.motor,
+  //       `Rp ${row.totalHarga.toLocaleString("id-ID")}`,
+  //       row.status,
+  //     ]),
+  //     [""],
+  //   ]);
 
-    const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+  //   const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+  //   const workbook = XLSX.utils.book_new();
+  //   XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
 
-    const fileName = `data_antrian_${geraiName}_${formattedDate}.xlsx`;
-    XLSX.writeFile(workbook, fileName);
-    console.log("Data berhasil diekspor ke:", fileName);
-  };
+  //   const fileName = `data_antrian_${geraiName}_${formattedDate}.xlsx`;
+  //   XLSX.writeFile(workbook, fileName);
+  //   console.log("Data berhasil diekspor ke:", fileName);
+  // };
 
   if (!userRole) {
     return null; // Tunggu autentikasi selesai
@@ -244,25 +254,36 @@ export default function LayoutManager() {
             <h1 className="text-xl flex justify-center font-semibold text-gray-800">
               Tabel Data Antrian ({getFormattedDate(new Date(selectedDate))})
             </h1>
-            <div className="flex flex-col sm:flex-row gap-4 items-center mt-2 justify-center w-full max-w-3xl mx-auto">
+            {/* <div className="flex flex-col sm:flex-row gap-4 items-center mt-2 justify-center w-full max-w-3xl mx-auto">
               <input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 className="w-full sm:w-auto border p-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
+
               <select
-                onChange={(e) => setSelectedGerai(e.target.value)}
+                onChange={(e) => {
+                  if (e.target.value == "all") fetchData(selectedDate);
+                  const result = data.data.filter(
+                    (item: any) =>
+                      item.gerai.name.toLowerCase() ===
+                      e.target.value.toLowerCase()
+                  );
+                  setData({ data: result });
+                  setSelectedGerai(e.target.value);
+                }}
                 value={selectedGerai}
                 className="w-full sm:w-auto border p-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
               >
-                <option value="">Semua Gerai</option>
+                <option value="all">Semua Gerai</option>
                 {geraiList.map((gerai) => (
                   <option key={gerai} value={gerai}>
                     {gerai}
                   </option>
                 ))}
               </select>
+
               <button
                 onClick={handleExport}
                 className="w-full sm:w-auto flex items-center justify-center bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition shadow-md"
@@ -270,7 +291,7 @@ export default function LayoutManager() {
                 <Download className="w-5 h-5 mr-2" />
                 Download
               </button>
-            </div>
+            </div> */}
             {errorMessage ? (
               <p className="text-center text-red-600 mt-4">{errorMessage}</p>
             ) : data.length === 0 ? (

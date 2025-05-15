@@ -1,17 +1,16 @@
 import { Wrench } from "lucide-react";
 import { PiMoneyWavy } from "react-icons/pi";
 import { useState, useEffect, useMemo } from "react";
-import Swal from "sweetalert2";
 import SealPricePicker from "./SealPricePicker";
 import {
   getServices,
   getServiceTypes,
-  getMotorParts,
   getMotors,
   getGerais,
   getAllSeals,
+  getMotorParts,
 } from "../../utils/ggAPI";
-import { Seal, Motor, Gerai } from "../../types";
+import { Sparepart, Motor, Gerai } from "../../types";
 
 interface Service {
   id: number;
@@ -27,8 +26,9 @@ interface ServiceType {
 
 interface MotorPart {
   id: number;
-  service: string;
+  name: string;
   price: number;
+  subcategory_id: number;
   subcategory: {
     id: number;
     name: string;
@@ -42,8 +42,8 @@ export default function CekHargaSection() {
   const [allMotorParts, setAllMotorParts] = useState<MotorPart[]>([]);
   const [motors, setMotors] = useState<Motor[]>([]);
   const [gerais, setGerais] = useState<Gerai[]>([]);
-  const [allSeals, setAllSeals] = useState<Seal[]>([]);
-  const [geraiId, setGeraiId] = useState<string>("");
+  const [allSeals, setAllSeals] = useState<Sparepart[]>([]);
+  const geraiId="";
   const [layananId, setLayananId] = useState<string>("");
   const [sublayananId, setSublayananId] = useState<string>("");
   const [motorId, setMotorId] = useState<string>("");
@@ -85,16 +85,15 @@ export default function CekHargaSection() {
         setAllServiceTypes(serviceTypesData);
         setAllMotorParts(motorPartsData);
         setAllSeals(sealsData);
-        console.log("All Seals:", sealsData);
         setLoading(false);
       } catch (err: any) {
         setError(err.message || "Gagal memuat data awal. Silakan coba lagi.");
         setLoading(false);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: err.message || "Gagal memuat data awal.",
-        });
+        // Swal.fire({
+        //   icon: "error",
+        //   title: "Error",
+        //   text: err.message || "Gagal memuat data awal.",
+        // });
       }
     };
     fetchInitialData();
@@ -114,7 +113,7 @@ export default function CekHargaSection() {
   const filteredMotorParts = useMemo(() => {
     if (!sublayananId) return [];
     return allMotorParts.filter(
-      (part) => part.subcategory.id === Number(sublayananId)
+      (part) => part.subcategory_id === Number(sublayananId)
     );
   }, [sublayananId, allMotorParts]);
 
@@ -154,10 +153,10 @@ export default function CekHargaSection() {
   ]);
 
   // Handler untuk perubahan dropdown
-  const handleSelectGerai = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setGeraiId(e.target.value);
-    resetSubsequentFields("gerai");
-  };
+  // const handleSelectGerai = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  //   setGeraiId(e.target.value);
+  //   resetSubsequentFields("gerai");
+  // };
 
   const handleSelectLayanan = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setLayananId(e.target.value);
@@ -271,24 +270,8 @@ export default function CekHargaSection() {
                 <div>
                   <select
                     className="w-full px-4 py-3 bg-white text-dark rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-gray-800/90 focus:border-orange-500 transition-all duration-300 hover:bg-slate-200"
-                    value={geraiId}
-                    onChange={handleSelectGerai}
-                    disabled={gerais.length === 0}
-                  >
-                    <option value="">Pilih Gerai</option>
-                    {gerais.map((gerai) => (
-                      <option key={gerai.id} value={gerai.id}>
-                        {gerai.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <select
-                    className="w-full px-4 py-3 bg-white text-dark rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-gray-800/90 focus:border-orange-500 transition-all duration-300 hover:bg-slate-200"
                     value={layananId}
                     onChange={handleSelectLayanan}
-                    disabled={!geraiId || services.length === 0}
                   >
                     <option value="">Pilih Layanan</option>
                     {services.map((service) => (
@@ -353,8 +336,8 @@ export default function CekHargaSection() {
                     >
                       <option value="">Pilih Bagian Motor</option>
                       {filteredMotorParts.map((part) => (
-                        <option key={part.id} value={part.id}>
-                          {part.service}
+                        <option className="text-black" key={part.id} value={part.id}>
+                          {part.name}
                         </option>
                       ))}
                     </select>
@@ -382,7 +365,7 @@ export default function CekHargaSection() {
                       <option value="">Pilih Bagian Motor Lainnya</option>
                       {filteredMotorParts.map((part) => (
                         <option key={part.id} value={part.id}>
-                          {part.service}
+                          {part.name}
                         </option>
                       ))}
                     </select>

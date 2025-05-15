@@ -1,13 +1,11 @@
-// @/utils/ggAPI.ts
 import axios from "axios";
-import { Motor, MotorPart, Seal } from "@/types";
+import { Motor, MotorPart, Sparepart } from "@/types";
 
 interface ApiOptions {
   signal?: AbortSignal;
 }
 
-const API_BASE_URL =
-  import.meta.env.VITE_BASE_URL || "http://127.0.0.1:8000/api";
+export const API_BASE_URL = "https://backend-web.ggsuspension.net/api";
 
 export async function getMotors(options: ApiOptions = {}): Promise<Motor[]> {
   try {
@@ -47,12 +45,12 @@ export async function getServices(
 }
 
 export async function getServiceTypes(
-  serviceId: number,
+  serviceId?: number,
   options: ApiOptions = {}
 ): Promise<{ id: number; name: string }[]> {
   try {
     const response = await axios.get(`${API_BASE_URL}/subcategories/getAll`, {
-      params: serviceId ? { serviceId } : undefined,
+      params: serviceId !== undefined ? { serviceId } : undefined,
       signal: options.signal,
     });
     return response.data;
@@ -77,7 +75,7 @@ export async function getGerais(
 export async function getSealsByGerai(
   geraiId: number,
   options: ApiOptions = {}
-): Promise<Seal[]> {
+): Promise<Sparepart[]> {
   try {
     const response = await axios.get(`${API_BASE_URL}/seals/gerai/${geraiId}`, {
       signal: options.signal,
@@ -96,6 +94,15 @@ export async function createServiceOrder(data: any): Promise<{ id: number }> {
     return response.data;
   } catch (error: any) {
     throw new Error(`Failed to create service order: ${error.message}`);
+  }
+}
+
+export async function getCustomers() {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/customers/getAll`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(`Failed to fetch customers: ${error.message}`);
   }
 }
 

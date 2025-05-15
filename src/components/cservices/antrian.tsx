@@ -5,15 +5,9 @@ import NavbarDashboard from "../fragments/NavbarDashboard";
 import { getAuthToken, decodeToken, removeAuthToken } from "@/utils/auth";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
-import { getAntrianByDateAndGerai, getGerais } from "@/utils/ggAPI";
-import type {
-  Antrian,
-  GroupedAntrian,
-  TransformedAntrian,
-  DecodedToken,
-} from "@/types";
+import { getAntrianCustomer, getGerais } from "@/utils/ggAPI";
+import type { Antrian, GroupedAntrian, DecodedToken } from "@/types";
 
-// Format Rupiah
 const formatRupiah = (value: number): string =>
   new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -80,10 +74,10 @@ const getFormattedDate = (date: Date): string => {
   return `${day}-${month}-${year}`; // DD-MM-YY
 };
 
-const getInputDate = (formattedDate: string): string => {
-  const [day, month, year] = formattedDate.split("-");
-  return `20${year}-${month}-${day}`; // YYYY-MM-DD
-};
+// const getInputDate = (formattedDate: string): string => {
+//   const [day, month, year] = formattedDate.split("-");
+//   return `20${year}-${month}-${day}`; // YYYY-MM-DD
+// };
 
 interface Gerai {
   id: number;
@@ -93,9 +87,7 @@ interface Gerai {
 export default function AntrianCS() {
   const navigate = useNavigate();
   const [data, setData] = useState<GroupedAntrian[]>([]);
-  const [selectedDate, setSelectedDate] = useState<string>(
-    getFormattedDate(new Date())
-  );
+  const selectedDate = getFormattedDate(new Date());
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -127,7 +119,6 @@ export default function AntrianCS() {
     }
 
     const validDecoded: DecodedToken = decoded;
-    console.log("Decoded Token:", validDecoded);
     setUserRole(validDecoded.role);
 
     if (validDecoded.role !== "CS") {
@@ -153,11 +144,8 @@ export default function AntrianCS() {
       setIsLoading(true);
       setData([]);
       setErrorMessage(null);
-
-      console.log("Fetching gerai list for date:", date);
       // Ambil daftar gerai
       const geraiList: Gerai[] = await getGerais();
-      console.log("Gerai list:", geraiList);
 
       if (!geraiList || geraiList.length === 0) {
         setErrorMessage("Tidak ada gerai yang tersedia.");
@@ -165,16 +153,12 @@ export default function AntrianCS() {
         return;
       }
 
-      // Ambil data antrian untuk setiap gerai
       const allData: Antrian[] = [];
       for (const gerai of geraiList) {
-        console.log(`Fetching data for gerai ID ${gerai.id}`);
-        const response = await getAntrianByDateAndGerai({
-          date,
-          geraiId: gerai.id,
-        });
-        const rawData = response.data || [];
-        console.log(`Raw data for gerai ${gerai.name}:`, rawData);
+        const response = await getAntrianCustomer();
+        const rawData = response.filter(
+          (item: any) => item.gerai === gerai.name
+        );
         allData.push(...rawData);
       }
 
@@ -186,71 +170,38 @@ export default function AntrianCS() {
       }
 
       // Transformasi data
-      const transformedData: TransformedAntrian[] = allData.map(
-        (item: Antrian) => {
-          if (!item.id || !item.waktu || !item.geraiId || !item.createdAt) {
-            console.warn("Data antrian tidak lengkap:", item);
-            return {
-              id: 0,
-              nama: "N/A",
-              plat: "N/A",
-              no_wa: "N/A",
-              layanan: "N/A",
-              subcategory: "N/A",
-              motor: "N/A",
-              bagianMotor: "N/A",
-              hargaLayanan: 0,
-              hargaSeal: 0,
-              totalHarga: 0,
-              status: "PROGRESS" as const,
-              waktu: "N/A",
-              gerai: item.gerai?.name || "Unknown Gerai",
-            };
-          }
+      const transformedData: any = allData.map((item: any) => {
+        // const totalHargaSeal =
+        //   Array.isArray(item.seals) && item.seals.length > 0
+        //     ? item.seals.reduce(
+        //         (
+        //           sum: number,
+        //           sealItem: NonNullable<Antrian["seals"]>[number]
+        //         ) => sum + (sealItem.seal?.price || 0),
+        //         0
+        //       )
+        //     : item.customer?.harga_seal || 0;
 
-          const totalHargaSeal =
-            Array.isArray(item.seals) && item.seals.length > 0
-              ? item.seals.reduce(
-                  (
-                    sum: number,
-                    sealItem: NonNullable<Antrian["seals"]>[number]
-                  ) => sum + (sealItem.seal?.price || 0),
-                  0
-                )
-              : item.customer?.harga_seal || 0;
-
-          return {
-            id: item.id,
-            nama: item.customer?.nama || item.nama || "N/A",
-            plat: item.customer?.plat || item.plat || "N/A",
-            no_wa: item.customer?.no_wa || item.noWA || "N/A",
-            layanan:
-              item.motorPart?.subcategory?.category?.name ||
-              item.customer?.layanan ||
-              "N/A",
-            subcategory:
-              item.motorPart?.subcategory?.name ||
-              item.customer?.subcategory ||
-              "N/A",
-            motor: item.motor?.name || item.customer?.motor || "N/A",
-            bagianMotor:
-              item.motorPart?.service || item.customer?.bagian_motor || "N/A",
-            hargaLayanan:
-              item.motorPart?.price || item.customer?.harga_layanan || 0,
-            hargaSeal: totalHargaSeal,
-            totalHarga: item.totalHarga || item.customer?.total_harga || 0,
-            status: item.status,
-            waktu: item.waktu,
-            gerai: item.gerai?.name || "Unknown Gerai",
-          };
-        }
-      );
-
-      console.log("Transformed data:", transformedData);
-
+        return {
+          id: item.id,
+          nama: item.customer?.nama || item.nama || "N/A",
+          plat: item.plat_motor || "N/A",
+          no_wa: item.noWA || "N/A",
+          layanan: item.layanan,
+          subcategory: item.jenis_motor,
+          motor: item.motor || "",
+          bagianMotor: item.bagian_motor,
+          hargaLayanan: item.harga_layanan || 0,
+          hargaSeal: item.harga_sparepart,
+          totalHarga: item.harga_layanan + item.harga_sparepart || 0,
+          status: item.status,
+          waktu: item.created_at,
+          gerai: item.gerai || "Unknown Gerai",
+        };
+      });
       if (
         transformedData.length === 0 ||
-        transformedData.every((item) => item.id === 0)
+        transformedData.every((item: any) => item.id === 0)
       ) {
         setData([]);
         setErrorMessage(`Tidak ada data antrian valid untuk tanggal ${date}.`);
@@ -261,7 +212,7 @@ export default function AntrianCS() {
       // Kelompokkan berdasarkan gerai
       const groupedData: GroupedAntrian[] = Object.values(
         transformedData.reduce(
-          (acc: { [key: string]: GroupedAntrian }, item) => {
+          (acc: { [key: string]: GroupedAntrian }, item: any) => {
             if (item.id === 0) return acc;
             const gerai = item.gerai || "Unknown Gerai";
             if (!acc[gerai]) {
@@ -309,11 +260,10 @@ export default function AntrianCS() {
     <div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8 bg-gray-50">
       <NavbarDashboard userRole={userRole} />
       <div className="mt-20 max-w-7xl mx-auto">
-        {/* Judul dan Input Tanggal */}
         <div className="flex items-center gap-4 mb-6">
           <h1 className="text-3xl font-bold text-gray-800">Data Antrian</h1>
           <div className="relative w-48 sm:w-64">
-            <label
+            {/* <label
               htmlFor="date-select"
               className="block text-sm font-medium text-gray-700 mb-1 sr-only"
             >
@@ -331,7 +281,7 @@ export default function AntrianCS() {
               }}
               className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white text-gray-700 transition-all duration-200"
               aria-label="Pilih tanggal untuk melihat antrian"
-            />
+            /> */}
           </div>
         </div>
 

@@ -4,7 +4,7 @@ import {
   createExpense,
   getAllExpenses,
   getGerais,
-  getAllExpenseCategories,
+  getDailyIncomeExpense,
 } from "@/utils/ggAPI";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,13 +28,7 @@ import NavbarDashboard from "../fragments/NavbarDashboard";
 import { getAuthToken, decodeToken, removeAuthToken } from "@/utils/auth";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
-import {
-  DecodedToken,
-  ExpenseCategory,
-  Gerai,
-  GeraiData,
-  RevenueData,
-} from "@/types";
+import { DecodedToken, Gerai, GeraiData, RevenueData } from "@/types";
 
 ChartJS.register(
   CategoryScale,
@@ -54,7 +48,7 @@ interface Expense {
   amount: number;
   date: string;
   description?: string;
-  expenseCategoryId?: number;
+  category: string;
 }
 
 const formatDateForAPIStandard = (date: Date): string => {
@@ -129,7 +123,10 @@ const fetchWithRetry = async (promise: Promise<any>, retries = 3) => {
 export default function Finance() {
   const navigate = useNavigate();
   const [revenueData, setRevenueData] = useState<RevenueData[]>([]);
-  const [totalRevenue, setTotalRevenue] = useState<number>(0);
+  const [dataBiaya, setDataBiaya] = useState<any>({
+    totalPendapatan: 0,
+    totalPengeluaran: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState("");
   const [timeRange, setTimeRange] = useState<TimeRange>("month");
@@ -137,7 +134,6 @@ export default function Finance() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userGeraiId, setUserGeraiId] = useState<string | null>(null);
   const [userGeraiName, setUserGeraiName] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [additionalCosts, setAdditionalCosts] = useState<
     Record<
       string,
@@ -147,21 +143,77 @@ export default function Finance() {
       }
     >
   >({});
-  const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
+  let [allExpenses, setAllExpenses] = useState<Expense[]>([]);
+  const [categoryCost, setCategoryCost] = useState<string>("");
   const [newCost, setNewCost] = useState<string>("");
   const [newDescription, setNewDescription] = useState<string>("");
-  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategory[]>(
-    []
-  );
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
-    null
-  );
   const [gerais, setGerais] = useState<Gerai[]>([]);
-  const [cache, setCache] = useState<Map<string, any>>(new Map());
+
+  function getStartOfMonthIsoString(dateInput: any) {
+    const date: any = dateInput ? new Date(dateInput) : new Date();
+    if (isNaN(date)) {
+      throw new Error("Input tanggal tidak valid");
+    }
+    date.setDate(1);
+    date.setHours(0, 0, 0, 0);
+    return date.toISOString();
+  }
+
+  function setTimeToMidnight(isoString: string) {
+    // Regex untuk memisahkan tanggal, waktu, dan zona waktu
+    const match = isoString.match(
+      /^(\d{4}-\d{2}-\d{2})(T\d{2}:\d{2}:\d{2}(\.\d+)?)?([+-]\d{2}:\d{2}|Z)?$/
+    );
+    if (match) {
+      // Ambil bagian tanggal
+      const date = match[1];
+      // Ambil zona waktu jika ada, kosong jika tidak ada
+      const timeZone = match[4] || "";
+      // Gabungkan tanggal dengan waktu 00:00:00 dan zona waktu
+      return `${date}T00:00:00${timeZone}`;
+    } else {
+      throw new Error("Format ISO string tidak valid");
+    }
+  }
+
+  function getEndOfMonthIsoString(dateInput: any) {
+    const date: any = dateInput ? new Date(dateInput) : new Date();
+    if (isNaN(date)) {
+      throw new Error("Input tanggal tidak valid");
+    }
+    // Pindah ke bulan berikutnya, set tanggal ke 0 untuk dapatkan tanggal terakhir bulan ini
+    date.setMonth(date.getMonth() + 1);
+    date.setDate(0);
+    // Atur waktu ke akhir hari
+    date.setHours(23, 59, 59, 999);
+    return date.toISOString();
+  }
+
+  function getStartOfYearIsoString(dateInput: any) {
+    const date: any = dateInput ? new Date(dateInput) : new Date();
+    if (isNaN(date)) {
+      throw new Error("Input tanggal tidak valid");
+    }
+    date.setMonth(0); // Januari (0-based)
+    date.setDate(1); // Tanggal 1
+    date.setHours(0, 0, 0, 0); // Jam 00:00:00
+    return date.toISOString();
+  }
+
+  // Akhir tahun (dengan waktu)
+  function getEndOfYearIsoString(dateInput: any) {
+    const date: any = dateInput ? new Date(dateInput) : new Date();
+    if (isNaN(date)) {
+      throw new Error("Input tanggal tidak valid");
+    }
+    date.setMonth(11); // Desember (0-based)
+    date.setDate(31); // Tanggal 31
+    date.setHours(23, 59, 59, 999); // Jam 23:59:59.999
+    return date.toISOString();
+  }
 
   useEffect(() => {
     const token = getAuthToken();
-    console.log("Auth token on mount:", token ? "[REDACTED]" : null);
     if (!token) {
       Swal.fire({
         icon: "warning",
@@ -187,18 +239,49 @@ export default function Finance() {
     }
 
     const validDecoded: DecodedToken = decoded;
-    console.log("Decoded token:", {
-      role: validDecoded.role,
-      geraiId: validDecoded.geraiId,
-      username: validDecoded.username,
-    });
     setUserRole(validDecoded.role);
     setUserGeraiId(validDecoded.geraiId.toString());
-
     const fetchInitialData = async () => {
       try {
+        const dailyIncomeExpense = await getDailyIncomeExpense(
+          new Date().toISOString().split("T")[0],
+          validDecoded.geraiId
+        );
+        setDataBiaya({
+          ...dataBiaya,
+          totalPendapatan: dailyIncomeExpense
+            ? parseInt(dailyIncomeExpense.total_revenue.split(".")[0])
+            : 0,
+        });
+        setDataBiaya({
+          ...dataBiaya,
+          totalPengeluaran: dailyIncomeExpense
+            ? parseInt(dailyIncomeExpense.total_expenses.split(".")[0])
+            : 0,
+        });
+        if (timeRange == "day") {
+          const expenses = await getAllExpenses(
+            validDecoded.geraiId,
+            setTimeToMidnight(new Date().toISOString()),
+            new Date().toISOString()
+          );
+          setAllExpenses(expenses);
+        } else if (timeRange == "month") {
+          const expenses = await getAllExpenses(
+            validDecoded.geraiId,
+            getStartOfMonthIsoString(new Date()),
+            getEndOfMonthIsoString(new Date())
+          );
+          setAllExpenses(expenses);
+        } else if (timeRange == "year") {
+          const expenses = await getAllExpenses(
+            validDecoded.geraiId,
+            getStartOfYearIsoString(new Date()),
+            getEndOfYearIsoString(new Date())
+          );
+          setAllExpenses(expenses);
+        }
         const geraiList = await getGerais();
-        console.log("Gerai list:", geraiList);
         setGerais(geraiList);
         const userGerai = geraiList.find(
           (g: Gerai) => g.id === validDecoded.geraiId
@@ -210,38 +293,22 @@ export default function Finance() {
         setAdditionalCosts({
           [userGerai.name.toUpperCase()]: { total: 0, details: [] },
         });
-
-        const categories = await getAllExpenseCategories();
-        console.log("Expense categories:", categories);
-        setExpenseCategories(categories);
-        if (categories.length > 0) setSelectedCategoryId(categories[0].id);
       } catch (error: any) {
         console.error("Failed to fetch initial data:", error);
-        setErrorMessage("Gagal mengambil data awal: " + error.message);
-      } finally {
-        setLoading(false);
       }
     };
-
     fetchInitialData();
-  }, [navigate]);
+  }, [navigate, timeRange]);
 
   const fetchData = useCallback(async () => {
     if (!userRole || !gerais.length || !userGeraiId || !userGeraiName) {
-      console.log("Skipping fetchData due to missing dependencies:", {
-        userRole,
-        geraisLength: gerais.length,
-        userGeraiId,
-        userGeraiName,
-      });
       return;
     }
 
     setLoading(true);
-    setErrorMessage(null);
 
     try {
-      const now = new Date("2025-04-26T00:00:00.000Z"); // Sementara untuk debugging
+      const now = new Date("2025-04-26T00:00:00.000Z");
       let startDate = new Date(now);
       let endDate = new Date(now);
 
@@ -271,12 +338,6 @@ export default function Finance() {
       const formattedStartDate = formatDateForAPIStandard(startDate);
       const formattedEndDate = formatDateForAPIStandard(endDate);
 
-      console.log("Fetching expenses with params:", {
-        geraiId: Number(userGeraiId),
-        startDate: formattedStartDate,
-        endDate: formattedEndDate,
-      });
-
       const [dailyTrendResponse, expensesResponse] = await Promise.all([
         fetchWithRetry(
           getDailyTrend(
@@ -293,12 +354,6 @@ export default function Finance() {
           )
         ),
       ]);
-
-      console.log("Full expensesResponse:", {
-        status: expensesResponse?.status,
-        headers: expensesResponse?.headers,
-        data: expensesResponse?.data,
-      });
 
       if (!expensesResponse || expensesResponse.status !== 200) {
         throw new Error(
@@ -320,7 +375,6 @@ export default function Finance() {
           }))
         : [];
 
-      console.log("Expenses fetched:", expenses);
       if (expenses.length === 0) {
         console.warn("No expenses returned from API. Parameters:", {
           geraiId: Number(userGeraiId),
@@ -328,9 +382,6 @@ export default function Finance() {
           endDate: formattedEndDate,
           token: getAuthToken() ? "[REDACTED]" : null,
         });
-        setErrorMessage(
-          "Tidak ada data pengeluaran ditemukan. Pastikan akun Anda memiliki akses ke gerai ini atau coba login ulang."
-        );
       }
 
       const processedRevenueData =
@@ -409,16 +460,9 @@ export default function Finance() {
       ];
 
       setRevenueData(processedRevenueData);
-      setTotalRevenue(totalRevenue);
       setGeraiData(geraiData);
       setAdditionalCosts(expenseMap);
-      setAllExpenses(expenses);
-      console.log("allExpenses set to:", expenses);
-
       setLastUpdated(formatDateForDisplay(new Date()));
-      if (expenses.length > 0) {
-        setErrorMessage(null);
-      }
     } catch (error: any) {
       console.error("Fetching data failed:", {
         message: error.message,
@@ -435,7 +479,6 @@ export default function Finance() {
           error.response.data
         )})`;
       }
-      setErrorMessage(errorMsg);
       const formattedStartDate = formatDateForAPIStandard(new Date());
       setRevenueData([
         {
@@ -444,7 +487,6 @@ export default function Finance() {
           gerai: userGeraiName || "Unknown",
         },
       ]);
-      setTotalRevenue(0);
       setGeraiData([
         {
           name: userGeraiName || "Unknown",
@@ -457,7 +499,6 @@ export default function Finance() {
       setAdditionalCosts({
         [userGeraiName?.toUpperCase() || "UNKNOWN"]: { total: 0, details: [] },
       });
-      setAllExpenses([]);
       setLastUpdated(formatDateForDisplay(new Date()));
     } finally {
       setLoading(false);
@@ -536,16 +577,14 @@ export default function Finance() {
     },
   };
 
-  const getCategoryName = (categoryId: number | undefined): string => {
-    const category = expenseCategories.find((cat) => cat.id === categoryId);
-    return category ? category.name : "Tanpa Kategori";
-  };
-
   const handleExport = () => {
     const data = [
       ["Laporan Pendapatan dan Pengeluaran Gerai", "", "", "", ""],
       ["Gerai", userGeraiName],
-      ["Total Pendapatan Bersih", `Rp ${totalRevenue.toLocaleString("id-ID")}`],
+      [
+        "Total Pendapatan Bersih",
+        `Rp ${dataBiaya.totalPendapatan.toLocaleString("id-ID")}`,
+      ],
       [
         "Total Pengeluaran",
         `Rp ${additionalCosts[
@@ -557,7 +596,6 @@ export default function Finance() {
       ["Tanggal", "Kategori", "Deskripsi", "Jumlah"],
       ...allExpenses.map((expense) => [
         formatDateForDisplay(expense.date, true),
-        getCategoryName(expense.expenseCategoryId),
         expense.description || "Tanpa deskripsi",
         `Rp ${(expense.amount || 0).toLocaleString("id-ID")}`,
       ]),
@@ -580,16 +618,6 @@ export default function Finance() {
       });
       return;
     }
-    if (!selectedCategoryId) {
-      Swal.fire({
-        icon: "error",
-        title: "Kategori Tidak Dipilih",
-        text: "Pilih kategori pengeluaran terlebih dahulu.",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-      return;
-    }
     if (!newDescription.trim()) {
       Swal.fire({
         icon: "error",
@@ -603,16 +631,16 @@ export default function Finance() {
 
     const costValue = Number(newCost);
     const currentDate = formatDateForAPIStandard(new Date());
-    const payload = {
+    const data = {
       geraiId: Number(userGeraiId),
-      expenseCategoryId: selectedCategoryId,
+      category: categoryCost.toUpperCase(),
       amount: costValue,
       description: newDescription,
       date: currentDate,
     };
 
     try {
-      await createExpense(payload);
+      await createExpense(data);
 
       setAdditionalCosts((prev) => {
         const updatedCosts = { ...prev };
@@ -636,7 +664,7 @@ export default function Finance() {
           amount: costValue,
           date: currentDate + "T00:00:00.000Z",
           description: newDescription,
-          expenseCategoryId: selectedCategoryId,
+          category: categoryCost.toUpperCase(),
         },
       ]);
 
@@ -661,8 +689,6 @@ export default function Finance() {
           ];
         }
       });
-
-      setTotalRevenue((prev) => prev - costValue);
 
       setGeraiData((prev) =>
         prev.map((gerai) => {
@@ -697,14 +723,9 @@ export default function Finance() {
         })
       );
 
-      setCache((prev) => {
-        const newCache = new Map(prev);
-        newCache.delete(`${timeRange}-${userRole}-${userGeraiId}`);
-        return newCache;
-      });
-
       setNewCost("");
       setNewDescription("");
+      setCategoryCost("");
 
       Swal.fire({
         icon: "success",
@@ -730,50 +751,7 @@ export default function Finance() {
   };
 
   const ExpenseTable = () => {
-    console.log("Rendering ExpenseTable with allExpenses:", allExpenses);
-
-    const now = new Date("2025-04-26T00:00:00.000Z"); // Sementara untuk debugging
-    const nowUTC = new Date(
-      now.getTime() - now.getTimezoneOffset() * 60 * 1000
-    );
-
-    const filteredExpenses = allExpenses.filter((expense) => {
-      if (!expense.date) return false;
-      const expenseDate = new Date(expense.date);
-      console.log("Filtering expense:", {
-        expenseDate: expenseDate.toISOString(),
-        timeRange,
-        nowUTC: nowUTC.toISOString(),
-      });
-
-      switch (timeRange) {
-        case "day":
-          return (
-            expenseDate.getUTCFullYear() === nowUTC.getUTCFullYear() &&
-            expenseDate.getUTCMonth() === nowUTC.getUTCMonth() &&
-            expenseDate.getUTCDate() === nowUTC.getUTCDate()
-          );
-        case "month":
-          return (
-            expenseDate.getUTCFullYear() === nowUTC.getUTCFullYear() &&
-            expenseDate.getUTCMonth() === nowUTC.getUTCMonth()
-          );
-        case "year":
-          return expenseDate.getUTCFullYear() === nowUTC.getUTCFullYear();
-        case "total":
-          return true;
-        default:
-          return true;
-      }
-    });
-
-    console.log("Filtered expenses:", filteredExpenses);
-
-    const sortedExpenses = filteredExpenses.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-
-    if (sortedExpenses.length === 0) {
+    if (allExpenses.length === 0) {
       return (
         <p className="text-gray-500 text-center">
           Tidak ada pengeluaran untuk periode ini. Coba ubah rentang waktu atau
@@ -802,13 +780,13 @@ export default function Finance() {
             </tr>
           </thead>
           <tbody>
-            {sortedExpenses.map((expense, idx) => (
+            {allExpenses.map((expense, idx) => (
               <tr key={expense.id || idx} className="hover:bg-gray-50">
                 <td className="border border-gray-200 px-4 py-2 text-sm text-gray-600">
                   {formatDateForDisplay(expense.date || new Date(), true)}
                 </td>
                 <td className="border border-gray-200 px-4 py-2 text-sm text-gray-600">
-                  {getCategoryName(expense.expenseCategoryId)}
+                  {expense.category || "Tanpa kategori"}
                 </td>
                 <td className="border border-gray-200 px-4 py-2 text-sm text-gray-600">
                   {expense.description || "Tanpa deskripsi"}
@@ -829,11 +807,6 @@ export default function Finance() {
   };
 
   if (!userRole || !userGeraiId || !userGeraiName) return null;
-
-  const totalExpenses = allExpenses.reduce(
-    (sum, expense) => sum + (expense.amount || 0),
-    0
-  );
 
   return (
     <div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8 bg-slate-100">
@@ -905,11 +878,6 @@ export default function Finance() {
           </div>
         ) : (
           <>
-            {errorMessage && (
-              <p className="text-center text-red-600 bg-red-50 p-3 rounded-md">
-                {errorMessage}
-              </p>
-            )}
             <Card className="bg-gradient-to-r from-orange-500 to-yellow-600 rounded-xl shadow-md">
               <CardHeader className="p-4 sm:p-5">
                 <div className="flex flex-col gap-3">
@@ -938,7 +906,10 @@ export default function Finance() {
                   </div>
                   <p className="text-white text-2xl sm:text-3xl font-bold">
                     Rp{" "}
-                    {(totalRevenue || 0).toLocaleString("id-ID", {
+                    {(
+                      dataBiaya.totalPendapatan - dataBiaya.totalPengeluaran ||
+                      0
+                    ).toLocaleString("id-ID", {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
                     })}
@@ -951,7 +922,6 @@ export default function Finance() {
                   <span>Terakhir Diperbarui: {lastUpdated}</span>
                   <Button
                     onClick={() => {
-                      setCache(new Map());
                       fetchData();
                     }}
                     className="ml-3 bg-white text-orange-600 hover:bg-gray-100 text-xs py-1 px-2 h-7 flex items-center"
@@ -969,9 +939,17 @@ export default function Finance() {
                     Tambah Pengeluaran
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-4 sm:p-5">
+                <CardContent className="">
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <select
+                    <input
+                      required
+                      type="text"
+                      value={categoryCost}
+                      onChange={(e) => setCategoryCost(e.target.value)}
+                      placeholder="Kategori Pengeluaran"
+                      className="w-full sm:w-1/3 p-2 border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                    {/* <select
                       value={selectedCategoryId || ""}
                       onChange={(e) =>
                         setSelectedCategoryId(Number(e.target.value))
@@ -983,8 +961,9 @@ export default function Finance() {
                           {category.name}
                         </option>
                       ))}
-                    </select>
+                    </select> */}
                     <input
+                      required
                       type="number"
                       value={newCost}
                       onChange={(e) => setNewCost(e.target.value)}
@@ -993,6 +972,7 @@ export default function Finance() {
                       min="0"
                     />
                     <input
+                      required
                       type="text"
                       value={newDescription}
                       onChange={(e) => setNewDescription(e.target.value)}
@@ -1016,7 +996,7 @@ export default function Finance() {
                   Daftar Pengeluaran - {userGeraiName}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 sm:p-5">
+              <CardContent className="">
                 <ExpenseTable />
               </CardContent>
             </Card>
@@ -1027,7 +1007,7 @@ export default function Finance() {
                   Tren Pendapatan Harian - {userGeraiName}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 sm:p-5">
+              <CardContent className="">
                 <div className="h-[400px]">
                   <Line data={chartData} options={chartOptions} />
                 </div>
@@ -1040,32 +1020,18 @@ export default function Finance() {
                   Ringkasan - {userGeraiName}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 sm:p-5">
+              <CardContent className="">
                 <div className="space-y-3">
                   <p className="text-sm text-gray-600">
                     Pendapatan Bersih:{" "}
                     <span className="font-semibold text-gray-800">
-                      Rp{" "}
-                      {(geraiData[0]?.totalRevenue || 0).toLocaleString(
-                        "id-ID",
-                        {
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 0,
-                        }
-                      )}
+                      Rp {dataBiaya.totalPendapatan.toLocaleString("id-ID")}
                     </span>
                   </p>
                   <p className="text-sm text-gray-600">
                     Total Pengeluaran:{" "}
                     <span className="font-semibold text-gray-800">
-                      Rp{" "}
-                      {(
-                        additionalCosts[userGeraiName.toUpperCase()]?.total ||
-                        totalExpenses
-                      ).toLocaleString("id-ID", {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0,
-                      })}
+                      Rp {dataBiaya.totalPengeluaran.toLocaleString("id-ID")}
                     </span>
                   </p>
                   {geraiData[0]?.percentageChange !== undefined && (

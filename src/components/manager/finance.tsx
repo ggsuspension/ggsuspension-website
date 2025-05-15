@@ -1,5 +1,11 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
-import { getDailyTrend, getAllExpenses, getGerais } from "@/utils/ggAPI";
+import { useEffect, useState, useCallback } from "react";
+import {
+  getDailyTrend,
+  getAllExpenses,
+  getGerais,
+  // getTotalPendapatan,
+  getAntrianCustomer,
+} from "@/utils/ggAPI";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,9 +19,7 @@ import {
   Title,
   Tooltip,
   Legend,
-  TooltipItem,
 } from "chart.js";
-import { Line } from "react-chartjs-2";
 import * as XLSX from "xlsx";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa6";
 import NavbarDashboard from "../fragments/NavbarDashboard";
@@ -106,13 +110,15 @@ export default function FinanceCEO() {
   const navigate = useNavigate();
   const [revenueData, setRevenueData] = useState<RevenueData[]>([]);
   const [totalRevenue, setTotalRevenue] = useState<number>(0);
+  const [totalRevenueByGerai, setTotalRevenueByGerai] = useState<any>([]);
+  const [totalRevenueFix, setTotalRevenueFix] = useState<any>([]);
   const [totalExpenses, setTotalExpenses] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState("");
   const [timeRange, setTimeRange] = useState<TimeRange>("month");
   const [geraiData, setGeraiData] = useState<GeraiData[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCostDetails, setShowCostDetails] = useState(false);
   const [additionalCosts, setAdditionalCosts] = useState<
     Record<
@@ -129,6 +135,20 @@ export default function FinanceCEO() {
   const [cache, setCache] = useState<Map<string, any>>(new Map());
 
   useEffect(() => {
+    async function fetchData() {
+      let dataAntrianSemuaGerai = await getAntrianCustomer();
+      setTotalRevenueFix(dataAntrianSemuaGerai);
+      dataAntrianSemuaGerai = dataAntrianSemuaGerai.reduce(
+        (acc: any, item: any) => {
+          acc += item.harga_service;
+          acc += item.harga_sparepart;
+          return acc;
+        },
+        0
+      );
+      setTotalRevenue(dataAntrianSemuaGerai);
+    }
+    fetchData();
     const token = getAuthToken();
     if (!token) {
       Swal.fire({
@@ -183,37 +203,47 @@ export default function FinanceCEO() {
         );
       } catch (error) {
         console.error("Failed to fetch initial data:", error);
-        setErrorMessage("Gagal mengambil data awal.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchInitialData();
+    async function fetchingData() {
+      let dataExpenses = await getAllExpenses(
+        undefined,
+        "2025-04-24",
+        formatDateForAPIStandard(new Date())
+      );
+      // let dataRevenue: any = await getTotalPendapatan(
+      //   "2025-04-24",
+      //   formatDateForAPIStandard(new Date())
+      // );
+      dataExpenses = dataExpenses.reduce((dataAwal: any, dataItem: any) => {
+        dataAwal += dataItem.amount;
+        return dataAwal;
+      }, 0);
+      setTotalExpenses(dataExpenses);
+    }
+    fetchingData();
   }, [navigate]);
 
   const fetchData = useCallback(async () => {
     if (!userRole || !gerais.length) return;
-
     const cacheKey = `${timeRange}-${userRole}`;
     const cachedData = cache.get(cacheKey);
 
     if (cachedData && timeRange !== "day") {
-      setRevenueData(cachedData.revenueData);
-      setTotalRevenue(cachedData.totalRevenue);
-      setTotalExpenses(cachedData.totalExpenses);
       setGeraiData(cachedData.geraiData);
       setAdditionalCosts(cachedData.additionalCosts);
       setAllExpenses(cachedData.allExpenses);
       setLastUpdated(cachedData.lastUpdated);
       setLoading(false);
-      setErrorMessage(null);
       console.log("Using cached data:", cachedData);
       return;
     }
 
     setLoading(true);
-    setErrorMessage(null);
 
     try {
       const now = new Date();
@@ -354,8 +384,6 @@ export default function FinanceCEO() {
       );
 
       setRevenueData(processedRevenueData);
-      setTotalRevenue(totalNetRevenue);
-      setTotalExpenses(totalExpenseAmount);
       setGeraiData(uniqueGeraiData);
       setAdditionalCosts(newAdditionalCosts);
       setAllExpenses(expenses);
@@ -374,15 +402,13 @@ export default function FinanceCEO() {
           })
         );
       }
-
-      setErrorMessage(null);
     } catch (error: any) {
       console.error("Fetching data failed:", error);
-      setErrorMessage(
-        error.message === "Request timed out"
-          ? "Server tidak merespons dalam waktu 5 detik."
-          : "Gagal mengambil data dari server: " + error.message
-      );
+      // setErrorMessage(
+      //   error.message === "Request timed out"
+      //     ? "Server tidak merespons dalam waktu 5 detik."
+      //     : "Gagal mengambil data dari server: " + error.message
+      // );
       const formattedStartDate = formatDateForAPIStandard(new Date());
       const defaultRevenueData = gerais.map((gerai) => ({
         date: formattedStartDate,
@@ -397,8 +423,6 @@ export default function FinanceCEO() {
         percentageChange: 0,
       }));
       setRevenueData(defaultRevenueData);
-      setTotalRevenue(0);
-      setTotalExpenses(0);
       setGeraiData(defaultGeraiData);
       setAdditionalCosts(
         gerais.reduce(
@@ -430,91 +454,91 @@ export default function FinanceCEO() {
     };
   }, [fetchData, timeRange]);
 
-  const chartData = useMemo((): { labels: string[]; datasets: any[] } => {
-    const uniqueDates = [
-      ...new Set(revenueData.map((d: RevenueData) => d.date)),
-    ].sort();
-    const geraiNames = [
-      ...new Set(revenueData.map((d: RevenueData) => d.gerai)),
-    ];
+  // const chartData = useMemo((): { labels: string[]; datasets: any[] } => {
+  //   const uniqueDates = [
+  //     ...new Set(revenueData.map((d: RevenueData) => d.date)),
+  //   ].sort();
+  //   const geraiNames = [
+  //     ...new Set(revenueData.map((d: RevenueData) => d.gerai)),
+  //   ];
 
-    return {
-      labels: uniqueDates,
-      datasets: [
-        ...geraiNames.map((geraiName) => {
-          const dailyRevenue: Record<string, number> = revenueData
-            .filter((data: RevenueData) => data.gerai === geraiName)
-            .reduce((acc: Record<string, number>, data: RevenueData) => {
-              acc[data.date] = (acc[data.date] || 0) + data.total;
-              return acc;
-            }, {});
+  //   return {
+  //     labels: uniqueDates,
+  //     datasets: [
+  //       ...geraiNames.map((geraiName) => {
+  //         const dailyRevenue: Record<string, number> = revenueData
+  //           .filter((data: RevenueData) => data.gerai === geraiName)
+  //           .reduce((acc: Record<string, number>, data: RevenueData) => {
+  //             acc[data.date] = (acc[data.date] || 0) + data.total;
+  //             return acc;
+  //           }, {});
 
-          const revenueByDate = uniqueDates.map(
-            (date) => dailyRevenue[date] || 0
-          );
+  //         const revenueByDate = uniqueDates.map(
+  //           (date) => dailyRevenue[date] || 0
+  //         );
 
-          return {
-            label: geraiName,
-            data: revenueByDate,
-            backgroundColor: `rgba(${Math.floor(
-              Math.random() * 255
-            )}, ${Math.floor(Math.random() * 255)}, ${Math.floor(
-              Math.random() * 255
-            )}, 0.6)`,
-            borderColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(
-              Math.random() * 255
-            )}, ${Math.floor(Math.random() * 255)}, 1)`,
-            borderWidth: 2,
-          };
-        }),
-        {
-          label: "Total Pengeluaran",
-          data: uniqueDates.map((date) => {
-            const dailyExpense = allExpenses
-              .filter((expense) => expense.date.split("T")[0] === date)
-              .reduce((sum, expense) => sum + expense.amount, 0);
-            return dailyExpense;
-          }),
-          backgroundColor: "rgba(255, 99, 132, 0.6)",
-          borderColor: "rgba(255, 99, 132, 1)",
-          borderWidth: 2,
-          borderDash: [5, 5],
-        },
-      ],
-    };
-  }, [revenueData, allExpenses]);
+  //         return {
+  //           label: geraiName,
+  //           data: revenueByDate,
+  //           backgroundColor: `rgba(${Math.floor(
+  //             Math.random() * 255
+  //           )}, ${Math.floor(Math.random() * 255)}, ${Math.floor(
+  //             Math.random() * 255
+  //           )}, 0.6)`,
+  //           borderColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(
+  //             Math.random() * 255
+  //           )}, ${Math.floor(Math.random() * 255)}, 1)`,
+  //           borderWidth: 2,
+  //         };
+  //       }),
+  //       {
+  //         label: "Total Pengeluaran",
+  //         data: uniqueDates.map((date) => {
+  //           const dailyExpense = allExpenses
+  //             .filter((expense) => expense.date.split("T")[0] === date)
+  //             .reduce((sum, expense) => sum + expense.amount, 0);
+  //           return dailyExpense;
+  //         }),
+  //         backgroundColor: "rgba(255, 99, 132, 0.6)",
+  //         borderColor: "rgba(255, 99, 132, 1)",
+  //         borderWidth: 2,
+  //         borderDash: [5, 5],
+  //       },
+  //     ],
+  //   };
+  // }, [revenueData, allExpenses]);
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: true, position: "top" as const },
-      tooltip: {
-        callbacks: {
-          label: (tooltipItem: TooltipItem<"line">) =>
-            `${tooltipItem.dataset.label}: Rp ${Number(
-              tooltipItem.raw
-            ).toLocaleString("id-ID")} (${
-              tooltipItem.dataset.label === "Total Pengeluaran"
-                ? "Pengeluaran"
-                : "Bersih"
-            })`,
-        },
-      },
-    },
-    scales: {
-      x: { title: { display: true, text: "Tanggal" } },
-      y: {
-        title: { display: true, text: "Nominal (Rp)" },
-        ticks: {
-          callback: (value: string | number) =>
-            `Rp ${
-              typeof value === "number" ? value.toLocaleString("id-ID") : value
-            }`,
-        },
-      },
-    },
-  };
+  // const chartOptions = {
+  //   responsive: true,
+  //   maintainAspectRatio: false,
+  //   plugins: {
+  //     legend: { display: true, position: "top" as const },
+  //     tooltip: {
+  //       callbacks: {
+  //         label: (tooltipItem: TooltipItem<"line">) =>
+  //           `${tooltipItem.dataset.label}: Rp ${Number(
+  //             tooltipItem.raw
+  //           ).toLocaleString("id-ID")} (${
+  //             tooltipItem.dataset.label === "Total Pengeluaran"
+  //               ? "Pengeluaran"
+  //               : "Bersih"
+  //           })`,
+  //       },
+  //     },
+  //   },
+  //   scales: {
+  //     x: { title: { display: true, text: "Tanggal" } },
+  //     y: {
+  //       title: { display: true, text: "Nominal (Rp)" },
+  //       ticks: {
+  //         callback: (value: string | number) =>
+  //           `Rp ${
+  //             typeof value === "number" ? value.toLocaleString("id-ID") : value
+  //           }`,
+  //       },
+  //     },
+  //   },
+  // };
 
   const handleExport = () => {
     const data = [
@@ -660,9 +684,9 @@ export default function FinanceCEO() {
           </div>
         ) : (
           <>
-            {errorMessage && (
+            {/* {errorMessage && (
               <p className="text-center text-red-600 mt-4">{errorMessage}</p>
-            )}
+            )} */}
             <Card className="bg-gradient-to-r from-orange-500 to-yellow-600 mb-6 mt-4 sm:mt-6 rounded-xl shadow-md overflow-hidden">
               <CardHeader className="p-4 sm:p-6">
                 <div className="flex flex-col gap-4">
@@ -768,7 +792,7 @@ export default function FinanceCEO() {
               </CardContent>
             </Card>
 
-            <Card className="mb-6">
+            {/* <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Tren Keuangan Harian</CardTitle>
               </CardHeader>
@@ -777,7 +801,7 @@ export default function FinanceCEO() {
                   <Line data={chartData} options={chartOptions} />
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
 
             <Card className="mb-6">
               <CardHeader>
@@ -798,7 +822,17 @@ export default function FinanceCEO() {
                   {gerais.map((gerai) => (
                     <Button
                       key={gerai.id}
-                      onClick={() => setSelectedGerai(gerai.name)}
+                      onClick={() => {
+                        setSelectedGerai(gerai.name);
+                        let revenueByGerai = totalRevenueFix
+                          .filter((g: any) => g.gerai.toLowerCase() == gerai.name.toLowerCase())
+                          .reduce((acc: any, item: any) => {
+                            acc += item.harga_service;
+                            acc += item.harga_sparepart;
+                            return acc;
+                          }, 0);
+                          setTotalRevenueByGerai(revenueByGerai);
+                      }}
                       className={`${
                         selectedGerai === gerai.name
                           ? "bg-orange-600 hover:bg-orange-700 text-white"
@@ -821,14 +855,11 @@ export default function FinanceCEO() {
                       <CardContent>
                         <p>
                           Pendapatan Bersih: Rp{" "}
-                          {(gerai.totalRevenue || 0).toLocaleString("id-ID")}
+                          {totalRevenueByGerai.toLocaleString("id-ID")}
                         </p>
                         <p>
                           Total Pengeluaran: Rp{" "}
-                          {(
-                            additionalCosts[gerai.name.toUpperCase()]?.total ||
-                            0
-                          ).toLocaleString("id-ID")}
+                          {totalExpenses.toLocaleString("id-ID")}
                         </p>
                         {additionalCosts[gerai.name.toUpperCase()]?.details
                           .length > 0 && (

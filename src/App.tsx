@@ -1,9 +1,9 @@
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import Home from "./Home";
-import ScanQR from "./components/fragments/ScanQR";
+// import ScanQR from "./components/fragments/ScanQR";
 import AntrianPage from "./components/pages/AntrianPage";
 import AntrianSemuaGerai from "./components/pages/AntrianSemuaGerai";
-import FormPelanggan from "./components/pages/FormPelanggan";
+// import FormPelanggan from "./components/pages/FormPelanggan";
 import Nusantara from "./components/pages/Nusantara";
 import Sample from "./components/pages/Sample";
 import KlaimGaransi from "./components/pages/KlaimGaransi";
@@ -17,26 +17,19 @@ import DashboardAdmin from "./components/admin";
 import DashboardCEO from "./components/manager";
 import Seals from "./components/admin/seal";
 import ListRequest from "./components/gudang/ListRequest";
-import SealManagement from "./components/gudang/sealManagement";
+import SealManagement from "./components/gudang/SparepartManagement";
 import DashboardGudang from "./components/gudang";
 import FinanceCEO from "./components/manager/finance";
 import AllGeraiSpareparts from "./components/cservices/spareparts";
 import AntrianCS from "./components/cservices/antrian";
+import AddRole from "./components/pages/AddRole";
+import Customer from "./components/layouts/Customer";
+import CustomerProfileForm from "./components/pages/CustomerProfileForm";
+import ImageUploader from "./components/pages/ImageUpload";
 
-// Ambil data cookie
 let cookieDataPelanggan: any = getCookie("pelangganGGSuspension");
 cookieDataPelanggan = cookieDataPelanggan && JSON.parse(cookieDataPelanggan);
 
-// Komponen ProtectedRoute
-// const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-//   const token = getAuthToken();
-//   if (!token) {
-//     return <Navigate to="/admin/login" replace />;
-//   }
-//   return children;
-// };
-
-// Definisikan router
 const router = createHashRouter([
   {
     path: "/",
@@ -45,6 +38,18 @@ const router = createHashRouter([
   {
     path: "/menu",
     element: <Home />,
+  },
+  {
+    path: "/image",
+    element: <ImageUploader />,
+  },
+  {
+    path: "/add-role",
+    element: <AddRole />,
+  },
+  {
+    path: "/customer",
+    element: <Customer />,
   },
   {
     path: "/ceo-dashboard",
@@ -145,7 +150,7 @@ const router = createHashRouter([
   {
     path: "/spareparts",
     element: (
-      <ProtectedRoute allowedRoles={["CS"]}>
+      <ProtectedRoute allowedRoles={["CS","CEO"]}>
         <AllGeraiSpareparts />
       </ProtectedRoute>
     ),
@@ -154,14 +159,10 @@ const router = createHashRouter([
     path: "/auth/login",
     element: <Login />,
   },
-  {
-    path: "/scan",
-    element: <ScanQR />,
-  },
-  {
-    path: "/form-pelanggan",
-    element: <FormPelanggan />,
-  },
+  // {
+  //   path: "/scan",
+  //   element: <ScanQR />,
+  // },
   {
     path: "/antrian",
     element: <AntrianSemuaGerai />,
@@ -175,11 +176,14 @@ const router = createHashRouter([
     element: <Nusantara />,
   },
   {
+    path: "/customer-form",
+    element: <CustomerProfileForm />,
+  },
+  {
     path: "/klaim_garansi",
     element: <KlaimGaransi />,
   },
 ]);
-
 const App = () => {
   return <RouterProvider router={router} />;
 };

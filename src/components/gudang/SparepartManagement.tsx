@@ -12,7 +12,7 @@ import Swal from "sweetalert2";
 import NavbarDashboard from "../fragments/NavbarDashboard";
 import { Motor, WarehouseSeal } from "@/types";
 
-const SealManagement = () => {
+const SparepartManagement = () => {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [seals, setSeals] = useState<WarehouseSeal[]>([]);
@@ -20,14 +20,18 @@ const SealManagement = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [formData, setFormData] = useState({
     motor_id: 0,
-    cc_range: "",
+    size: "",
     price: 0,
-    qty: 0,
+    qty: 1,
+    type: "",
+    category: "",
   });
   const [editId, setEditId] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const spareparts = ["SEAL", "AS", "OLI", "PER"];
 
   useEffect(() => {
+    console.log("userRole:", userRole);
     const initializeUser = () => {
       const token = getAuthToken();
       if (!token) {
@@ -76,7 +80,6 @@ const SealManagement = () => {
     setLoading(true);
     try {
       const data = await getWarehouseSeals();
-      console.log("Fetched seals data:", data);
       setSeals(data);
       if (data.length === 0) {
         console.warn("No seals data returned from API");
@@ -92,7 +95,6 @@ const SealManagement = () => {
   const fetchMotors = async () => {
     try {
       const data = await getMotors();
-      console.log("Fetched motors data:", data);
       setMotors(data);
     } catch (error) {
       console.error("Error fetching motors:", error);
@@ -122,22 +124,27 @@ const SealManagement = () => {
           : value,
     }));
   };
+  console.log("formData:", formData);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    formData.category = formData.category.toUpperCase();
     try {
       if (editId) {
-        const updatedSeal = await updateWarehouseSeal(editId, formData);
-        setSeals((prev) =>
-          prev.map((seal) => (seal.id === editId ? updatedSeal : seal))
-        );
+        await updateWarehouseSeal(editId, formData).then((res) => {
         Swal.fire("Berhasil", "Seal berhasil diperbarui.", "success");
+          if (res) {
+            setTimeout(() => {
+              window.location.reload();
+            }, 500);
+          }
+        });
       } else {
         if (
-          !formData.motor_id ||
-          !formData.cc_range ||
           !formData.price ||
-          !formData.qty
+          !formData.qty ||
+          !formData.type ||
+          !formData.category
         ) {
           Swal.fire(
             "Error",
@@ -146,9 +153,14 @@ const SealManagement = () => {
           );
           return;
         }
-        const newSeal = await createWarehouseSeal(formData);
-        setSeals((prev) => [...prev, newSeal]);
         Swal.fire("Berhasil", "Seal berhasil ditambahkan.", "success");
+        await createWarehouseSeal(formData).then((res) => {
+          if (res) {
+            setTimeout(() => {
+              window.location.reload();
+            }, 500);
+          }
+        });
       }
       resetForm();
     } catch (error: any) {
@@ -164,9 +176,11 @@ const SealManagement = () => {
       motor_id:
         (seal.motor && motors.find((m) => m.name === seal.motor?.name)?.id) ||
         0,
-      cc_range: seal.cc_range,
+      size: seal.size,
       price: seal.price,
       qty: seal.qty,
+      type: seal.type,
+      category: seal.category,
     });
     setIsModalOpen(true);
   };
@@ -195,7 +209,14 @@ const SealManagement = () => {
 
   const resetForm = () => {
     setEditId(null);
-    setFormData({ motor_id: 0, cc_range: "", price: 0, qty: 0 });
+    setFormData({
+      motor_id: 0,
+      size: "",
+      price: 0,
+      qty: 0,
+      type: "",
+      category: "",
+    });
     setIsModalOpen(false);
   };
 
@@ -207,13 +228,13 @@ const SealManagement = () => {
       <main className="mt-20 px-6 flex-1 m-2">
         <div className="flex flex-row justify-between m-2">
           <h2 className="text-xl font-semibold text-gray-700 mt-4">
-            Manajemen Seal Gudang
+            Manajemen Sparepart
           </h2>
           <button
             onClick={() => setIsModalOpen(true)}
             className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           >
-            Tambah Seal
+            Tambah Sparepart
           </button>
         </div>
         {loading ? (
@@ -222,22 +243,30 @@ const SealManagement = () => {
           <table className="w-full mt-6 bg-white rounded-lg shadow-md border-collapse">
             <thead>
               <tr className="bg-gray-200">
-                <th className="p-3 border-b">ID</th>
+                <th className="p-3 border-b">NO</th>
                 <th className="p-3 border-b">Motor</th>
-                <th className="p-3 border-b">CC Range</th>
+                <th className="p-3 border-b">Kategori</th>
+                <th className="p-3 border-b">Tipe</th>
+                <th className="p-3 border-b">Size</th>
                 <th className="p-3 border-b">Harga (Rp)</th>
                 <th className="p-3 border-b">Jumlah</th>
                 <th className="p-3 border-b">Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {seals.map((seal) => (
+              {seals.map((seal, index) => (
                 <tr key={seal.id} className="hover:bg-gray-50">
-                  <td className="p-3 border-b">{seal.id}</td>
+                  <td className="p-3 border-b">{index + 1}</td>
                   <td className="p-3 border-b">
-                    {seal.motor ? seal.motor.name : "Motor Tidak Diketahui"}
+                    {seal.motor
+                      ? seal.motor.name.toUpperCase()
+                      : "UNTUK BANYAK MOTOR"}
                   </td>
-                  <td className="p-3 border-b">{seal.cc_range}</td>
+                  <td className="p-3 border-b">
+                    {seal.category.toUpperCase()}
+                  </td>
+                  <td className="p-3 border-b">{seal.type.toUpperCase()}</td>
+                  <td className="p-3 border-b">{seal.size}</td>
                   <td className="p-3 border-b">
                     {seal.price.toLocaleString("id-ID")}
                   </td>
@@ -267,9 +296,28 @@ const SealManagement = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
             <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
               <h3 className="text-lg font-semibold mb-4">
-                {editId ? "Edit Seal" : "Tambah Seal"}
+                {editId ? "Edit Seal" : "Tambah Sparepart"}
               </h3>
               <form onSubmit={handleSubmit}>
+                <div className="mb-4">
+                  <label className="block text-gray-700">
+                    Kategori Sparepart
+                  </label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border rounded"
+                    required
+                  >
+                    <option value={0}>Pilih Sparepart</option>
+                    {spareparts.map((sparepart, index) => (
+                      <option key={index} value={sparepart}>
+                        {sparepart}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="mb-4">
                   <label className="block text-gray-700">Motor</label>
                   <select
@@ -277,7 +325,6 @@ const SealManagement = () => {
                     value={formData.motor_id}
                     onChange={handleInputChange}
                     className="w-full p-2 border rounded"
-                    required
                   >
                     <option value={0}>Pilih Motor</option>
                     {motors.map((motor) => (
@@ -288,26 +335,33 @@ const SealManagement = () => {
                   </select>
                 </div>
                 <div className="mb-4">
-                  <label className="block text-gray-700">CC Range</label>
+                  <label className="block text-gray-700">Size Sparepart</label>
                   <input
                     type="text"
-                    name="cc_range"
-                    value={formData.cc_range}
+                    name="size"
+                    value={formData.size}
                     onChange={handleInputChange}
                     className="w-full p-2 border rounded"
-                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-gray-700">Tipe Sparepart</label>
+                  <input
+                    type="text"
+                    name="type"
+                    value={formData.type}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border rounded"
                   />
                 </div>
                 <div className="mb-4">
                   <label className="block text-gray-700">Harga (Rp)</label>
                   <input
-                    type="number"
                     name="price"
-                    value={formData.price}
                     onChange={handleInputChange}
                     className="w-full p-2 border rounded"
-                    min="0"
                     required
+                    value={formData.price}
                   />
                 </div>
                 <div className="mb-4">
@@ -318,7 +372,7 @@ const SealManagement = () => {
                     value={formData.qty}
                     onChange={handleInputChange}
                     className="w-full p-2 border rounded"
-                    min="0"
+                    min="1"
                     required
                   />
                 </div>
@@ -346,4 +400,4 @@ const SealManagement = () => {
   );
 };
 
-export default SealManagement;
+export default SparepartManagement;

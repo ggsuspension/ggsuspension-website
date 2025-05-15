@@ -195,7 +195,7 @@ const DashboardGudang = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {requests.map((req) => (
+                    {requests.map((req:any) => (
                       <tr key={req.id} className="border-b hover:bg-gray-50">
                         <td className="p-3">{req.id}</td>
                         <td className="p-3">
@@ -203,9 +203,9 @@ const DashboardGudang = () => {
                         </td>
                         <td className="p-3">
                           {req.warehouse_seal?.motor
-                            ? `${req.warehouse_seal.motor.name} (${req.warehouse_seal.cc_range})`
+                            ? `${req.warehouse_seal.motor.name} (${req.warehouse_seal.category})`
                             : `Seal Tidak Diketahui (${
-                                req.warehouse_seal?.cc_range || "N/A"
+                                req.warehouse_seal?.category || "N/A"
                               })`}
                         </td>
                         <td className="p-3">{req.qty_requested}</td>

@@ -107,7 +107,6 @@ const ListRequest = () => {
     try {
       const updatedRequest = await approveStockRequest(id);
       console.log("Stock request disetujui:", updatedRequest);
-
       setStockRequests((prevRequests) =>
         prevRequests.map((request) =>
           request.id === id
@@ -127,6 +126,9 @@ const ListRequest = () => {
         timer: 1500,
         showConfirmButton: false,
       });
+      setTimeout(()=>{
+        window.location.reload();
+      },500)
     } catch (error: any) {
       console.error("Approve Error:", error);
       Swal.fire({
@@ -136,7 +138,7 @@ const ListRequest = () => {
       });
     }
   };
-
+console.log("stock request",stockRequests);
   const handleReject = async (id: number) => {
     try {
       const updatedRequest = await rejectStockRequest(id);
@@ -198,9 +200,11 @@ const ListRequest = () => {
               <table className="w-full mt-4 border-collapse">
                 <thead>
                   <tr className="bg-gray-200">
-                    <th className="p-2 border">ID</th>
+                    <th className="p-2 border">No</th>
                     <th className="p-2 border">Nama Gerai</th>
-                    <th className="p-2 border">Nama Seal</th>
+                    <th className="p-2 border">Kategori</th>
+                    <th className="p-2 border">Tipe</th>
+                    <th className="p-2 border">Size</th>
                     <th className="p-2 border">Jumlah</th>
                     <th className="p-2 border">Status</th>
                     <th className="p-2 border">Tanggal Request</th>
@@ -218,10 +222,13 @@ const ListRequest = () => {
                           `Gerai ID: ${request.gerai_id || "N/A"}`}
                       </td>
                       <td className="p-2 border">
-                        {request.warehouse_seal?.motor?.name &&
-                        request.warehouse_seal?.cc_range
-                          ? `${request.warehouse_seal.motor.name} ${request.warehouse_seal.cc_range}`
-                          : `Seal ID: ${request.warehouse_seal_id || "N/A"}`}
+                        {request.warehouse_seal?.category}
+                      </td>
+                      <td className="p-2 border">
+                        {request.warehouse_seal?.type}
+                      </td>
+                      <td className="p-2 border">
+                        {request.warehouse_seal?.size}
                       </td>
                       <td className="p-2 border">{request.qty_requested}</td>
                       <td className="p-2 border">

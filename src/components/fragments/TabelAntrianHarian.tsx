@@ -1,23 +1,38 @@
 import React from "react";
 
 interface TabelAntrianHarianProps {
-  data: any[];
+  data: any;
 }
 
 const TabelAntrianHarian: React.FC<TabelAntrianHarianProps> = ({ data }) => {
+  const hasilObjectPerGerai = data.data.reduce(
+    (dataAwal: any, dataAkhir: any) => {
+      if (!dataAwal[dataAkhir.gerai])
+        dataAwal[dataAkhir.gerai] = [dataAkhir];
+      else
+        dataAwal[dataAkhir.gerai] = [
+          ...dataAwal[dataAkhir.gerai],
+          dataAkhir,
+        ];
+      return dataAwal;
+    },
+    {}
+  );
+
   if (!data || data.length === 0) {
     return (
       <p className="text-center text-gray-500 mt-4">Tidak ada data antrian.</p>
     );
   }
-  console.log(data);
+
+
 
   return (
     <div className="mt-6">
-      {data.map((item: any, index: number) => (
+      {Object.keys(hasilObjectPerGerai).map((gerai: any, index: number) => (
         <div key={index} className="mb-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-2">
-            Gerai: {item.gerai}
+            Gerai: {gerai}
           </h2>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border rounded-lg shadow-md">
@@ -30,39 +45,45 @@ const TabelAntrianHarian: React.FC<TabelAntrianHarianProps> = ({ data }) => {
                   <th className="py-2 px-4 border-b">LAYANAN</th>
                   <th className="py-2 px-4 border-b">JENIS MOTOR</th>
                   <th className="py-2 px-4 border-b">BAGIAN MOTOR</th>
+                  <th className="py-2 px-4 border-b">BAGIAN MOTOR LAIN</th>
                   <th className="py-2 px-4 border-b">MOTOR</th>
+                  <th className="py-2 px-4 border-b">SPAREPART</th>
+                  <th className="py-2 px-4 border-b">HARGA LAYANAN</th>
+                  <th className="py-2 px-4 border-b">HARGA SPAREPART</th>
                   <th className="py-2 px-4 border-b">TOTAL HARGA</th>
                   <th className="py-2 px-4 border-b">STATUS</th>
                 </tr>
               </thead>
-              <tbody>
-                {item.data.map((row: any, i: number) => {
-                  // Validasi status
-                  const validStatuses = ["PROGRESS", "FINISH", "CANCELED"];
-                  const displayStatus = validStatuses.includes(row.status)
-                    ? row.status
-                    : "PROGRESS";
-
-                  return (
-                    <tr key={i} className="hover:bg-gray-50">
+              {hasilObjectPerGerai[gerai].map(
+                (item: any, indexArray: number) => (
+                  <tbody key={indexArray}>
+                    <tr className="hover:bg-gray-50">
                       <td className="py-2 px-4 border-b text-center">
-                        {i + 1}
+                        {indexArray + 1}
                       </td>
-                      <td className="py-2 px-4 border-b">{row.nama}</td>
-                      <td className="py-2 px-4 border-b">{row.plat}</td>
-                      <td className="py-2 px-4 border-b">{row.noWA}</td>
-                      <td className="py-2 px-4 border-b">{row.layanan}</td>
-                      <td className="py-2 px-4 border-b">{row.jenisMotor}</td>
-                      <td className="py-2 px-4 border-b">{row.bagianMotor}</td>
-                      <td className="py-2 px-4 border-b">{row.motor}</td>
+                      <td className="py-2 px-4 border-b">{item.nama}</td>
+                      <td className="py-2 px-4 border-b">{item.plat_motor}</td>
+                      <td className="py-2 px-4 border-b">{item.noWA}</td>
+                      <td className="py-2 px-4 border-b">{item.layanan}</td>
+                      <td className="py-2 px-4 border-b">{item.jenis_motor}</td>
+                      <td className="py-2 px-4 border-b">{item.bagian_motor}</td>
+                      <td className="py-2 px-4 border-b">{item.bagian_motor2}</td>
+                      <td className="py-2 px-4 border-b">{item.motor}</td>
+                      <td className="py-2 px-4 border-b">{item.sparepart}</td>
                       <td className="py-2 px-4 border-b">
-                        Rp {row.totalHarga.toLocaleString("id-ID")}
+                        Rp {item.harga_service}
                       </td>
-                      <td className="py-2 px-4 border-b">{displayStatus}</td>
+                      <td className="py-2 px-4 border-b">
+                        Rp {item.harga_sparepart||0}
+                      </td>
+                      <td className="py-2 px-4 border-b">
+                        Rp {item.harga_service +item.harga_sparepart}
+                      </td>
+                      <td className="py-2 px-4 border-b">{item.status}</td>
                     </tr>
-                  );
-                })}
-              </tbody>
+                  </tbody>
+                )
+              )}
             </table>
           </div>
         </div>

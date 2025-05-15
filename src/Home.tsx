@@ -15,7 +15,6 @@ import { dataListMotor } from "./utils/dataListMotor";
 import { getCookie } from "./utils/getCookie";
 import PriceChecker from "./components/fragments/GeraiSection";
 
-// Komponen AnimatedSection untuk membungkus setiap section
 const AnimatedSection = ({ children, className = "" }: any) => {
   const [ref, inView] = useInView({
     triggerOnce: true,
@@ -34,8 +33,6 @@ const AnimatedSection = ({ children, className = "" }: any) => {
     </motion.div>
   );
 };
-
-// Main Website component
 const Home = () => {
   const [listMotor, setListMotor] = useState<any>(undefined);
   const [gerai, setGerai] = useState<any>(undefined);
@@ -114,7 +111,6 @@ const Home = () => {
   return (
     <div className="relative min-h-screen bg-blue-700 font-poppins overflow-hidden">
       <Navigation namaGerai={setGeraiSelected} />
-
       <div className="w-full h-[40em] tablet:h-[55em] desktop:h-[50em]">
         <HeaderCarousel />
       </div>

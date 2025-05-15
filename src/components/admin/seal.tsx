@@ -12,7 +12,7 @@ import {
   requestSeal,
   getStockRequestsByGerai,
 } from "@/utils/ggAPI";
-import { type DecodedToken, type Seal, type StockRequest } from "@/types";
+import { type DecodedToken, type Sparepart, type StockRequest } from "@/types";
 
 // Format waktu WIB
 const formatDateForDisplay = (
@@ -76,7 +76,7 @@ const formatRupiah = (value: number) =>
 
 export default function SealAdmin() {
   const navigate = useNavigate();
-  const [seals, setSeals] = useState<Seal[]>([]);
+  const [seals, setSeals] = useState<Sparepart[]>([]);
   const [warehouseSeals, setWarehouseSeals] = useState<any[]>([]);
   const [stockRequests, setStockRequests] = useState<StockRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,9 +99,6 @@ export default function SealAdmin() {
         getWarehouseSeals(),
         getStockRequestsByGerai(geraiId),
       ]);
-      console.log("Seal Data:", sealData);
-      console.log("Warehouse Data:", warehouseData);
-      console.log("Stock Request Data:", stockRequestData);
       setSeals(sealData || []);
       setWarehouseSeals(warehouseData || []);
       setStockRequests(stockRequestData || []);
@@ -118,6 +115,7 @@ export default function SealAdmin() {
       setStockRequests([]);
     }
   };
+  console.log("daftar sparepart =", warehouseSeals);
 
   useEffect(() => {
     const token = getAuthToken();
@@ -146,7 +144,6 @@ export default function SealAdmin() {
     }
 
     const validDecoded: DecodedToken = decoded;
-    console.log("Decoded Token:", validDecoded);
     setUserRole(validDecoded.role);
     setUserGeraiId(validDecoded.geraiId);
     setUserGeraiName(validDecoded.gerai?.name || "");
@@ -171,25 +168,17 @@ export default function SealAdmin() {
   }, [navigate]);
 
   useEffect(() => {
-    console.log("Current Stock Requests:", stockRequests);
-  }, [stockRequests]);
-
-  useEffect(() => {
     if (warehouseSeals.length > 0 && selectedWarehouseSealId === null) {
       setSelectedWarehouseSealId(warehouseSeals[0].id);
     }
   }, [warehouseSeals]);
 
   const handleRequestSeal = async () => {
-    console.log("Gerai ID:", userGeraiId);
-    console.log("Selected Warehouse Seal ID:", selectedWarehouseSealId);
-    console.log("Request Quantity:", requestQuantity);
-
     if (!userGeraiId || !selectedWarehouseSealId || !requestQuantity) {
       return Swal.fire({
         icon: "error",
         title: "Data Tidak Lengkap",
-        text: "Pastikan ID Gerai, Seal, dan Jumlah permintaan sudah terisi.",
+        text: "Pastikan ID Gerai, Sparepart, dan Jumlah permintaan sudah terisi.",
         timer: 1500,
         showConfirmButton: false,
       });
@@ -221,7 +210,7 @@ export default function SealAdmin() {
 
     const payload = {
       gerai_id: userGeraiId,
-      warehouse_seal_id: selectedWarehouseSealId,
+      sparepart_id: selectedWarehouseSealId,
       qty_requested: qty,
     };
 
@@ -236,7 +225,7 @@ export default function SealAdmin() {
 
       Swal.fire({
         icon: "success",
-        title: "Permintaan Seal Berhasil",
+        title: "Permintaan Sparepart Berhasil",
         text: `Permintaan ${qty} seal dikirim ke gudang.`,
         timer: 1500,
         showConfirmButton: false,
@@ -254,13 +243,14 @@ export default function SealAdmin() {
     } catch (error: any) {
       Swal.fire({
         icon: "error",
-        title: "Gagal Meminta Seal",
+        title: "Gagal Meminta Sparepart",
         text: error.message || "Terjadi kesalahan.",
       });
     } finally {
       setRequesting(false);
     }
   };
+  console.log("SEAL",seals)
 
   if (userRole !== "ADMIN") return null;
 
@@ -293,11 +283,11 @@ export default function SealAdmin() {
             <Card className="bg-gradient-to-r from-orange-500 to-yellow-600 mb-6 rounded-xl shadow-md">
               <CardHeader>
                 <CardTitle className="text-white text-xl">
-                  Total Stok Seal
+                  Total Stok Sparepart
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-white text-2xl font-bold">
-                {totalStock} Seal
+                {totalStock} Sparepart
                 <div className="flex items-center text-sm mt-2">
                   <Clock className="w-4 h-4 mr-1" />
                   {lastUpdated}
@@ -307,7 +297,7 @@ export default function SealAdmin() {
 
             <Card className="mb-6">
               <CardHeader>
-                <CardTitle>Request Seal Baru</CardTitle>
+                <CardTitle>Request Sparepart Baru</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -321,9 +311,10 @@ export default function SealAdmin() {
                     {warehouseSeals.length === 0 ? (
                       <option value="">Tidak ada seal tersedia</option>
                     ) : (
-                      warehouseSeals.map((ws) => (
-                        <option key={ws.id} value={ws.id}>
-                          {ws.motor?.name} - {ws.cc_range} ({ws.qty} tersedia)
+                      warehouseSeals.map((sparepart) => (
+                        <option key={sparepart.id} value={sparepart.id}>
+                          {sparepart.category.toUpperCase()} - {sparepart.size} -{" "}
+                          {sparepart.type} ({sparepart.qty} tersedia)
                         </option>
                       ))
                     )}
@@ -351,26 +342,30 @@ export default function SealAdmin() {
 
             <Card className="mb-6">
               <CardHeader>
-                <CardTitle>Daftar Seal</CardTitle>
+                <CardTitle>Daftar Sparepart</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="custom-scrollbar">
                   <table className="w-full table-auto border min-w-[1200px]">
                     <thead>
                       <tr className="bg-gray-200">
-                        <th className="p-2">CC Range</th>
+                        <th className="p-2">Kategori</th>
+                        <th className="p-2">Tipe</th>
+                        <th className="p-2">Size</th>
                         <th className="p-2">Motor</th>
                         <th className="p-2">Harga</th>
                         <th className="p-2">Stok</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {seals.map((seal) => (
-                        <tr key={seal.id} className="border-b">
-                          <td className="p-2">{seal.cc_range}</td>
-                          <td className="p-2">{seal.motor?.name || "-"}</td>
-                          <td className="p-2">{formatRupiah(seal.price)}</td>
-                          <td className="p-2">{seal.qty}</td>
+                      {seals.map((sparepart) => (
+                        <tr key={sparepart.id} className="border-b">
+                          <td className="p-2">{sparepart.category.toUpperCase()}</td>
+                          <td className="p-2">{sparepart.type || "-"}</td>
+                          <td className="p-2">{sparepart.size || "-"}</td>
+                          <td className="p-2">{sparepart.motor?.name || "BANYAK MOTOR"}</td>
+                          <td className="p-2">{formatRupiah(sparepart.price)}</td>
+                          <td className="p-2">{sparepart.qty}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -388,8 +383,9 @@ export default function SealAdmin() {
                   <table className="w-full table-auto border min-w-[1200px]">
                     <thead>
                       <tr className="bg-gray-200">
-                        <th className="p-2">CC Range</th>
-                        <th className="p-2">Motor</th>
+                        <th className="p-2">Kategori</th>
+                        <th className="p-2">Tipe</th>
+                        <th className="p-2">Size</th>
                         <th className="p-2">Jumlah</th>
                         <th className="p-2">Tanggal</th>
                         <th className="p-2">Status</th>
@@ -408,10 +404,13 @@ export default function SealAdmin() {
                           return (
                             <tr key={request.id} className="border-b">
                               <td className="p-2">
-                                {request.warehouse_seal?.cc_range || "N/A"}
+                                {request.warehouse_seal?.category.toUpperCase() || "N/A"}
                               </td>
                               <td className="p-2">
-                                {request.warehouse_seal?.motor?.name || "N/A"}
+                                {request.warehouse_seal?.type || "N/A"}
+                              </td>
+                              <td className="p-2">
+                                {request.warehouse_seal?.size || "N/A"}
                               </td>
                               <td className="p-2">{request.qty_requested}</td>
                               <td className="p-2">

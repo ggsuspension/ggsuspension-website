@@ -1,50 +1,38 @@
 import React from "react";
 import Swal from "sweetalert2";
 import type { GroupedAntrian, TransformedAntrian } from "@/types";
+import { updateCustomer } from "@/utils/ggAPI";
+import { getChannel } from "@/utils/realtime";
 
 interface TabelAntrianHarianEditProps {
   data: GroupedAntrian[];
+  dataSeal: any;
   isLoading: boolean;
   onEdit: (item: TransformedAntrian) => void;
   onFinish: (id: number) => Promise<void>;
   onCancel: (id: number) => Promise<void>;
-  editItem: TransformedAntrian | null;
-  setEditItem: React.Dispatch<React.SetStateAction<TransformedAntrian | null>>;
+  editItem: any | null;
+  setEditItem: React.Dispatch<React.SetStateAction<any | null>>;
   onUpdate: (e: React.FormEvent) => Promise<void>;
 }
 
 const TabelAntrianHarianEdit: React.FC<TabelAntrianHarianEditProps> = ({
   data,
+  dataSeal,
   isLoading,
   onEdit,
-  onFinish,
   onCancel,
   editItem,
   setEditItem,
   onUpdate,
+  onFinish,
 }) => {
   if (isLoading)
     return <p className="text-center text-gray-600">Memuat data...</p>;
   if (!data || data.length === 0)
     return <p className="text-center text-gray-600">Tidak ada data antrian.</p>;
 
-  const statusOptions = ["PROGRESS", "FINISHED", "CANCELLED"];
-
-  const handleFinishClick = (item: TransformedAntrian) => {
-    // Validasi: Hanya bisa "Finish" dari status "PROGRESS"
-    if (item.status !== "PROGRESS") {
-      Swal.fire({
-        icon: "warning",
-        title: "Tidak Diizinkan",
-        text: "Order harus dalam status 'PROGRESS' sebelum bisa diselesaikan.",
-        timer: 2000,
-        showConfirmButton: false,
-      });
-      return;
-    }
-    onFinish(item.id);
-  };
-
+  const channel = getChannel();
   const handleCancelClick = (item: TransformedAntrian) => {
     // Validasi: Tidak bisa "Cancel" jika sudah "FINISHED"
     if (item.status === "FINISHED") {
@@ -64,7 +52,7 @@ const TabelAntrianHarianEdit: React.FC<TabelAntrianHarianEditProps> = ({
     <div className="space-y-6 mt-6">
       {data.map((group: GroupedAntrian) => (
         <div key={group.gerai} className="bg-white p-4 rounded shadow">
-          <h2 className="text-xl font-semibold mb-2">{group.gerai}</h2>
+          {/* <h2 className="text-xl font-semibold mb-2">{group.gerai}</h2> */}
           {/* Wrapper div untuk scroll horizontal dengan scrollbar kustom */}
           <div className="custom-scrollbar">
             <table className="w-full table-auto border min-w-[1200px]">
@@ -77,16 +65,17 @@ const TabelAntrianHarianEdit: React.FC<TabelAntrianHarianEditProps> = ({
                   <th className="border p-2 text-sm">Subkategori</th>
                   <th className="border p-2 text-sm">Motor</th>
                   <th className="border p-2 text-sm">Bagian Motor</th>
+                  <th className="border p-2 text-sm">Bagian Motor Lain</th>
                   <th className="border p-2 text-sm">Harga Layanan</th>
-                  <th className="border p-2 text-sm">Harga Seal</th>
+                  <th className="border p-2 text-sm">Sparepart</th>
+                  <th className="border p-2 text-sm">Harga Sparepart</th>
                   <th className="border p-2 text-sm">Total</th>
                   <th className="border p-2 text-sm">Status</th>
                   <th className="border p-2 text-sm">Aksi</th>
                 </tr>
               </thead>
               <tbody>
-                {group.data.map((item: TransformedAntrian) => {
-                  console.log("Rendering item:", item, "editItem:", editItem);
+                {group.data.map((item: any) => {
                   const isEditing = editItem && editItem.id === item.id;
                   return (
                     <tr key={item.id}>
@@ -96,7 +85,7 @@ const TabelAntrianHarianEdit: React.FC<TabelAntrianHarianEditProps> = ({
                             className="border p-1 rounded w-full text-sm"
                             value={editItem?.nama || ""}
                             onChange={(e) =>
-                              setEditItem((prev) => {
+                              setEditItem((prev: any) => {
                                 if (!prev) {
                                   return {
                                     id: item.id,
@@ -108,7 +97,7 @@ const TabelAntrianHarianEdit: React.FC<TabelAntrianHarianEditProps> = ({
                                     motor: item.motor,
                                     bagianMotor: item.bagianMotor,
                                     hargaLayanan: item.hargaLayanan,
-                                    hargaSeal: item.hargaSeal,
+                                    hargaSparepart: item.hargaSparepart,
                                     totalHarga: item.totalHarga,
                                     status: item.status,
                                     waktu: item.waktu,
@@ -132,7 +121,7 @@ const TabelAntrianHarianEdit: React.FC<TabelAntrianHarianEditProps> = ({
                             className="border p-1 rounded w-full text-sm"
                             value={editItem?.plat || ""}
                             onChange={(e) =>
-                              setEditItem((prev) => {
+                              setEditItem((prev: any) => {
                                 if (!prev) {
                                   return {
                                     id: item.id,
@@ -144,7 +133,7 @@ const TabelAntrianHarianEdit: React.FC<TabelAntrianHarianEditProps> = ({
                                     motor: item.motor,
                                     bagianMotor: item.bagianMotor,
                                     hargaLayanan: item.hargaLayanan,
-                                    hargaSeal: item.hargaSeal,
+                                    hargaSparepart: item.hargaSparepart,
                                     totalHarga: item.totalHarga,
                                     status: item.status,
                                     waktu: item.waktu,
@@ -168,7 +157,7 @@ const TabelAntrianHarianEdit: React.FC<TabelAntrianHarianEditProps> = ({
                             className="border p-1 rounded w-full text-sm"
                             value={editItem?.no_wa || ""}
                             onChange={(e) =>
-                              setEditItem((prev) => {
+                              setEditItem((prev: any) => {
                                 if (!prev) {
                                   return {
                                     id: item.id,
@@ -180,7 +169,7 @@ const TabelAntrianHarianEdit: React.FC<TabelAntrianHarianEditProps> = ({
                                     motor: item.motor,
                                     bagianMotor: item.bagianMotor,
                                     hargaLayanan: item.hargaLayanan,
-                                    hargaSeal: item.hargaSeal,
+                                    hargaSparepart: item.hargaSparepart,
                                     totalHarga: item.totalHarga,
                                     status: item.status,
                                     waktu: item.waktu,
@@ -198,26 +187,160 @@ const TabelAntrianHarianEdit: React.FC<TabelAntrianHarianEditProps> = ({
                           item.no_wa
                         )}
                       </td>
-                      <td className="border p-2 text-sm">{item.layanan}</td>
-                      <td className="border p-2 text-sm">{item.subcategory}</td>
-                      <td className="border p-2 text-sm">{item.motor}</td>
-                      <td className="border p-2 text-sm">{item.bagianMotor}</td>
                       <td className="border p-2 text-sm">
-                        {item.hargaLayanan.toLocaleString()}
-                      </td>
-                      <td className="border p-2 text-sm">
-                        {item.hargaSeal.toLocaleString()}
-                      </td>
-                      <td className="border p-2 text-sm">
-                        {item.totalHarga.toLocaleString()}
+                        {isEditing ? (
+                          <input
+                            className="border p-1 rounded w-full text-sm"
+                            value={editItem?.layanan || ""}
+                            onChange={(e) =>
+                              setEditItem((prev: any) => {
+                                if (!prev) {
+                                  return {
+                                    id: item.id,
+                                    nama: item.nama,
+                                    plat: item.plat,
+                                    no_wa: item.no_wa,
+                                    layanan: e.target.value,
+                                    subcategory: item.subcategory,
+                                    motor: item.motor,
+                                    bagianMotor: item.bagianMotor,
+                                    hargaLayanan: item.hargaLayanan,
+                                    hargaSparepart: item.hargaSparepart,
+                                    totalHarga: item.totalHarga,
+                                    status: item.status,
+                                    waktu: item.waktu,
+                                    gerai: item.gerai,
+                                  };
+                                }
+                                return {
+                                  ...prev,
+                                  layanan: e.target.value,
+                                };
+                              })
+                            }
+                          />
+                        ) : (
+                          item.layanan
+                        )}
                       </td>
                       <td className="border p-2 text-sm">
                         {isEditing ? (
-                          <select
+                          <input
                             className="border p-1 rounded w-full text-sm"
-                            value={editItem?.status || "PROGRESS"}
+                            value={editItem?.subcategory || ""}
                             onChange={(e) =>
-                              setEditItem((prev) => {
+                              setEditItem((prev: any) => {
+                                if (!prev) {
+                                  return {
+                                    id: item.id,
+                                    nama: item.nama,
+                                    plat: item.plat,
+                                    no_wa: item.no_wa,
+                                    layanan: item.layanan,
+                                    subcategory: e.target.value,
+                                    motor: item.motor,
+                                    bagianMotor: item.bagianMotor,
+                                    hargaLayanan: item.hargaLayanan,
+                                    hargaSparepart: item.hargaSparepart,
+                                    totalHarga: item.totalHarga,
+                                    status: item.status,
+                                    waktu: item.waktu,
+                                    gerai: item.gerai,
+                                  };
+                                }
+                                return {
+                                  ...prev,
+                                  subcategory: e.target.value,
+                                };
+                              })
+                            }
+                          />
+                        ) : (
+                          item.subcategory
+                        )}
+                      </td>
+                      <td className="border p-2 text-sm">
+                        {" "}
+                        <td className="border p-2 text-sm">
+                          {isEditing ? (
+                            <input
+                              className="border p-1 rounded w-full text-sm"
+                              value={editItem?.motor || ""}
+                              onChange={(e) =>
+                                setEditItem((prev: any) => {
+                                  if (!prev) {
+                                    return {
+                                      id: item.id,
+                                      nama: item.nama,
+                                      plat: item.plat,
+                                      no_wa: item.no_wa,
+                                      layanan: item.layanan,
+                                      subcategory: item.subcategory,
+                                      motor: e.target.value,
+                                      bagianMotor: item.bagianMotor,
+                                      hargaLayanan: item.hargaLayanan,
+                                      hargaSparepart: item.hargaSparepart,
+                                      totalHarga: item.totalHarga,
+                                      status: item.status,
+                                      waktu: item.waktu,
+                                      gerai: item.gerai,
+                                    };
+                                  }
+                                  return {
+                                    ...prev,
+                                    motor: e.target.value,
+                                  };
+                                })
+                              }
+                            />
+                          ) : (
+                            item.motor
+                          )}
+                        </td>
+                      </td>
+                      <td className="border p-2 text-sm">
+                        {isEditing ? (
+                          <input
+                            className="border p-1 rounded w-full text-sm"
+                            value={editItem?.bagianMotor || ""}
+                            onChange={(e) =>
+                              setEditItem((prev: any) => {
+                                if (!prev) {
+                                  return {
+                                    id: item.id,
+                                    nama: item.nama,
+                                    plat: item.plat,
+                                    no_wa: item.no_wa,
+                                    layanan: item.layanan,
+                                    subcategory: item.subcategory,
+                                    motor: item.motor,
+                                    bagianMotor: e.target.value,
+                                    hargaLayanan: item.hargaLayanan,
+                                    hargaSparepart: item.hargaSparepart,
+                                    totalHarga: item.totalHarga,
+                                    status: item.status,
+                                    waktu: item.waktu,
+                                    gerai: item.gerai,
+                                  };
+                                }
+                                return {
+                                  ...prev,
+                                  bagianMotor: e.target.value,
+                                };
+                              })
+                            }
+                          />
+                        ) : (
+                          item.bagianMotor
+                        )}
+                      </td>
+                      <td className="border p-2 text-sm">
+                        {isEditing ? (
+                          <input
+                            className="border p-1 rounded w-full text-sm"
+                            value={editItem?.bagianMotor2 || ""}
+                            onChange={(e) =>
+                              setEditItem((prev: any) => {
                                 if (!prev) {
                                   return {
                                     id: item.id,
@@ -229,35 +352,120 @@ const TabelAntrianHarianEdit: React.FC<TabelAntrianHarianEditProps> = ({
                                     motor: item.motor,
                                     bagianMotor: item.bagianMotor,
                                     hargaLayanan: item.hargaLayanan,
-                                    hargaSeal: item.hargaSeal,
+                                    hargaSparepart: item.hargaSparepart,
                                     totalHarga: item.totalHarga,
-                                    status: e.target.value as
-                                      | "PROGRESS"
-                                      | "FINISHED"
-                                      | "CANCELLED",
+                                    status: item.status,
                                     waktu: item.waktu,
                                     gerai: item.gerai,
                                   };
                                 }
                                 return {
                                   ...prev,
-                                  status: e.target.value as
-                                    | "PROGRESS"
-                                    | "FINISHED"
-                                    | "CANCELLED",
+                                  bagianMotor2: e.target.value,
                                 };
                               })
                             }
+                          />
+                        ) : (
+                          item.bagianMotor2
+                        )}
+                      </td>
+
+                      <td className="border p-2 text-sm">
+                        {isEditing ? (
+                          <input
+                            className="border p-1 rounded w-full text-sm"
+                            value={editItem?.hargaLayanan || ""}
+                            onChange={(e) =>
+                              setEditItem((prev: any) => {
+                                if (!prev) {
+                                  return {
+                                    id: item.id,
+                                    nama: item.nama,
+                                    plat: item.plat,
+                                    no_wa: item.no_wa,
+                                    layanan: item.layanan,
+                                    subcategory: item.subcategory,
+                                    motor: item.motor,
+                                    bagianMotor: item.bagianMotor,
+                                    hargaLayanan: item.hargaLayanan,
+                                    hargaSparepart: item.hargaSparepart,
+                                    totalHarga: item.totalHarga,
+                                    status: item.status,
+                                    waktu: item.waktu,
+                                    gerai: item.gerai,
+                                  };
+                                }
+                                return {
+                                  ...prev,
+                                  hargaLayanan: e.target.value,
+                                };
+                              })
+                            }
+                          />
+                        ) : (
+                          item.hargaLayanan.toLocaleString()
+                        )}
+                      </td>
+                      {item.sparepart && !isEditing ? (
+                        <td className="border p-2 text-sm">{item.sparepart}</td>
+                      ) : (
+                        <td>
+                          <select
+                            onChange={(e: any) => {
+                              const confirmation = confirm(
+                                "Apakah Anda yakin ingin menambahkan seal?"
+                              );
+                              if (confirmation) {
+                                const sendMessage = (data: any) => {
+                                  channel?.send({
+                                    type: "broadcast",
+                                    event: "sparepart",
+                                    payload: {
+                                      data,
+                                      timestamp: new Date().toISOString(),
+                                    },
+                                  });
+                                };
+                                sendMessage(item.gerai);
+                                updateCustomer({
+                                  ...JSON.parse(e.target.value),
+                                  id: item.id,
+                                }).then((res) => {
+                                  if (res.success) window.location.reload();
+                                });
+                              } else {
+                                return;
+                              }
+                            }}
+                            name=""
+                            id=""
                           >
-                            {statusOptions.map((status) => (
-                              <option key={status} value={status}>
-                                {status}
+                            <option value="">Tambah Seal</option>
+                            {dataSeal.map((item: any) => (
+                              <option
+                                value={JSON.stringify({
+                                  sparepart: item.type + " - " + item.size,
+                                  harga_sparepart: item.price,
+                                })}
+                              >
+                                {item.type} - {item.size}
                               </option>
                             ))}
                           </select>
-                        ) : (
-                          item.status
-                        )}
+                        </td>
+                      )}
+                      <td className="border p-2 text-sm">
+                        {item.hargaSparepart.toLocaleString()}
+                      </td>
+                      <td className="border p-2 text-sm">
+                        Rp.{" "}
+                        {(
+                          item.hargaLayanan + item.hargaSparepart
+                        ).toLocaleString()}
+                      </td>
+                      <td className="border p-2 text-sm font-bold">
+                        {item.status}
                       </td>
                       <td className="p-2 space-x-2 flex justify-between items-center">
                         {isEditing ? (
@@ -283,23 +491,46 @@ const TabelAntrianHarianEdit: React.FC<TabelAntrianHarianEditProps> = ({
                             >
                               Edit
                             </button>
-                            {item.status !== "FINISHED" &&
-                              item.status !== "CANCELLED" && (
-                                <>
-                                  <button
-                                    className="bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 text-sm"
-                                    onClick={() => handleFinishClick(item)}
-                                  >
-                                    Finish
-                                  </button>
-                                  <button
-                                    className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 text-sm"
-                                    onClick={() => handleCancelClick(item)}
-                                  >
-                                    Cancel
-                                  </button>
-                                </>
-                              )}
+                            {item.status == "PROGRESS" && (
+                              <div className="flex flex-col gap-1">
+                                <button
+                                  className="bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 text-sm"
+                                  onClick={() => {
+                                    let yakin = confirm(
+                                      "Apakah kamu yakin ingin FINISH Motor ini?"
+                                    );
+
+                                    if (yakin) {
+                                      // aksi jika pengguna klik OK
+                                      onFinish(item.id);
+                                    } else {
+                                      // aksi jika pengguna klik Cancel
+                                      return;
+                                    }
+                                  }}
+                                >
+                                  Finish
+                                </button>
+                                <button
+                                  className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 text-sm"
+                                  onClick={() => {
+                                    let yakin = confirm(
+                                      "Apakah kamu yakin ingin CANCEL Motor ini?"
+                                    );
+
+                                    if (yakin) {
+                                      // aksi jika pengguna klik OK
+                                      handleCancelClick(item);
+                                    } else {
+                                      // aksi jika pengguna klik Cancel
+                                      return;
+                                    }
+                                  }}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            )}
                           </>
                         )}
                       </td>
