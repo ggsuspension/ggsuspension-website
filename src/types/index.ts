@@ -95,6 +95,7 @@ export interface MotorPart {
 export interface Motor {
   id: number;
   name: string;
+  subcategory:string;
   created_at?: string;
   updated_at?: string;
 }

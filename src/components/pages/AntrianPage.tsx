@@ -21,13 +21,11 @@ import { supabase } from "@/utils/realtime";
 import ModalDetailAntrian from "../fragments/ModalDetailAntrian";
 import { BsTools } from "react-icons/bs";
 
-// Interface untuk presence data
 interface PresenceData {
   user: string;
   online_at: string;
 }
 
-// Buat fungsi untuk mendapatkan channel
 const getChannel = (): RealtimeChannel => {
   return supabase.channel("test-channel");
 };
@@ -162,15 +160,18 @@ export default function AntrianSaya() {
         if (payload.payload.data.gerai.toLowerCase() == gerai?.toLowerCase())
           setData([...data, payload.payload.data]);
       })
-      .on("broadcast", { event: "sparepart" }, (payload: any) => {
-       if(payload.payload.data.toLowerCase()==gerai?.toLowerCase()){
-         window.location.reload();
-       };
-      }
-      //   if (payload.payload.gerai.toLowerCase() == gerai?.toLowerCase())
-      //     setData([...data, payload.payload.data]);
-      // }\
-    )
+      .on(
+        "broadcast",
+        { event: "sparepart" },
+        (payload: any) => {
+          if (payload.payload.data.toLowerCase() == gerai?.toLowerCase()) {
+            window.location.reload();
+          }
+        }
+        //   if (payload.payload.gerai.toLowerCase() == gerai?.toLowerCase())
+        //     setData([...data, payload.payload.data]);
+        // }\
+      )
       .on(
         "presence",
         { event: "join" },

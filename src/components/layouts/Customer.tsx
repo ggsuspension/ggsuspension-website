@@ -23,6 +23,7 @@ import { getChannel } from "@/utils/realtime";
 import { setCookie } from "@/utils/setCookie";
 import { motion } from "framer-motion";
 import ModalWelcome from "../fragments/ModalWelcome";
+import { CircleDotDashed } from "lucide-react";
 
 interface Question {
   id: number;
@@ -51,9 +52,12 @@ export default function Customer() {
   const [allMotorParts, setAllMotorParts] = useState<MotorPart[]>([]);
   const [allMotorPartsFixed, setAllMotorPartsFixed] = useState<MotorPart[]>([]);
   const [motors, setMotors] = useState<Motor[]>([]);
-  const [price, setPrice] = useState(0);
+  const [motorsFixed, setMotorsFixed] = useState<Motor[]>([]);
+  const [price, setPrice] = useState({ bagianMotor1: 0, bagianMotor2: 0 });
   const [searchParams] = useSearchParams();
   const [isSubmit, setIsSubmit] = useState(false);
+  const [isInput, setIsInput] = useState(false);
+  const [isModal, setIsModal] = useState(true);
 
   useEffect(() => {
     if (!searchParams.get("id")) window.location.href = "/#/customer-form";
@@ -75,8 +79,9 @@ export default function Customer() {
         (item: any) => !seen.has(item.name) && seen.add(item.name)
       );
       setCategories(categoriesData.reverse());
-      setMotors(motorsData);
       setAllMotorParts(motorPartsData);
+      setMotors(motorsData);
+      setMotorsFixed(motorsData);
       setAllSubcategories(subcategoriesData);
     }
     fetchData();
@@ -152,17 +157,18 @@ export default function Customer() {
     optionPrice: number,
     optionType: string
   ) => {
-    if (optionPrice) setPrice(price + optionPrice);
+    if (questions[currentQuestionIndex].options[0].type == "motorpart")
+      setPrice({ ...price, bagianMotor1: optionPrice });
+    if (questions[currentQuestionIndex].options[0].type == "motorpart2")
+      setPrice({ ...price, bagianMotor2: optionPrice });
     const newAnswer: Answer = {
       questionId: currentQuestion.id,
       selectedOptionId: optionId,
       selectedOptionText: optionText,
       selectedOptionType: optionType,
     };
-    setAnswers([
-      ...answers.filter((a) => a.questionId !== currentQuestion.id),
-      newAnswer,
-    ]);
+    answers[currentQuestionIndex] = newAnswer;
+    setAnswers([...answers]);
     if (currentQuestionIndex < questions.length - 1) {
       setTimeout(() => {
         setCurrentQuestionIndex(currentQuestionIndex + 1);
@@ -196,7 +202,7 @@ export default function Customer() {
         answers.length < 5
           ? answers[3].selectedOptionText
           : answers[4].selectedOptionText,
-      harga_service: price,
+      harga_service: price.bagianMotor1 + price.bagianMotor2,
     });
     if (result.success) {
       setCookie("pelangganGGSuspension", JSON.stringify(result.data));
@@ -205,8 +211,15 @@ export default function Customer() {
       Swal.fire("Sukses!", "Berhasil menambahkan antrian", "success");
       setTimeout(() => {
         window.location.href = `/#/antrian/${searchParams.get("gerai")}`;
+        window.location.reload();
       }, 500);
     }
+  }
+
+  function handleMotorLainnya(e: any) {
+    e.preventDefault();
+    handleSelectOption("100", e.target.motor.value, 0, "motor");
+    setIsInput(false);
   }
 
   useEffect(() => {
@@ -227,9 +240,27 @@ export default function Customer() {
             answers[currentQuestionIndex].selectedOptionId
         );
         setAllMotorParts(res);
+      } else if (questions[currentQuestionIndex].options[0].type == "motor") {
+        if (answers[1].selectedOptionText.includes("OHLINS")) {
+          setAnswers([
+            ...answers,
+            {
+              questionId: 5,
+              selectedOptionId: "0",
+              selectedOptionText: "Motor Lainnya",
+              selectedOptionType: "motor",
+            },
+          ]);
+          return setShowResults(true);
+        }
+        setMotors(
+          motorsFixed.filter(
+            (item) => item.subcategory == answers[1].selectedOptionText
+          )
+        );
       }
     }
-  }, [answers]);
+  }, [answers, currentQuestionIndex]);
 
   if (showResults) {
     return (
@@ -269,9 +300,9 @@ export default function Customer() {
           <div className="space-y-5 mb-6">
             {questions.map((question, index) => {
               const answer = answers.find((a) => a.questionId === question.id);
-              const selectedOption = question.options.find(
-                (o) => o.id === answer?.selectedOptionId
-              );
+              // const selectedOption = question.options.find(
+              //   (o) => o.id === answer?.selectedOptionId
+              // );
               return (
                 <motion.div
                   key={question.id}
@@ -285,7 +316,7 @@ export default function Customer() {
                     {index + 1}. {question.text}
                   </p>
                   <p className="text-yellow-400 font-semibold">
-                    {selectedOption?.text || "Tidak dijawab"}
+                    {answer?.selectedOptionText || "Tidak dijawab"}
                   </p>
                 </motion.div>
               );
@@ -297,10 +328,13 @@ export default function Customer() {
               Total Harga
             </p>
             <p className="text-yellow-400 text-2xl font-bold">
-              {price.toLocaleString("id-ID", {
-                style: "currency",
-                currency: "IDR",
-              })}
+              {(price.bagianMotor1 + price.bagianMotor2).toLocaleString(
+                "id-ID",
+                {
+                  style: "currency",
+                  currency: "IDR",
+                }
+              )}
             </p>
             <p className="text-red-500 text-sm mt-1 italic">
               *Harga tidak termasuk sparepart tambahan
@@ -342,7 +376,7 @@ export default function Customer() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-700 via-orange-400 to-orange-800 relative p-6 overflow-hidden">
-      <ModalWelcome></ModalWelcome>
+      {isModal && <ModalWelcome></ModalWelcome>}
       <svg
         className="absolute inset-0 w-full h-full opacity-10"
         viewBox="0 0 1440 900"
@@ -370,7 +404,6 @@ export default function Customer() {
               <FaMotorcycle className="inline text-yellow-400 ml-2" />
             </h1>
 
-            {/* Decorative suspension line */}
             <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2">
               <svg
                 width="200"
@@ -407,10 +440,17 @@ export default function Customer() {
             </div>
           </div>
           <div className="bg-gray-900 p-6 rounded-lg shadow-md mb-6 border-l-4 border-orange-500">
-            <h2 className="text-2xl font-bold text-white mb-5 flex items-center">
+            <h2 className="text-2xl font-bold text-white flex items-center">
               <FaCheckCircle className="text-yellow-500 mr-2" />
               {currentQuestion.text}
             </h2>
+            {questions[currentQuestionIndex].options[0] &&
+              questions[currentQuestionIndex].options[0].type ==
+                "motorpart2" && (
+                <p className="text-red-400 text-lg mb-4">
+                  Klik panah di bawah jika tidak menambah bagian motor lainnya{" "}
+                </p>
+              )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {currentQuestion.options.map((option) => {
                 const isSelected = answers.some(
@@ -421,14 +461,16 @@ export default function Customer() {
                 return (
                   <motion.div
                     key={option.id}
-                    onClick={() =>
+                    onClick={() => {
+                      setIsModal(false);
                       handleSelectOption(
                         option.id,
                         option.text,
                         option.price,
                         option.type
-                      )
-                    }
+                      );
+                      setIsInput(false);
+                    }}
                     className={`p-5 rounded-lg cursor-pointer shadow-md transition-all duration-300 ${
                       isSelected
                         ? "bg-yellow-500 text-black"
@@ -456,6 +498,56 @@ export default function Customer() {
                   </motion.div>
                 );
               })}
+              {questions[currentQuestionIndex].options[0] &&
+                questions[currentQuestionIndex].options[0].type == "motor" && (
+                  <motion.div
+                    onClick={() => {
+                      setIsInput(true);
+                    }}
+                    className={`p-5 rounded-lg cursor-pointer shadow-md transition-all duration-300 hover:bg-yellow-600 hover:text-black  ${
+                      answers[currentQuestionIndex] &&
+                      answers[currentQuestionIndex].selectedOptionId == "100"
+                        ? "bg-yellow-500 text-black"
+                        : "bg-gray-800 text-white"
+                    }`}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {/* {option.type !== "motorpart" &&
+                      option.type !== "motorpart2" && (
+                      )} */}
+                    <p className="text-center font-bold flex items-center justify-center text-xl">
+                      <CircleDotDashed className="mr-2" /> Motor Lainnya
+                      {/* {isSelected ? (
+                        <FaCheckCircle className="mr-2" />
+                      ) : (
+                        <FaTimesCircle className="mr-2" />
+                      )} */}
+                      {/* {option.text} */}
+                    </p>
+                    {isInput && (
+                      <form
+                        onSubmit={handleMotorLainnya}
+                        className="flex flex-col gap-2"
+                      >
+                        <input
+                          type="text"
+                          name="motor"
+                          defaultValue={
+                            answers[currentQuestionIndex]
+                              ? answers[currentQuestionIndex].selectedOptionText
+                              : ""
+                          }
+                          className="p-1 rounded-xl mt-2 pl-3"
+                          placeholder="Tulis Motor Anda.."
+                        />
+                        <button className="bg-orange-600 text-white font-bold p-2 rounded-full shadow-lg hover:bg-gray-600 transition-all self-center">
+                          KIRIM
+                        </button>
+                      </form>
+                    )}
+                  </motion.div>
+                )}
             </div>
           </div>
           <div className="flex justify-between">

@@ -3,8 +3,8 @@ import {
   getDailyTrend,
   getAllExpenses,
   getGerais,
-  // getTotalPendapatan,
-  getAntrianCustomer,
+  getDailyTrendAll,
+  getAllExpensesAll,
 } from "@/utils/ggAPI";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -97,7 +97,7 @@ const formatDateForDisplay = (
   return `${day}, ${dateNum} ${month} ${year}, ${hours}:${minutes} WIB`;
 };
 
-const fetchWithTimeout = (promise: Promise<any>, timeoutMs: number) => {
+const fetchWithTimeout = (promise: Promise<any>, timeoutMs: number = 10000) => {
   return Promise.race([
     promise,
     new Promise((_, reject) =>
@@ -108,17 +108,14 @@ const fetchWithTimeout = (promise: Promise<any>, timeoutMs: number) => {
 
 export default function FinanceCEO() {
   const navigate = useNavigate();
-  const [revenueData, setRevenueData] = useState<RevenueData[]>([]);
   const [totalRevenue, setTotalRevenue] = useState<number>(0);
-  const [totalRevenueByGerai, setTotalRevenueByGerai] = useState<any>([]);
-  const [totalRevenueFix, setTotalRevenueFix] = useState<any>([]);
+  const [totalRevenueByGerai, setTotalRevenueByGerai] = useState<number>(0);
   const [totalExpenses, setTotalExpenses] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState("");
   const [timeRange, setTimeRange] = useState<TimeRange>("month");
   const [geraiData, setGeraiData] = useState<GeraiData[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
-  // const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCostDetails, setShowCostDetails] = useState(false);
   const [additionalCosts, setAdditionalCosts] = useState<
     Record<
@@ -133,22 +130,11 @@ export default function FinanceCEO() {
   const [gerais, setGerais] = useState<Gerai[]>([]);
   const [selectedGerai, setSelectedGerai] = useState<string | null>(null);
   const [cache, setCache] = useState<Map<string, any>>(new Map());
+  const [overallPercentageChange, setOverallPercentageChange] = useState<
+    number | undefined
+  >(undefined);
 
   useEffect(() => {
-    async function fetchData() {
-      let dataAntrianSemuaGerai = await getAntrianCustomer();
-      setTotalRevenueFix(dataAntrianSemuaGerai);
-      dataAntrianSemuaGerai = dataAntrianSemuaGerai.reduce(
-        (acc: any, item: any) => {
-          acc += item.harga_service;
-          acc += item.harga_sparepart;
-          return acc;
-        },
-        0
-      );
-      setTotalRevenue(dataAntrianSemuaGerai);
-    }
-    fetchData();
     const token = getAuthToken();
     if (!token) {
       Swal.fire({
@@ -191,6 +177,17 @@ export default function FinanceCEO() {
     const fetchInitialData = async () => {
       try {
         const geraiList = await getGerais();
+        console.log("Fetched gerais:", geraiList);
+        if (!geraiList.length) {
+          console.warn("No gerais found. Cannot fetch financial data.");
+          Swal.fire({
+            icon: "warning",
+            title: "Tidak Ada Gerai",
+            text: "Tidak ada data gerai yang tersedia. Hubungi admin.",
+            timer: 2000,
+            showConfirmButton: false,
+          });
+        }
         setGerais(geraiList);
         setAdditionalCosts(
           geraiList.reduce(
@@ -203,33 +200,29 @@ export default function FinanceCEO() {
         );
       } catch (error) {
         console.error("Failed to fetch initial data:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Gagal Memuat Gerai",
+          text: "Terjadi kesalahan saat memuat daftar gerai.",
+          timer: 2000,
+          showConfirmButton: false,
+        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchInitialData();
-    async function fetchingData() {
-      let dataExpenses = await getAllExpenses(
-        undefined,
-        "2025-04-24",
-        formatDateForAPIStandard(new Date())
-      );
-      // let dataRevenue: any = await getTotalPendapatan(
-      //   "2025-04-24",
-      //   formatDateForAPIStandard(new Date())
-      // );
-      dataExpenses = dataExpenses.reduce((dataAwal: any, dataItem: any) => {
-        dataAwal += dataItem.amount;
-        return dataAwal;
-      }, 0);
-      setTotalExpenses(dataExpenses);
-    }
-    fetchingData();
   }, [navigate]);
 
   const fetchData = useCallback(async () => {
-    if (!userRole || !gerais.length) return;
+    if (!userRole || !gerais.length) {
+      console.warn("fetchData aborted: No userRole or gerais", {
+        userRole,
+        gerais,
+      });
+      return;
+    }
     const cacheKey = `${timeRange}-${userRole}`;
     const cachedData = cache.get(cacheKey);
 
@@ -238,6 +231,9 @@ export default function FinanceCEO() {
       setAdditionalCosts(cachedData.additionalCosts);
       setAllExpenses(cachedData.allExpenses);
       setLastUpdated(cachedData.lastUpdated);
+      setTotalRevenue(cachedData.totalRevenue);
+      setTotalExpenses(cachedData.totalExpenses);
+      setOverallPercentageChange(cachedData.overallPercentageChange);
       setLoading(false);
       console.log("Using cached data:", cachedData);
       return;
@@ -249,60 +245,254 @@ export default function FinanceCEO() {
       const now = new Date();
       let startDate = new Date(now);
       let endDate = new Date(now);
+      let previousStartDate: Date | null = null;
+      let previousEndDate: Date | null = null;
 
       switch (timeRange) {
         case "day":
           startDate.setHours(0, 0, 0, 0);
           endDate.setHours(23, 59, 59, 999);
+          previousStartDate = new Date(now);
+          previousStartDate.setDate(now.getDate() - 1);
+          previousStartDate.setHours(0, 0, 0, 0);
+          previousEndDate = new Date(now);
+          previousEndDate.setDate(now.getDate() - 1);
+          previousEndDate.setHours(23, 59, 59, 999);
           break;
         case "month":
           startDate.setDate(1);
           startDate.setHours(0, 0, 0, 0);
           endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
           endDate.setHours(23, 59, 59, 999);
+          previousStartDate = new Date(
+            now.getFullYear(),
+            now.getMonth() - 1,
+            1
+          );
+          previousEndDate = new Date(now.getFullYear(), now.getMonth(), 0);
+          previousEndDate.setHours(23, 59, 59, 999);
           break;
         case "year":
           startDate.setMonth(0, 1);
           startDate.setHours(0, 0, 0, 0);
           endDate = new Date(now.getFullYear(), 11, 31);
           endDate.setHours(23, 59, 59, 999);
+          previousStartDate = new Date(now.getFullYear() - 1, 0, 1);
+          previousEndDate = new Date(now.getFullYear() - 1, 11, 31);
+          previousEndDate.setHours(23, 59, 59, 999);
           break;
         case "total":
-          startDate = new Date(2000, 0, 1); // Mulai dari tahun awal
+          startDate = new Date(2000, 0, 1);
           endDate.setHours(23, 59, 59, 999);
+          previousStartDate = null;
+          previousEndDate = null;
           break;
       }
 
       const formattedStartDate = formatDateForAPIStandard(startDate);
       const formattedEndDate = formatDateForAPIStandard(endDate);
+      const formattedPreviousStartDate = previousStartDate
+        ? formatDateForAPIStandard(previousStartDate)
+        : null;
+      const formattedPreviousEndDate = previousEndDate
+        ? formatDateForAPIStandard(previousEndDate)
+        : null;
 
-      const [dailyTrendResponse, expensesResponse] = await Promise.all([
-        fetchWithTimeout(
-          getDailyTrend(formattedStartDate, formattedEndDate),
-          5000
-        ),
-        fetchWithTimeout(
-          getAllExpenses(undefined, formattedStartDate, formattedEndDate),
-          5000
-        ),
-      ]);
+      console.log("Fetching data with params:", {
+        start_date: formattedStartDate,
+        end_date: formattedEndDate,
+        previous_start_date: formattedPreviousStartDate,
+        previous_end_date: formattedPreviousEndDate,
+        gerai_ids: gerais.map((g) => g.id),
+      });
 
-      const dailyTrend = dailyTrendResponse.data || [];
-      const expenses = expensesResponse.data || [];
+      let dailyTrend: any[] = [];
+      let expenses: Expense[] = [];
+      let previousDailyTrend: any[] = [];
+
+      // Coba gunakan endpoint all-gerais
+      try {
+        const dailyTrendResponse = await fetchWithTimeout(
+          getDailyTrendAll(formattedStartDate, formattedEndDate),
+          10000
+        );
+        const expensesResponse = await fetchWithTimeout(
+          getAllExpensesAll(formattedStartDate, formattedEndDate),
+          10000
+        );
+        const previousDailyTrendResponse =
+          formattedPreviousStartDate && formattedPreviousEndDate
+            ? await fetchWithTimeout(
+                getDailyTrendAll(
+                  formattedPreviousStartDate,
+                  formattedPreviousEndDate
+                ),
+                10000
+              )
+            : { data: [] };
+
+        dailyTrend = dailyTrendResponse.data.flatMap((item: any) =>
+          item.data.map((d: any) => ({
+            date: d.date,
+            netRevenue: d.netRevenue,
+            gerai: item.gerai,
+            gerai_id: item.gerai_id,
+          }))
+        );
+        expenses = expensesResponse.data.flatMap((item: any) =>
+          item.data.map((d: any) => ({
+            geraiId: item.gerai_id,
+            amount: Number(d.amount) || 0,
+            date: d.date,
+            description: d.description || "",
+            expenseCategoryId: d.expense_category_id || d.expenseCategoryId,
+          }))
+        );
+        previousDailyTrend = previousDailyTrendResponse.data.flatMap(
+          (item: any) =>
+            item.data.map((d: any) => ({
+              date: d.date,
+              netRevenue: d.netRevenue,
+              gerai: item.gerai,
+              gerai_id: item.gerai_id,
+            }))
+        );
+      } catch (error) {
+        console.warn(
+          "Failed to fetch using all-gerais endpoints, falling back to per-gerai requests:",
+          error
+        );
+
+        // Fallback ke panggilan serial per gerai
+        const dailyTrendResponses = [];
+        const expensesResponses = [];
+        const previousDailyTrendResponses = [];
+
+        for (const gerai of gerais) {
+          try {
+            const dailyTrendRes = await fetchWithTimeout(
+              getDailyTrend(formattedStartDate, formattedEndDate, gerai.id),
+              10000
+            );
+            dailyTrendResponses.push(dailyTrendRes);
+          } catch (err) {
+            console.error(
+              `Failed to fetch daily trend for gerai ${gerai.id}:`,
+              err
+            );
+            dailyTrendResponses.push({ data: [] });
+          }
+
+          try {
+            const expensesRes = await fetchWithTimeout(
+              getAllExpenses(gerai.id, formattedStartDate, formattedEndDate),
+              10000
+            );
+            expensesResponses.push(expensesRes);
+          } catch (err) {
+            console.error(
+              `Failed to fetch expenses for gerai ${gerai.id}:`,
+              err
+            );
+            expensesResponses.push({ data: [] });
+          }
+
+          if (formattedPreviousStartDate && formattedPreviousEndDate) {
+            try {
+              const prevDailyTrendRes = await fetchWithTimeout(
+                getDailyTrend(
+                  formattedPreviousStartDate,
+                  formattedPreviousEndDate,
+                  gerai.id
+                ),
+                10000
+              );
+              previousDailyTrendResponses.push(prevDailyTrendRes);
+            } catch (err) {
+              console.error(
+                `Failed to fetch previous daily trend for gerai ${gerai.id}:`,
+                err
+              );
+              previousDailyTrendResponses.push({ data: [] });
+            }
+          }
+        }
+
+        dailyTrend = dailyTrendResponses
+          .flatMap((res) => res.data || [])
+          .filter((item) => item);
+        expenses = expensesResponses
+          .flatMap((res) => res.data || [])
+          .filter((item) => item)
+          .map((item) => ({
+            geraiId: item.gerai_id || item.geraiId,
+            amount: Number(item.amount) || 0,
+            date: item.date,
+            description: item.description || "",
+            expenseCategoryId:
+              item.expense_category_id || item.expenseCategoryId,
+          }));
+        previousDailyTrend = previousDailyTrendResponses
+          .flatMap((res) => res.data || [])
+          .filter((item) => item);
+      }
+
+      console.log("Processed data:", {
+        dailyTrend,
+        expenses,
+        previousDailyTrend,
+      });
 
       const processedRevenueData =
         dailyTrend.length > 0
           ? dailyTrend.map((item: any) => ({
-              date: item.date,
-              total: item.netRevenue || 0,
-              gerai: item.gerai,
+              date: item.date.split("T")[0],
+              total: Number(item.netRevenue) || 0,
+              gerai:
+                item.gerai ||
+                gerais.find((g) => g.id === item.gerai_id)?.name ||
+                "Unknown",
+              geraiId: item.gerai_id,
             }))
           : gerais.map((gerai) => ({
               date: formattedStartDate,
               total: 0,
               gerai: gerai.name,
+              geraiId: gerai.id,
             }));
 
+      const processedPreviousRevenueData =
+        previousDailyTrend.length > 0
+          ? previousDailyTrend.map((item: any) => ({
+              date: item.date.split("T")[0],
+              total: Number(item.netRevenue) || 0,
+              gerai:
+                item.gerai ||
+                gerais.find((g) => g.id === item.gerai_id)?.name ||
+                "Unknown",
+              geraiId: item.gerai_id,
+            }))
+          : [];
+
+      // Hitung total pendapatan per gerai untuk periode saat ini
+      const geraiRevenueMap = new Map<string, number>();
+      processedRevenueData.forEach((item: RevenueData) => {
+        geraiRevenueMap.set(
+          item.gerai,
+          (geraiRevenueMap.get(item.gerai) || 0) + item.total
+        );
+      });
+
+      // Hitung total pendapatan per gerai untuk periode sebelumnya
+      const previousGeraiRevenueMap = new Map<string, number>();
+      processedPreviousRevenueData.forEach((item: RevenueData) => {
+        previousGeraiRevenueMap.set(
+          item.gerai,
+          (previousGeraiRevenueMap.get(item.gerai) || 0) + item.total
+        );
+      });
+
+      // Proses pengeluaran
       const expenseMap = new Map<
         string,
         {
@@ -326,55 +516,95 @@ export default function FinanceCEO() {
         });
       });
 
-      const uniqueDates = [
-        ...new Set(processedRevenueData.map((d: RevenueData) => d.date)),
-      ].sort();
-      const lastDate =
-        uniqueDates[uniqueDates.length - 1] || formattedStartDate;
-      const previousDate = uniqueDates[uniqueDates.length - 2];
-
-      const geraiRevenueMap = new Map<string, number>();
-      processedRevenueData.forEach((item: RevenueData) => {
-        geraiRevenueMap.set(
-          item.gerai,
-          (geraiRevenueMap.get(item.gerai) || 0) + item.total
-        );
-      });
-
-      const uniqueGeraiData: GeraiData[] = [...geraiRevenueMap].map(
-        ([geraiName, totalRevenue]) => {
-          const lastDayData = processedRevenueData.find(
-            (d: RevenueData) => d.date === lastDate && d.gerai === geraiName
-          );
-          const previousDayData = processedRevenueData.find(
-            (d: RevenueData) => d.date === previousDate && d.gerai === geraiName
-          );
-
-          return {
-            name: geraiName,
-            totalRevenue,
-            lastDayRevenue: lastDayData?.total || 0,
-            previousDayRevenue: previousDayData?.total || 0,
-            percentageChange:
-              previousDayData?.total && previousDayData.total > 0
-                ? (((lastDayData?.total || 0) - previousDayData.total) /
-                    previousDayData.total) *
-                  100
-                : (lastDayData?.total || 0) > 0
-                ? 100
-                : 0,
-          };
-        }
-      );
-
-      const totalNetRevenue = uniqueGeraiData.reduce(
-        (sum, gerai) => sum + gerai.totalRevenue,
+      // Hitung total pendapatan dan pengeluaran
+      const totalNetRevenue = processedRevenueData.reduce(
+        (sum: number, item: RevenueData) => sum + item.total,
         0
       );
       const totalExpenseAmount = expenses.reduce(
         (sum: number, expense: Expense) => sum + expense.amount,
         0
       );
+
+      // Buat geraiData dengan percentageChange
+      const uniqueGeraiData: GeraiData[] = [...geraiRevenueMap].map(
+        ([geraiName, totalRevenue]) => {
+          const previousTotalRevenue =
+            previousGeraiRevenueMap.get(geraiName) || 0;
+          let percentageChange: number;
+
+          if (timeRange === "total") {
+            percentageChange = 0;
+          } else if (previousTotalRevenue === 0 && totalRevenue === 0) {
+            percentageChange = 0;
+          } else if (previousTotalRevenue === 0) {
+            percentageChange = totalRevenue > 0 ? 100 : 0;
+          } else {
+            percentageChange =
+              ((totalRevenue - previousTotalRevenue) /
+                Math.abs(previousTotalRevenue)) *
+              100;
+          }
+
+          // Batasi percentageChange agar tidak ekstrem
+          percentageChange = Number.isFinite(percentageChange)
+            ? Math.max(
+                Math.min(Number(percentageChange.toFixed(2)), 1000),
+                -1000
+              )
+            : 0;
+
+          console.log(`Percentage change for ${geraiName}:`, percentageChange);
+
+          return {
+            name: geraiName,
+            totalRevenue,
+            lastDayRevenue:
+              timeRange === "day"
+                ? processedRevenueData.find(
+                    (d: RevenueData) =>
+                      d.date === formattedStartDate && d.gerai === geraiName
+                  )?.total || 0
+                : totalRevenue,
+            previousDayRevenue:
+              timeRange === "day"
+                ? processedPreviousRevenueData.find(
+                    (d: RevenueData) =>
+                      d.date === formatDateForAPIStandard(previousStartDate!) &&
+                      d.gerai === geraiName
+                  )?.total || 0
+                : previousTotalRevenue,
+            percentageChange,
+          };
+        }
+      );
+
+      // Hitung overallPercentageChange
+      const previousTotalNetRevenue = processedPreviousRevenueData.reduce(
+        (sum: number, item: RevenueData) => sum + item.total,
+        0
+      );
+      let newOverallPercentageChange: number;
+      if (timeRange === "total") {
+        newOverallPercentageChange = 0;
+      } else if (previousTotalNetRevenue === 0 && totalNetRevenue === 0) {
+        newOverallPercentageChange = 0;
+      } else if (previousTotalNetRevenue === 0) {
+        newOverallPercentageChange = totalNetRevenue > 0 ? 100 : 0;
+      } else {
+        newOverallPercentageChange =
+          ((totalNetRevenue - previousTotalNetRevenue) /
+            Math.abs(previousTotalNetRevenue)) *
+          100;
+      }
+      newOverallPercentageChange = Number.isFinite(newOverallPercentageChange)
+        ? Math.max(
+            Math.min(Number(newOverallPercentageChange.toFixed(2)), 1000),
+            -1000
+          )
+        : 0;
+
+      console.log("Overall percentage change:", newOverallPercentageChange);
 
       const newAdditionalCosts = Object.fromEntries(
         gerais.map((gerai) => [
@@ -383,38 +613,29 @@ export default function FinanceCEO() {
         ])
       );
 
-      setRevenueData(processedRevenueData);
       setGeraiData(uniqueGeraiData);
       setAdditionalCosts(newAdditionalCosts);
       setAllExpenses(expenses);
+      setTotalRevenue(totalNetRevenue);
+      setTotalExpenses(totalExpenseAmount);
+      setOverallPercentageChange(newOverallPercentageChange);
       setLastUpdated(formatDateForDisplay(new Date()));
 
       if (timeRange !== "day") {
         setCache((prev) =>
           new Map(prev).set(cacheKey, {
-            revenueData: processedRevenueData,
-            totalRevenue: totalNetRevenue,
-            totalExpenses: totalExpenseAmount,
             geraiData: uniqueGeraiData,
             additionalCosts: newAdditionalCosts,
             allExpenses: expenses,
+            totalRevenue: totalNetRevenue,
+            totalExpenses: totalExpenseAmount,
+            overallPercentageChange: newOverallPercentageChange,
             lastUpdated: formatDateForDisplay(new Date()),
           })
         );
       }
     } catch (error: any) {
       console.error("Fetching data failed:", error);
-      // setErrorMessage(
-      //   error.message === "Request timed out"
-      //     ? "Server tidak merespons dalam waktu 5 detik."
-      //     : "Gagal mengambil data dari server: " + error.message
-      // );
-      const formattedStartDate = formatDateForAPIStandard(new Date());
-      const defaultRevenueData = gerais.map((gerai) => ({
-        date: formattedStartDate,
-        total: 0,
-        gerai: gerai.name,
-      }));
       const defaultGeraiData = gerais.map((gerai) => ({
         name: gerai.name,
         totalRevenue: 0,
@@ -422,7 +643,6 @@ export default function FinanceCEO() {
         previousDayRevenue: 0,
         percentageChange: 0,
       }));
-      setRevenueData(defaultRevenueData);
       setGeraiData(defaultGeraiData);
       setAdditionalCosts(
         gerais.reduce(
@@ -434,7 +654,17 @@ export default function FinanceCEO() {
         )
       );
       setAllExpenses([]);
+      setTotalRevenue(0);
+      setTotalExpenses(0);
+      setOverallPercentageChange(0);
       setLastUpdated(formatDateForDisplay(new Date()));
+      Swal.fire({
+        icon: "error",
+        title: "Gagal Memuat Data",
+        text: "Terjadi kesalahan saat memuat data keuangan. Silakan coba lagi.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
     } finally {
       setLoading(false);
     }
@@ -454,93 +684,15 @@ export default function FinanceCEO() {
     };
   }, [fetchData, timeRange]);
 
-  // const chartData = useMemo((): { labels: string[]; datasets: any[] } => {
-  //   const uniqueDates = [
-  //     ...new Set(revenueData.map((d: RevenueData) => d.date)),
-  //   ].sort();
-  //   const geraiNames = [
-  //     ...new Set(revenueData.map((d: RevenueData) => d.gerai)),
-  //   ];
-
-  //   return {
-  //     labels: uniqueDates,
-  //     datasets: [
-  //       ...geraiNames.map((geraiName) => {
-  //         const dailyRevenue: Record<string, number> = revenueData
-  //           .filter((data: RevenueData) => data.gerai === geraiName)
-  //           .reduce((acc: Record<string, number>, data: RevenueData) => {
-  //             acc[data.date] = (acc[data.date] || 0) + data.total;
-  //             return acc;
-  //           }, {});
-
-  //         const revenueByDate = uniqueDates.map(
-  //           (date) => dailyRevenue[date] || 0
-  //         );
-
-  //         return {
-  //           label: geraiName,
-  //           data: revenueByDate,
-  //           backgroundColor: `rgba(${Math.floor(
-  //             Math.random() * 255
-  //           )}, ${Math.floor(Math.random() * 255)}, ${Math.floor(
-  //             Math.random() * 255
-  //           )}, 0.6)`,
-  //           borderColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(
-  //             Math.random() * 255
-  //           )}, ${Math.floor(Math.random() * 255)}, 1)`,
-  //           borderWidth: 2,
-  //         };
-  //       }),
-  //       {
-  //         label: "Total Pengeluaran",
-  //         data: uniqueDates.map((date) => {
-  //           const dailyExpense = allExpenses
-  //             .filter((expense) => expense.date.split("T")[0] === date)
-  //             .reduce((sum, expense) => sum + expense.amount, 0);
-  //           return dailyExpense;
-  //         }),
-  //         backgroundColor: "rgba(255, 99, 132, 0.6)",
-  //         borderColor: "rgba(255, 99, 132, 1)",
-  //         borderWidth: 2,
-  //         borderDash: [5, 5],
-  //       },
-  //     ],
-  //   };
-  // }, [revenueData, allExpenses]);
-
-  // const chartOptions = {
-  //   responsive: true,
-  //   maintainAspectRatio: false,
-  //   plugins: {
-  //     legend: { display: true, position: "top" as const },
-  //     tooltip: {
-  //       callbacks: {
-  //         label: (tooltipItem: TooltipItem<"line">) =>
-  //           `${tooltipItem.dataset.label}: Rp ${Number(
-  //             tooltipItem.raw
-  //           ).toLocaleString("id-ID")} (${
-  //             tooltipItem.dataset.label === "Total Pengeluaran"
-  //               ? "Pengeluaran"
-  //               : "Bersih"
-  //           })`,
-  //       },
-  //     },
-  //   },
-  //   scales: {
-  //     x: { title: { display: true, text: "Tanggal" } },
-  //     y: {
-  //       title: { display: true, text: "Nominal (Rp)" },
-  //       ticks: {
-  //         callback: (value: string | number) =>
-  //           `Rp ${
-  //             typeof value === "number" ? value.toLocaleString("id-ID") : value
-  //           }`,
-  //       },
-  //     },
-  //   },
-  // };
-
   const handleExport = () => {
+    const changeLabel =
+      timeRange === "day"
+        ? "Harian"
+        : timeRange === "month"
+        ? "Bulanan"
+        : timeRange === "year"
+        ? "Tahunan"
+        : "Total";
     const data = [
       ["Laporan Keuangan Semua Gerai", "", "", "", ""],
       [
@@ -548,7 +700,7 @@ export default function FinanceCEO() {
         "Pendapatan Bersih",
         "Total Pengeluaran",
         "Detail Pengeluaran",
-        "Perubahan Harian (%)",
+        `Perubahan ${changeLabel} (%)`,
       ],
       ...geraiData.map((gerai) => {
         const costDetails = additionalCosts[gerai.name.toUpperCase()];
@@ -578,7 +730,11 @@ export default function FinanceCEO() {
         `Rp ${totalRevenue.toLocaleString("id-ID")}`,
         `Rp ${totalExpenses.toLocaleString("id-ID")}`,
         "",
-        "",
+        overallPercentageChange !== undefined
+          ? `${
+              overallPercentageChange >= 0 ? "+" : ""
+            }${overallPercentageChange.toFixed(2)}%`
+          : "0.00%",
       ],
     ];
 
@@ -589,30 +745,6 @@ export default function FinanceCEO() {
   };
 
   if (!userRole) return null;
-
-  const uniqueDates = [
-    ...new Set(revenueData.map((d: RevenueData) => d.date)),
-  ].sort();
-  const lastDate =
-    uniqueDates[uniqueDates.length - 1] || formatDateForAPIStandard(new Date());
-  const previousDate = uniqueDates[uniqueDates.length - 2];
-  let overallPercentageChange: number | undefined;
-  if (uniqueDates.length >= 2) {
-    const totalLastDayRevenue = revenueData
-      .filter((d: RevenueData) => d.date === lastDate)
-      .reduce((sum, d: RevenueData) => sum + d.total, 0);
-    const totalPreviousDayRevenue = revenueData
-      .filter((d: RevenueData) => d.date === previousDate)
-      .reduce((sum, d: RevenueData) => sum + d.total, 0);
-    overallPercentageChange =
-      totalPreviousDayRevenue > 0
-        ? ((totalLastDayRevenue - totalPreviousDayRevenue) /
-            totalPreviousDayRevenue) *
-          100
-        : totalLastDayRevenue > 0
-        ? 100
-        : 0;
-  }
 
   return (
     <div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8 bg-slate-100 shadow-lg">
@@ -684,9 +816,6 @@ export default function FinanceCEO() {
           </div>
         ) : (
           <>
-            {/* {errorMessage && (
-              <p className="text-center text-red-600 mt-4">{errorMessage}</p>
-            )} */}
             <Card className="bg-gradient-to-r from-orange-500 to-yellow-600 mb-6 mt-4 sm:mt-6 rounded-xl shadow-md overflow-hidden">
               <CardHeader className="p-4 sm:p-6">
                 <div className="flex flex-col gap-4">
@@ -708,7 +837,8 @@ export default function FinanceCEO() {
                           ) : (
                             <FaArrowUp className="mr-1 w-3 h-3" />
                           )}
-                          {Math.abs(overallPercentageChange).toFixed(2)}%
+                          {overallPercentageChange >= 0 ? "+" : ""}
+                          {overallPercentageChange.toFixed(2)}%
                         </Badge>
                       )}
                       <Button
@@ -792,17 +922,6 @@ export default function FinanceCEO() {
               </CardContent>
             </Card>
 
-            {/* <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Tren Keuangan Harian</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[400px]">
-                  <Line data={chartData} options={chartOptions} />
-                </div>
-              </CardContent>
-            </Card> */}
-
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Detail Per Gerai</CardTitle>
@@ -810,7 +929,10 @@ export default function FinanceCEO() {
               <CardContent>
                 <div className="flex flex-wrap gap-2 mb-4">
                   <Button
-                    onClick={() => setSelectedGerai(null)}
+                    onClick={() => {
+                      setSelectedGerai(null);
+                      setTotalRevenueByGerai(0);
+                    }}
                     className={`${
                       selectedGerai === null
                         ? "bg-orange-600 hover:bg-orange-700 text-white"
@@ -824,14 +946,12 @@ export default function FinanceCEO() {
                       key={gerai.id}
                       onClick={() => {
                         setSelectedGerai(gerai.name);
-                        let revenueByGerai = totalRevenueFix
-                          .filter((g: any) => g.gerai.toLowerCase() == gerai.name.toLowerCase())
-                          .reduce((acc: any, item: any) => {
-                            acc += item.harga_service;
-                            acc += item.harga_sparepart;
-                            return acc;
-                          }, 0);
-                          setTotalRevenueByGerai(revenueByGerai);
+                        const revenueByGerai =
+                          geraiData.find(
+                            (g) =>
+                              g.name.toLowerCase() === gerai.name.toLowerCase()
+                          )?.totalRevenue || 0;
+                        setTotalRevenueByGerai(revenueByGerai);
                       }}
                       className={`${
                         selectedGerai === gerai.name
@@ -855,11 +975,17 @@ export default function FinanceCEO() {
                       <CardContent>
                         <p>
                           Pendapatan Bersih: Rp{" "}
-                          {totalRevenueByGerai.toLocaleString("id-ID")}
+                          {(selectedGerai
+                            ? totalRevenueByGerai
+                            : gerai.totalRevenue
+                          ).toLocaleString("id-ID")}
                         </p>
                         <p>
                           Total Pengeluaran: Rp{" "}
-                          {totalExpenses.toLocaleString("id-ID")}
+                          {(
+                            additionalCosts[gerai.name.toUpperCase()]?.total ||
+                            0
+                          ).toLocaleString("id-ID")}
                         </p>
                         {additionalCosts[gerai.name.toUpperCase()]?.details
                           .length > 0 && (
@@ -890,12 +1016,20 @@ export default function FinanceCEO() {
                             }`}
                           >
                             {gerai.percentageChange < 0 ? (
-                              <FaArrowDown />
+                              <FaArrowDown className="h-4 w-4" />
                             ) : (
-                              <FaArrowUp />
+                              <FaArrowUp className="h-4 w-4" />
                             )}
-                            Perubahan Harian:{" "}
-                            {Math.abs(gerai.percentageChange).toFixed(2)}%
+                            Perubahan{" "}
+                            {timeRange === "day"
+                              ? "Harian"
+                              : timeRange === "month"
+                              ? "Bulanan"
+                              : timeRange === "year"
+                              ? "Tahunan"
+                              : "Total"}
+                            : {gerai.percentageChange >= 0 ? "+" : ""}
+                            {gerai.percentageChange.toFixed(2)}%
                           </p>
                         )}
                       </CardContent>

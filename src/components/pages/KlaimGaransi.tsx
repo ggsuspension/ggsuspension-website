@@ -1,44 +1,45 @@
 import FooterSection from "../layouts/Footer";
 import { useState } from "react";
-import { getPelangganByDateRange } from "@/utils/ggAPI";
+import { getAntrianCustomer } from "@/utils/ggAPI";
 import Navbar from "../fragments/Navbar";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 interface LayananType {
   id: string;
-  plat: string;
-  tanggalLayanan: string;
+  plat_motor: string;
   gerai: string;
   status: boolean;
   bagianMotor: string;
-  motorPart: string;
-  hargaLayanan: number;
-  hargaSeal: string;
-  info: string;
+  bagian_motor: string;
+  bagian_motor2: string;
+  harga_service: number;
+  harga_sparepart: string;
+  sumber_info: string;
   layanan: string;
   motor: string;
   nama: string;
   noWA: string;
-  seal: string;
+  sparepart: string;
   totalHarga: number;
-  createdAt: string;
+  created_at: string;
 }
+const formatDateForDisplay = (date: Date | string): string => {
+  const d = new Date(date);
+  const day = ("0" + d.getDate()).slice(-2);
+  const month = ("0" + (d.getMonth() + 1)).slice(-2);
+  const year = d.getFullYear();
+  return `${year}-${month}-${day}`; // YYYY-MM-DD
+};
 
 const KlaimGaransi = () => {
   const [plat, setPlat] = useState("");
-  const [tanggalLayanan, setTanggalLayanan] = useState("");
+  const [tanggalLayanan, setTanggalLayanan] = useState(
+    formatDateForDisplay(new Date())
+  );
   const [results, setResults] = useState<LayananType[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const formatDateForDisplay = (date: Date | string): string => {
-    const d = new Date(date);
-    const day = ("0" + d.getDate()).slice(-2);
-    const month = ("0" + (d.getMonth() + 1)).slice(-2);
-    const year = d.getFullYear();
-    return `${year}-${month}-${day}`; // YYYY-MM-DD
-  };
 
   const calculateWarrantyStatus = (
     tanggalLayanan: string,
@@ -47,9 +48,6 @@ const KlaimGaransi = () => {
     status: boolean
   ): string => {
     if (!status) {
-      console.log(
-        `calculateWarrantyStatus: status=false, garansi tidak aktif karena pesanan belum selesai`
-      );
       return "Tidak Aktif"; // Garansi hanya aktif jika status Finish
     }
 
@@ -57,9 +55,6 @@ const KlaimGaransi = () => {
     const currentDate = new Date();
     const diffTime = currentDate.getTime() - layananDate.getTime();
     const diffDays = diffTime / (1000 * 3600 * 24);
-    console.log(
-      `calculateWarrantyStatus: diffDays=${diffDays}, layanan='${layanan}', motorPart='${motorPart}', status=${status}`
-    );
 
     if (!layanan || layanan === "-") {
       return diffDays > 90 ? "Tidak Aktif" : "Aktif"; // Default 90 hari
@@ -89,31 +84,26 @@ const KlaimGaransi = () => {
       setLoading(true);
       setResults([]);
       setError("");
-
-      // Gunakan tanggal layanan sebagai startDate dan endDate
-      const startDateStr = formatDateForDisplay(tanggalLayananStr);
-      const endDateStr = startDateStr;
-
-      console.log("Mengambil data dari:", {
-        startDate: startDateStr,
-        endDate: endDateStr,
-        plat: platInput,
-      });
-
-      const data = await getPelangganByDateRange(
-        startDateStr,
-        endDateStr,
-        platInput
+      let semuaAntrian = await getAntrianCustomer();
+      console.log(
+        tanggalLayananStr,
+        formatDateForDisplay(semuaAntrian[0].created_at)
       );
-      console.log("Data mentah dari API:", data);
-
-      if (!data || data.length === 0) {
+      semuaAntrian = semuaAntrian
+        .filter(
+          (item: any) =>
+            formatDateForDisplay(item.created_at) == tanggalLayananStr
+        )
+        .filter(
+          (item: any) =>
+            item.plat_motor.toLowerCase() == platInput.toLowerCase()
+        );
+      if (!semuaAntrian || semuaAntrian.length === 0) {
         setError("Data tidak ditemukan untuk plat dan tanggal tersebut.");
         setLoading(false);
         return;
       }
-
-      setResults(data);
+      setResults(semuaAntrian);
       setError("");
     } catch (err) {
       setError("Gagal mengambil data layanan.");
@@ -135,7 +125,6 @@ const KlaimGaransi = () => {
       setError("Plat kendaraan dan tanggal layanan wajib diisi.");
       return;
     }
-
     fetchData(plat, tanggalLayanan);
   };
 
@@ -201,21 +190,21 @@ const KlaimGaransi = () => {
           </div>
 
           {/* Results Section */}
-          <div className="bg-white p-8 overflow-y-auto max-h-[600px]">
+          <div className="overflow-y-auto max-h-[600px]">
             {results.length > 0 ? (
               <div className="space-y-6">
                 {results.map((result) => {
                   const warrantyStatus = calculateWarrantyStatus(
-                    result.createdAt,
+                    result.created_at,
                     result.layanan,
-                    result.motorPart,
+                    result.bagian_motor,
                     result.status
                   );
-                  console.log(
-                    `Rendering result id: ${result.id}, warrantyStatus: ${warrantyStatus}, status: ${result.status}`
-                  );
                   return (
-                    <div key={result.id} className="border-b pb-4">
+                    <div
+                      key={result.id}
+                      className="border-b p-8 pb-4 mb-5 bg-white rounded-lg shadow-xl"
+                    >
                       <div className="text-lg font-semibold mb-2 flex justify-between items-center">
                         <span>{result.nama}</span>
                         <span
@@ -231,32 +220,40 @@ const KlaimGaransi = () => {
                       <table className="w-full text-sm text-left">
                         <tbody>
                           {[
-                            { label: "Plat Kendaraan", value: result.plat },
+                            {
+                              label: "Plat Kendaraan",
+                              value: result.plat_motor,
+                            },
                             {
                               label: "Tanggal Layanan",
-                              value: result.tanggalLayanan,
+                              value: formatDateForDisplay(result.created_at),
                             },
                             { label: "Gerai", value: result.gerai },
                             { label: "Layanan", value: result.layanan },
                             {
                               label: "Bagian Motor",
-                              value: result.bagianMotor,
+                              value: result.bagian_motor,
                             },
                             {
                               label: "Harga Layanan",
-                              value: `Rp. ${result.hargaLayanan}`,
+                              value: `Rp. ${result.harga_service}`,
                             },
                             {
                               label: "Harga Seal",
-                              value: `Rp. ${result.hargaSeal}`,
+                              value: `Rp. ${result.harga_sparepart ?? 0}`,
                             },
-                            { label: "Info", value: result.info },
+                            { label: "Info", value: result.sumber_info },
                             { label: "Motor", value: result.motor },
                             { label: "No WA", value: result.noWA },
-                            { label: "Seal", value: result.seal },
+                            {
+                              label: "Sparepart",
+                              value: result.sparepart ?? "-",
+                            },
                             {
                               label: "Total Harga",
-                              value: `Rp. ${result.totalHarga}`,
+                              value: `Rp. ${(
+                                result.harga_service + result.harga_sparepart
+                              ).toLocaleString()}`,
                             },
                             {
                               label: "Status Pesanan",

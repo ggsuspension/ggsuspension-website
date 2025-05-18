@@ -758,13 +758,17 @@ export const getDailyTrend = async (
 ): Promise<{ data: { date: string; netRevenue: number; gerai: string }[] }> => {
   try {
     const response = await api.get("/daily-net-revenue/daily-trend", {
-      params: { startDate, endDate, geraiId },
+      params: {
+        startDate,
+        endDate,
+        gerai_id: geraiId,
+      },
     });
     const data = Array.isArray(response.data.data)
       ? response.data.data.map((item: any) => ({
           date: item.date,
-          netRevenue: parseFloat(item.netRevenue) || 0,
-          gerai: item.gerai || "",
+          netRevenue: parseFloat(item.netRevenue || item.net_revenue || "0"),
+          gerai: item.gerai?.name || item.gerai || "",
         }))
       : [];
     return { data };
@@ -780,16 +784,41 @@ export const getDailyTrend = async (
   }
 };
 
-export async function getDailyIncomeExpense(
+export const getDailyIncomeExpense = async (
   date: string,
-  gerai_id: number | string
-) {
-  const result = await api.post("/daily-net-revenue/daily-income-expense", {
-    date,
-    gerai_id,
-  });
-  return result.data.data[0];
-}
+  geraiId?: number
+): Promise<{ data: { total_revenue: string; total_expenses: string }[] }> => {
+  try {
+    const response = await api.get("/daily-net-revenue/daily-income-expense", {
+      params: {
+        date,
+        gerai_id: geraiId,
+      },
+    });
+    console.log(
+      "getDailyIncomeExpense response:",
+      JSON.stringify(response.data, null, 2)
+    );
+    const data = Array.isArray(response.data.data)
+      ? response.data.data.map((item: any) => ({
+          total_revenue: item.total_revenue || "0",
+          total_expenses: item.total_expenses || "0",
+        }))
+      : [];
+    return { data };
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(
+        `Failed to fetch daily income/expense: ${
+          error.response.data?.error || error.message
+        }`
+      );
+    }
+    throw new Error(
+      `Failed to fetch daily income/expense: ${(error as Error).message}`
+    );
+  }
+};
 
 export const getDailyTrendTotal = async (
   startDate: string,
@@ -919,31 +948,132 @@ export async function totalPendapatan(id: number) {
 //   }
 // };
 
-export const getAllExpenses = async (
-  gerai_id: number | undefined,
-  start_date: string,
-  end_date: string
-) => {
+export const getDailyTrendAll = async (
+  startDate: string,
+  endDate: string
+): Promise<{
+  data: {
+    gerai_id: number;
+    gerai: string;
+    data: { date: string; netRevenue: number }[];
+  }[];
+}> => {
   try {
-    const response = await api.post("/expenses/all", {
-      gerai_id,
-      start_date,
-      end_date,
+    console.log("getDailyTrendAll params:", { startDate, endDate });
+    const response = await api.get("/daily-net-revenue/daily-trend-all", {
+      params: { startDate, endDate },
     });
-    return response.data;
-  } catch (error: any) {
-    console.error("getAllExpenses error:", {
-      message: error.message,
-      response: error.response
-        ? {
-            status: error.response.status,
-            data: error.response.data,
-            headers: error.response.headers,
-          }
-        : null,
-      config: error.config,
+    console.log(
+      "getDailyTrendAll response:",
+      JSON.stringify(response.data, null, 2)
+    );
+    const data = Array.isArray(response.data.data)
+      ? response.data.data.map((item: any) => ({
+          gerai_id: item.gerai_id,
+          gerai: item.gerai,
+          data: item.data.map((d: any) => ({
+            date: d.date,
+            netRevenue: parseFloat(d.netRevenue || "0"),
+          })),
+        }))
+      : [];
+    return { data };
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      console.error("getDailyTrendAll error:", {
+        status: error.response.status,
+        data: error.response.data,
+        params: { startDate, endDate },
+      });
+      throw new Error(
+        `Failed to fetch daily trend all: ${
+          error.response.data?.error || error.message
+        }`
+      );
+    }
+    console.error("getDailyTrendAll non-Axios error:", error);
+    throw new Error(
+      `Failed to fetch daily trend all: ${(error as Error).message}`
+    );
+  }
+};
+
+export const getAllExpensesAll = async (
+  startDate: string,
+  endDate: string
+): Promise<{
+  data: { gerai_id: number; gerai: string; data: any[] }[];
+}> => {
+  try {
+    console.log("getAllExpensesAll params:", { startDate, endDate });
+    const response = await api.get("/expenses/all-gerais", {
+      params: { startDate, endDate },
     });
-    throw error;
+    console.log(
+      "getAllExpensesAll response:",
+      JSON.stringify(response.data, null, 2)
+    );
+    const data = Array.isArray(response.data.data)
+      ? response.data.data.map((item: any) => ({
+          gerai_id: item.gerai_id,
+          gerai: item.gerai,
+          data: item.data,
+        }))
+      : [];
+    return { data };
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      console.error("getAllExpensesAll error:", {
+        status: error.response.status,
+        data: error.response.data,
+        params: { startDate, endDate },
+      });
+      throw new Error(
+        `Failed to fetch expenses all: ${
+          error.response.data?.error || error.message
+        }`
+      );
+    }
+    console.error("getAllExpensesAll non-Axios error:", error);
+    throw new Error(
+      `Failed to fetch expenses all: ${(error as Error).message}`
+    );
+  }
+};
+
+export const getAllExpenses = async (
+  geraiId: number,
+  startDate: string,
+  endDate: string
+): Promise<{ data: any[] }> => {
+  try {
+    console.log("getAllExpenses params:", {
+      gerai_id: geraiId,
+      startDate,
+      endDate,
+    });
+    const response = await api.get("/expenses/all", {
+      params: {
+        gerai_id: geraiId,
+        startDate,
+        endDate,
+      },
+    });
+    console.log(
+      "getAllExpenses response:",
+      JSON.stringify(response.data, null, 2)
+    );
+    const data = Array.isArray(response.data.data) ? response.data.data : [];
+    return { data };
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(
+        `Failed to fetch expenses: ${
+          error.response.data?.error || error.message
+        }`
+      );
+    }
+    throw new Error(`Failed to fetch expenses: ${(error as Error).message}`);
   }
 };
 

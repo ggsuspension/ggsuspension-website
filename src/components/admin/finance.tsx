@@ -123,7 +123,10 @@ const fetchWithRetry = async (promise: Promise<any>, retries = 3) => {
 export default function Finance() {
   const navigate = useNavigate();
   const [revenueData, setRevenueData] = useState<RevenueData[]>([]);
-  const [dataBiaya, setDataBiaya] = useState<any>({
+  const [dataBiaya, setDataBiaya] = useState<{
+    totalPendapatan: number;
+    totalPengeluaran: number;
+  }>({
     totalPendapatan: 0,
     totalPengeluaran: 0,
   });
@@ -143,74 +146,13 @@ export default function Finance() {
       }
     >
   >({});
-  let [allExpenses, setAllExpenses] = useState<Expense[]>([]);
+  const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
   const [categoryCost, setCategoryCost] = useState<string>("");
   const [newCost, setNewCost] = useState<string>("");
   const [newDescription, setNewDescription] = useState<string>("");
   const [gerais, setGerais] = useState<Gerai[]>([]);
-
-  function getStartOfMonthIsoString(dateInput: any) {
-    const date: any = dateInput ? new Date(dateInput) : new Date();
-    if (isNaN(date)) {
-      throw new Error("Input tanggal tidak valid");
-    }
-    date.setDate(1);
-    date.setHours(0, 0, 0, 0);
-    return date.toISOString();
-  }
-
-  function setTimeToMidnight(isoString: string) {
-    // Regex untuk memisahkan tanggal, waktu, dan zona waktu
-    const match = isoString.match(
-      /^(\d{4}-\d{2}-\d{2})(T\d{2}:\d{2}:\d{2}(\.\d+)?)?([+-]\d{2}:\d{2}|Z)?$/
-    );
-    if (match) {
-      // Ambil bagian tanggal
-      const date = match[1];
-      // Ambil zona waktu jika ada, kosong jika tidak ada
-      const timeZone = match[4] || "";
-      // Gabungkan tanggal dengan waktu 00:00:00 dan zona waktu
-      return `${date}T00:00:00${timeZone}`;
-    } else {
-      throw new Error("Format ISO string tidak valid");
-    }
-  }
-
-  function getEndOfMonthIsoString(dateInput: any) {
-    const date: any = dateInput ? new Date(dateInput) : new Date();
-    if (isNaN(date)) {
-      throw new Error("Input tanggal tidak valid");
-    }
-    // Pindah ke bulan berikutnya, set tanggal ke 0 untuk dapatkan tanggal terakhir bulan ini
-    date.setMonth(date.getMonth() + 1);
-    date.setDate(0);
-    // Atur waktu ke akhir hari
-    date.setHours(23, 59, 59, 999);
-    return date.toISOString();
-  }
-
-  function getStartOfYearIsoString(dateInput: any) {
-    const date: any = dateInput ? new Date(dateInput) : new Date();
-    if (isNaN(date)) {
-      throw new Error("Input tanggal tidak valid");
-    }
-    date.setMonth(0); // Januari (0-based)
-    date.setDate(1); // Tanggal 1
-    date.setHours(0, 0, 0, 0); // Jam 00:00:00
-    return date.toISOString();
-  }
-
-  // Akhir tahun (dengan waktu)
-  function getEndOfYearIsoString(dateInput: any) {
-    const date: any = dateInput ? new Date(dateInput) : new Date();
-    if (isNaN(date)) {
-      throw new Error("Input tanggal tidak valid");
-    }
-    date.setMonth(11); // Desember (0-based)
-    date.setDate(31); // Tanggal 31
-    date.setHours(23, 59, 59, 999); // Jam 23:59:59.999
-    return date.toISOString();
-  }
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isRevenueEmpty, setIsRevenueEmpty] = useState<boolean>(false);
 
   useEffect(() => {
     const token = getAuthToken();
@@ -243,44 +185,6 @@ export default function Finance() {
     setUserGeraiId(validDecoded.geraiId.toString());
     const fetchInitialData = async () => {
       try {
-        const dailyIncomeExpense = await getDailyIncomeExpense(
-          new Date().toISOString().split("T")[0],
-          validDecoded.geraiId
-        );
-        setDataBiaya({
-          ...dataBiaya,
-          totalPendapatan: dailyIncomeExpense
-            ? parseInt(dailyIncomeExpense.total_revenue.split(".")[0])
-            : 0,
-        });
-        setDataBiaya({
-          ...dataBiaya,
-          totalPengeluaran: dailyIncomeExpense
-            ? parseInt(dailyIncomeExpense.total_expenses.split(".")[0])
-            : 0,
-        });
-        if (timeRange == "day") {
-          const expenses = await getAllExpenses(
-            validDecoded.geraiId,
-            setTimeToMidnight(new Date().toISOString()),
-            new Date().toISOString()
-          );
-          setAllExpenses(expenses);
-        } else if (timeRange == "month") {
-          const expenses = await getAllExpenses(
-            validDecoded.geraiId,
-            getStartOfMonthIsoString(new Date()),
-            getEndOfMonthIsoString(new Date())
-          );
-          setAllExpenses(expenses);
-        } else if (timeRange == "year") {
-          const expenses = await getAllExpenses(
-            validDecoded.geraiId,
-            getStartOfYearIsoString(new Date()),
-            getEndOfYearIsoString(new Date())
-          );
-          setAllExpenses(expenses);
-        }
         const geraiList = await getGerais();
         setGerais(geraiList);
         const userGerai = geraiList.find(
@@ -298,7 +202,7 @@ export default function Finance() {
       }
     };
     fetchInitialData();
-  }, [navigate, timeRange]);
+  }, [navigate]);
 
   const fetchData = useCallback(async () => {
     if (!userRole || !gerais.length || !userGeraiId || !userGeraiName) {
@@ -306,98 +210,256 @@ export default function Finance() {
     }
 
     setLoading(true);
+    setErrorMessage(null);
 
     try {
-      const now = new Date("2025-04-26T00:00:00.000Z");
-      let startDate = new Date(now);
+      const now = new Date();
+      let startDate: Date;
       let endDate = new Date(now);
+      let previousStartDate: Date | null = null;
+      let previousEndDate: Date | null = null;
 
       switch (timeRange) {
         case "day":
+          startDate = new Date(now);
           startDate.setHours(0, 0, 0, 0);
           endDate.setHours(23, 59, 59, 999);
+          previousStartDate = new Date(now);
+          previousStartDate.setDate(now.getDate() - 1);
+          previousStartDate.setHours(0, 0, 0, 0);
+          previousEndDate = new Date(now);
+          previousEndDate.setDate(now.getDate() - 1);
+          previousEndDate.setHours(23, 59, 59, 999);
           break;
         case "month":
-          startDate.setDate(1);
-          startDate.setHours(0, 0, 0, 0);
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
           endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
           endDate.setHours(23, 59, 59, 999);
+          previousStartDate = new Date(
+            now.getFullYear(),
+            now.getMonth() - 1,
+            1
+          );
+          previousEndDate = new Date(now.getFullYear(), now.getMonth(), 0);
+          previousEndDate.setHours(23, 59, 59, 999);
           break;
         case "year":
-          startDate.setMonth(0, 1);
-          startDate.setHours(0, 0, 0, 0);
+          startDate = new Date(now.getFullYear(), 0, 1);
           endDate = new Date(now.getFullYear(), 11, 31);
           endDate.setHours(23, 59, 59, 999);
+          previousStartDate = new Date(now.getFullYear() - 1, 0, 1);
+          previousEndDate = new Date(now.getFullYear() - 1, 11, 31);
+          previousEndDate.setHours(23, 59, 59, 999);
           break;
         case "total":
           startDate = new Date(2000, 0, 1);
           endDate.setHours(23, 59, 59, 999);
+          previousStartDate = null;
+          previousEndDate = null;
           break;
+        default:
+          throw new Error("Invalid time range");
       }
 
       const formattedStartDate = formatDateForAPIStandard(startDate);
       const formattedEndDate = formatDateForAPIStandard(endDate);
+      const formattedToday = formatDateForAPIStandard(now);
+      const formattedPreviousStartDate = previousStartDate
+        ? formatDateForAPIStandard(previousStartDate)
+        : null;
+      const formattedPreviousEndDate = previousEndDate
+        ? formatDateForAPIStandard(previousEndDate)
+        : null;
 
-      const [dailyTrendResponse, expensesResponse] = await Promise.all([
+      console.log("Fetching data with params:", {
+        start_date: formattedStartDate,
+        end_date: formattedEndDate,
+        today: formattedToday,
+        gerai_id: userGeraiId,
+        previous_start_date: formattedPreviousStartDate,
+        previous_end_date: formattedPreviousEndDate,
+      });
+
+      const [
+        dailyTrendResponse,
+        expensesResponse,
+        dailyIncomeExpenseResponse,
+        previousDailyTrendResponse,
+      ] = await Promise.all([
         fetchWithRetry(
-          getDailyTrend(
-            formattedStartDate,
-            formattedEndDate,
-            Number(userGeraiId)
-          )
+          (async () => {
+            console.log("Calling /daily-trend with params:", {
+              start_date: formattedStartDate,
+              end_date: formattedEndDate,
+              gerai_id: userGeraiId,
+            });
+            const response = await getDailyTrend(
+              formattedStartDate,
+              formattedEndDate,
+              Number(userGeraiId)
+            );
+            console.log(
+              "Raw /daily-trend response:",
+              JSON.stringify(response, null, 2)
+            );
+            return response;
+          })()
         ),
         fetchWithRetry(
-          getAllExpenses(
-            Number(userGeraiId),
-            formattedStartDate,
-            formattedEndDate
-          )
+          (async () => {
+            console.log("Calling /expenses/all with params:", {
+              gerai_id: userGeraiId,
+              start_date: formattedStartDate,
+              end_date: formattedEndDate,
+            });
+            const response = await getAllExpenses(
+              Number(userGeraiId),
+              formattedStartDate,
+              formattedEndDate
+            );
+            return response;
+          })()
         ),
+        fetchWithRetry(
+          (async () => {
+            console.log(
+              "Calling /daily-income-expense for date:",
+              formattedToday,
+              "gerai_id:",
+              userGeraiId
+            );
+            const incomeExpenseResponse = await getDailyIncomeExpense(
+              formattedToday,
+              Number(userGeraiId)
+            );
+            console.log(
+              "Raw /daily-income-expense response:",
+              JSON.stringify(incomeExpenseResponse, null, 2)
+            );
+            return incomeExpenseResponse;
+          })()
+        ),
+        previousStartDate && previousEndDate
+          ? fetchWithRetry(
+              (async () => {
+                console.log(
+                  "Calling /daily-trend for previous period with params:",
+                  {
+                    start_date: formattedPreviousStartDate,
+                    end_date: formattedPreviousEndDate,
+                    gerai_id: userGeraiId,
+                  }
+                );
+                const response = await getDailyTrend(
+                  formattedPreviousStartDate!,
+                  formattedPreviousEndDate!,
+                  Number(userGeraiId)
+                );
+                console.log(
+                  "Raw /daily-trend response for previous period:",
+                  JSON.stringify(response, null, 2)
+                );
+                return response;
+              })()
+            )
+          : Promise.resolve({ data: [] }),
       ]);
 
-      if (!expensesResponse || expensesResponse.status !== 200) {
-        throw new Error(
-          `Invalid expenses response: Status ${
-            expensesResponse?.status || "undefined"
-          }, Data: ${JSON.stringify(expensesResponse?.data)}`
-        );
-      }
+      // Proses tren harian
+      const dailyTrend = Array.isArray(dailyTrendResponse.data)
+        ? dailyTrendResponse.data
+        : [];
+      console.log("Daily trend data:", dailyTrend);
+      const processedRevenueData = dailyTrend.length
+        ? dailyTrend.map(
+            (item: { date: string; netRevenue: number; gerai: string }) => {
+              console.log("Processing daily trend item:", item);
+              const netRevenue = item.netRevenue || 0;
+              const parsedRevenue =
+                typeof netRevenue === "string"
+                  ? parseFloat(netRevenue)
+                  : Number(netRevenue);
+              console.log("netRevenue:", netRevenue, "Parsed:", parsedRevenue);
+              return {
+                date: item.date.split("T")[0],
+                total: isNaN(parsedRevenue) ? 0 : parsedRevenue,
+                gerai: item.gerai || userGeraiName,
+              };
+            }
+          )
+        : [
+            {
+              date: formattedStartDate,
+              total: 0,
+              gerai: userGeraiName,
+            },
+          ];
 
-      const dailyTrend = dailyTrendResponse.data || [];
+      // Proses tren periode sebelumnya
+      const previousDailyTrend = Array.isArray(previousDailyTrendResponse.data)
+        ? previousDailyTrendResponse.data
+        : [];
+      const processedPreviousRevenueData = previousDailyTrend.length
+        ? previousDailyTrend.map(
+            (item: { date: string; netRevenue: number; gerai: string }) => {
+              const netRevenue = item.netRevenue || 0;
+              const parsedRevenue =
+                typeof netRevenue === "string"
+                  ? parseFloat(netRevenue)
+                  : Number(netRevenue);
+              return {
+                date: item.date.split("T")[0],
+                total: isNaN(parsedRevenue) ? 0 : parsedRevenue,
+                gerai: item.gerai || userGeraiName,
+              };
+            }
+          )
+        : [];
+
+      // Hitung total pendapatan untuk periode saat ini dan sebelumnya
+      const totalRevenue = processedRevenueData.reduce(
+        (sum: number, item: RevenueData) => sum + item.total,
+        0
+      );
+      const previousTotalRevenue = processedPreviousRevenueData.reduce(
+        (sum: number, item: RevenueData) => sum + item.total,
+        0
+      );
+
+      // Periksa apakah pendapatan bersih kosong
+      const isRevenueEmpty =
+        dailyTrend.length === 0 ||
+        dailyTrend.every(
+          (item: { netRevenue: number }) =>
+            item.netRevenue === 0 || item.netRevenue === null
+        );
+      setIsRevenueEmpty(isRevenueEmpty);
+      console.log("Is revenue empty:", isRevenueEmpty);
+
+      // Proses pengeluaran
+      console.log(
+        "Raw expenses response:",
+        JSON.stringify(expensesResponse, null, 2)
+      );
       const expenses = Array.isArray(expensesResponse.data)
         ? expensesResponse.data.map((item: any) => ({
             id: item.id,
-            geraiId: item.geraiId,
-            amount: item.amount,
+            geraiId: item.gerai_id || item.geraiId,
+            amount: parseFloat(item.amount) || 0,
             date: item.date,
-            description: item.description,
-            expenseCategoryId: item.expenseCategoryId,
+            description: item.description || "Tanpa deskripsi",
+            category: item.category || item.expenseCategory?.name || "Unknown",
           }))
         : [];
+      console.log("Processed expenses:", expenses);
 
       if (expenses.length === 0) {
         console.warn("No expenses returned from API. Parameters:", {
-          geraiId: Number(userGeraiId),
-          startDate: formattedStartDate,
-          endDate: formattedEndDate,
-          token: getAuthToken() ? "[REDACTED]" : null,
+          gerai_id: Number(userGeraiId),
+          start_date: formattedStartDate,
+          end_date: formattedEndDate,
         });
       }
-
-      const processedRevenueData =
-        dailyTrend.length > 0
-          ? dailyTrend.map((item: any) => ({
-              date: item.date,
-              total: parseFloat(item.netRevenue) || 0,
-              gerai: item.gerai || userGeraiName,
-            }))
-          : [
-              {
-                date: formattedStartDate,
-                total: 0,
-                gerai: userGeraiName,
-              },
-            ];
 
       const expenseTotal = expenses.reduce(
         (sum: number, expense: Expense) => sum + (expense.amount || 0),
@@ -416,52 +478,67 @@ export default function Finance() {
         },
       };
 
-      const uniqueDates = [
-        ...new Set(processedRevenueData.map((d: RevenueData) => d.date)),
-      ].sort();
-      const lastDate =
-        uniqueDates[uniqueDates.length - 1] || formattedStartDate;
-      const previousDate = uniqueDates[uniqueDates.length - 2];
+      // Proses pendapatan kotor dan pengeluaran dari dailyIncomeExpense
+      const dailyIncomeExpense =
+        Array.isArray(dailyIncomeExpenseResponse.data?.data) &&
+        dailyIncomeExpenseResponse.data.data.length > 0
+          ? dailyIncomeExpenseResponse.data.data[0]
+          : {};
+      console.log("Processed dailyIncomeExpense:", dailyIncomeExpense);
+      const totalPendapatan = parseFloat(dailyIncomeExpense.total_revenue) || 0;
+      const totalPengeluaran =
+        parseFloat(dailyIncomeExpense.total_expenses) || 0;
 
-      const totalRevenue = processedRevenueData.reduce(
-        (sum: number, item: RevenueData) => sum + item.total,
-        0
-      );
+      // Hitung percentageChange berdasarkan timeRange
+      let percentageChange: number;
+      if (timeRange === "total") {
+        percentageChange = 0; // Tidak ada perbandingan untuk "total"
+      } else if (previousTotalRevenue === 0 && totalRevenue === 0) {
+        percentageChange = 0; // Tidak ada pendapatan di kedua periode
+      } else if (previousTotalRevenue === 0) {
+        percentageChange = totalRevenue > 0 ? 100 : 0; // Pendapatan sebelumnya nol
+      } else {
+        percentageChange =
+          ((totalRevenue - previousTotalRevenue) /
+            Math.abs(previousTotalRevenue)) *
+          100;
+      }
+
+      // Batasi percentageChange agar tidak ekstrem
+      percentageChange = Number.isFinite(percentageChange)
+        ? Math.max(Math.min(Number(percentageChange.toFixed(2)), 1000), -1000)
+        : 0;
+
+      console.log("Calculated percentageChange:", percentageChange);
+      console.log("Total revenue:", totalRevenue);
+      console.log("Previous total revenue:", previousTotalRevenue);
 
       const geraiData: GeraiData[] = [
         {
           name: userGeraiName,
           totalRevenue,
           lastDayRevenue:
-            processedRevenueData.find((d: RevenueData) => d.date === lastDate)
-              ?.total || 0,
-          previousDayRevenue: previousDate
-            ? processedRevenueData.find(
-                (d: RevenueData) => d.date === previousDate
-              )?.total || 0
-            : 0,
-          percentageChange: previousDate
-            ? (((processedRevenueData.find(
-                (d: RevenueData) => d.date === lastDate
-              )?.total || 0) -
-                (processedRevenueData.find(
-                  (d: RevenueData) => d.date === previousDate
-                )?.total || 0)) /
-                (processedRevenueData.find(
-                  (d: RevenueData) => d.date === previousDate
-                )?.total || 1)) *
-              100
-            : (processedRevenueData.find(
-                (d: RevenueData) => d.date === lastDate
-              )?.total || 0) > 0
-            ? 100
-            : 0,
+            timeRange === "day"
+              ? processedRevenueData.find(
+                  (d: RevenueData) => d.date === formattedStartDate
+                )?.total || 0
+              : totalRevenue,
+          previousDayRevenue:
+            timeRange === "day"
+              ? processedPreviousRevenueData.find(
+                  (d: RevenueData) =>
+                    d.date === formatDateForAPIStandard(previousStartDate!)
+                )?.total || 0
+              : previousTotalRevenue,
+          percentageChange,
         },
       ];
 
       setRevenueData(processedRevenueData);
       setGeraiData(geraiData);
       setAdditionalCosts(expenseMap);
+      setAllExpenses(expenses);
+      setDataBiaya({ totalPendapatan, totalPengeluaran });
       setLastUpdated(formatDateForDisplay(new Date()));
     } catch (error: any) {
       console.error("Fetching data failed:", {
@@ -470,15 +547,11 @@ export default function Finance() {
           ? {
               status: error.response.status,
               data: error.response.data,
+              headers: error.response.headers,
             }
           : null,
+        request: error.request || null,
       });
-      let errorMsg = "Gagal mengambil data dari server: " + error.message;
-      if (error.response) {
-        errorMsg += ` (Status: ${error.response.status}, Data: ${JSON.stringify(
-          error.response.data
-        )})`;
-      }
       const formattedStartDate = formatDateForAPIStandard(new Date());
       setRevenueData([
         {
@@ -499,7 +572,21 @@ export default function Finance() {
       setAdditionalCosts({
         [userGeraiName?.toUpperCase() || "UNKNOWN"]: { total: 0, details: [] },
       });
-      setLastUpdated(formatDateForDisplay(new Date()));
+      setAllExpenses([]);
+      setDataBiaya({ totalPendapatan: 0, totalPengeluaran: 0 });
+      setIsRevenueEmpty(true);
+      setErrorMessage(
+        error.response?.status === 404
+          ? "Data pendapatan harian tidak ditemukan. Coba periksa data pelanggan atau pengeluaran."
+          : "Terjadi kesalahan saat memuat data. Silakan coba lagi atau hubungi admin."
+      );
+      Swal.fire({
+        icon: "error",
+        title: "Gagal Memuat Data",
+        text: errorMessage || "Terjadi kesalahan saat memuat data.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
     } finally {
       setLoading(false);
     }
@@ -583,7 +670,7 @@ export default function Finance() {
       ["Gerai", userGeraiName],
       [
         "Total Pendapatan Bersih",
-        `Rp ${dataBiaya.totalPendapatan.toLocaleString("id-ID")}`,
+        `Rp ${(geraiData[0]?.totalRevenue || 0).toLocaleString("id-ID")}`,
       ],
       [
         "Total Pengeluaran",
@@ -596,6 +683,7 @@ export default function Finance() {
       ["Tanggal", "Kategori", "Deskripsi", "Jumlah"],
       ...allExpenses.map((expense) => [
         formatDateForDisplay(expense.date, true),
+        expense.category || "Tanpa kategori",
         expense.description || "Tanpa deskripsi",
         `Rp ${(expense.amount || 0).toLocaleString("id-ID")}`,
       ]),
@@ -751,6 +839,7 @@ export default function Finance() {
   };
 
   const ExpenseTable = () => {
+    console.log("Rendering ExpenseTable with allExpenses:", allExpenses);
     if (allExpenses.length === 0) {
       return (
         <p className="text-gray-500 text-center">
@@ -876,6 +965,21 @@ export default function Finance() {
               Harap tunggu, ini mungkin memakan waktu.
             </p>
           </div>
+        ) : errorMessage ? (
+          <Card className="bg-white rounded-xl shadow-sm">
+            <CardContent className="p-4 sm:p-5">
+              <p className="text-red-500 text-center">{errorMessage}</p>
+              <Button
+                onClick={() => {
+                  setErrorMessage(null);
+                  fetchData();
+                }}
+                className="mt-4 bg-orange-600 hover:bg-orange-700 text-white mx-auto block"
+              >
+                Coba Lagi
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           <>
             <Card className="bg-gradient-to-r from-orange-500 to-yellow-600 rounded-xl shadow-md">
@@ -886,34 +990,38 @@ export default function Finance() {
                       Total Pendapatan Bersih - {userGeraiName}
                     </CardTitle>
                     <div className="flex items-center gap-2">
-                      {geraiData[0]?.percentageChange !== undefined && (
-                        <Badge
-                          className={`${
-                            geraiData[0].percentageChange < 0
-                              ? "bg-red-100 text-red-700"
-                              : "bg-green-100 text-green-700"
-                          } px-2 py-1 text-xs`}
-                        >
-                          {geraiData[0].percentageChange < 0 ? (
-                            <FaArrowDown className="mr-1 w-3 h-3" />
-                          ) : (
-                            <FaArrowUp className="mr-1 w-3 h-3" />
-                          )}
-                          {Math.abs(geraiData[0].percentageChange).toFixed(2)}%
-                        </Badge>
-                      )}
+                      {geraiData[0]?.percentageChange !== undefined &&
+                        !isRevenueEmpty && (
+                          <Badge
+                            className={`${
+                              geraiData[0].percentageChange < 0
+                                ? "bg-red-100 text-red-700"
+                                : "bg-green-100 text-green-700"
+                            } px-2 py-1 text-xs`}
+                          >
+                            {geraiData[0].percentageChange < 0 ? (
+                              <FaArrowDown className="mr-1 w-3 h-3" />
+                            ) : (
+                              <FaArrowUp className="mr-1 w-3 h-3" />
+                            )}
+                            {Math.abs(geraiData[0].percentageChange).toFixed(2)}
+                            %
+                          </Badge>
+                        )}
                     </div>
                   </div>
                   <p className="text-white text-2xl sm:text-3xl font-bold">
                     Rp{" "}
-                    {(
-                      dataBiaya.totalPendapatan - dataBiaya.totalPengeluaran ||
-                      0
-                    ).toLocaleString("id-ID", {
+                    {(geraiData[0]?.totalRevenue || 0).toLocaleString("id-ID", {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
                     })}
                   </p>
+                  {isRevenueEmpty && (
+                    <p className="text-white text-sm">
+                      Tidak ada data pendapatan bersih untuk periode ini.
+                    </p>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="p-4 sm:p-5">
@@ -921,9 +1029,7 @@ export default function Finance() {
                   <Clock className="h-4 w-4" />
                   <span>Terakhir Diperbarui: {lastUpdated}</span>
                   <Button
-                    onClick={() => {
-                      fetchData();
-                    }}
+                    onClick={() => fetchData()}
                     className="ml-3 bg-white text-orange-600 hover:bg-gray-100 text-xs py-1 px-2 h-7 flex items-center"
                   >
                     <RefreshCw className="mr-1 h-3 w-3" /> Muat Ulang
@@ -949,19 +1055,6 @@ export default function Finance() {
                       placeholder="Kategori Pengeluaran"
                       className="w-full sm:w-1/3 p-2 border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-orange-500 focus:border-orange-500"
                     />
-                    {/* <select
-                      value={selectedCategoryId || ""}
-                      onChange={(e) =>
-                        setSelectedCategoryId(Number(e.target.value))
-                      }
-                      className="w-full sm:w-1/3 p-2 border border-gray-300 rounded-md text-sm text-gray-600 focus:ring-orange-500 focus:border-orange-500"
-                    >
-                      {expenseCategories.map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select> */}
                     <input
                       required
                       type="number"
@@ -1023,7 +1116,7 @@ export default function Finance() {
               <CardContent className="">
                 <div className="space-y-3">
                   <p className="text-sm text-gray-600">
-                    Pendapatan Bersih:{" "}
+                    Pendapatan Kotor:{" "}
                     <span className="font-semibold text-gray-800">
                       Rp {dataBiaya.totalPendapatan.toLocaleString("id-ID")}
                     </span>
@@ -1034,23 +1127,41 @@ export default function Finance() {
                       Rp {dataBiaya.totalPengeluaran.toLocaleString("id-ID")}
                     </span>
                   </p>
-                  {geraiData[0]?.percentageChange !== undefined && (
-                    <p
-                      className={`flex items-center gap-1 text-sm ${
-                        geraiData[0].percentageChange < 0
-                          ? "text-red-600"
-                          : "text-green-600"
-                      }`}
-                    >
-                      {geraiData[0].percentageChange < 0 ? (
-                        <FaArrowDown className="h-4 w-4" />
-                      ) : (
-                        <FaArrowUp className="h-4 w-4" />
+                  <p className="text-sm text-gray-600">
+                    Pendapatan Bersih:{" "}
+                    <span className="font-semibold text-gray-800">
+                      Rp{" "}
+                      {(geraiData[0]?.totalRevenue || 0).toLocaleString(
+                        "id-ID"
                       )}
-                      Perubahan Harian:{" "}
-                      {Math.abs(geraiData[0].percentageChange).toFixed(2)}%
-                    </p>
-                  )}
+                    </span>
+                  </p>
+                  {geraiData[0]?.percentageChange !== undefined &&
+                    !isRevenueEmpty && (
+                      <p
+                        className={`flex items-center gap-1 text-sm ${
+                          geraiData[0].percentageChange < 0
+                            ? "text-red-600"
+                            : "text-green-600"
+                        }`}
+                      >
+                        {geraiData[0].percentageChange < 0 ? (
+                          <FaArrowDown className="h-4 w-4" />
+                        ) : (
+                          <FaArrowUp className="h-4 w-4" />
+                        )}
+                        Perubahan{" "}
+                        {timeRange === "day"
+                          ? "Harian"
+                          : timeRange === "month"
+                          ? "Bulanan"
+                          : timeRange === "year"
+                          ? "Tahunan"
+                          : "Total"}
+                        : {geraiData[0].percentageChange >= 0 ? "+" : ""}
+                        {geraiData[0].percentageChange.toFixed(2)}%
+                      </p>
+                    )}
                 </div>
               </CardContent>
             </Card>

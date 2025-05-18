@@ -5,14 +5,16 @@ interface ApiOptions {
   signal?: AbortSignal;
 }
 
-export const API_BASE_URL = "https://backend-web.ggsuspension.net/api";
+export const API_BASE_URL = "http://127.0.0.1:8000/api";
+export const FRONTEND_URL="http://localhost:5173";
+
 
 export async function getMotors(options: ApiOptions = {}): Promise<Motor[]> {
   try {
     const response = await axios.get(`${API_BASE_URL}/motors/getAll`, {
       signal: options.signal,
     });
-    return response.data;
+    return response.data; 
   } catch (error: any) {
     throw new Error(`Failed to fetch motors: ${error.message}`);
   }

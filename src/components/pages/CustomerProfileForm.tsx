@@ -2,19 +2,16 @@ import { useEffect, useState } from "react";
 import { addCustomer, getGerais } from "@/utils/ggAPI";
 import { Gerai } from "@/types";
 import { QRCodeSVG } from "qrcode.react";
-import { 
-  CalendarDays, 
-  Settings, 
-  Activity, 
-  CheckCircle2, 
-  XCircle 
+import {
+  CalendarDays,
+  Settings,
+  Activity,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
-import { 
-  FaMotorcycle, 
-  FaUserAlt, 
-  FaClock 
-} from "react-icons/fa";
+import { FaMotorcycle, FaUserAlt, FaClock } from "react-icons/fa";
 import { BsTools } from "react-icons/bs";
+import { FRONTEND_URL } from "@/utils/ggsAPI";
 
 const CustomerProfileForm = () => {
   const [isSubmit, setIsSubmit] = useState(false);
@@ -125,7 +122,7 @@ const CustomerProfileForm = () => {
       {isSubmit && (
         <div className="h-full w-full fixed z-10 bg-black top-0 opacity-70"></div>
       )}
-      
+
       {isLoading && (
         <div className="fixed inset-0 flex items-center justify-center z-20">
           <div className="w-16 h-16 border-4 border-yellow-500 border-t-orange-500 rounded-full animate-spin"></div>
@@ -212,7 +209,7 @@ const CustomerProfileForm = () => {
             <div className="flex flex-col items-center justify-center bg-black bg-opacity-50 p-6 rounded-lg text-white">
               <div className="bg-white p-6 rounded-lg shadow-lg mb-4">
                 <QRCodeSVG
-                  value={`https://ggsuspension.net/#/customer?id=${
+                  value={`${FRONTEND_URL}/#/customer?id=${
                     customerData.id
                   }&gerai=${customerData.gerai.toLowerCase()}`}
                   size={200}
@@ -228,7 +225,9 @@ const CustomerProfileForm = () => {
               </div>
               <div className="flex items-center justify-center gap-2 mt-3">
                 <CheckCircle2 size={24} className="text-green-500" />
-                <span className="text-green-400 font-medium">Berhasil Ditambahkan</span>
+                <span className="text-green-400 font-medium">
+                  Berhasil Ditambahkan
+                </span>
               </div>
             </div>
           ) : (
@@ -321,7 +320,7 @@ const CustomerProfileForm = () => {
                         Sudah Chat
                       </label>
                     </span>
-                    
+
                     {hasChatAdmin && (
                       <div className="mt-3 grid grid-cols-3 gap-2">
                         <span className="flex items-center">
@@ -375,7 +374,7 @@ const CustomerProfileForm = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="bg-black bg-opacity-40 p-3 rounded-lg">
                     <span className="flex items-center">
                       <input
@@ -414,7 +413,9 @@ const CustomerProfileForm = () => {
                         type="radio"
                         className="w-4 h-4 text-yellow-600 bg-gray-800 border-gray-700 focus:ring-yellow-500"
                       />
-                      <label htmlFor="IG2" className="ms-2 text-white">Instagram</label>
+                      <label htmlFor="IG2" className="ms-2 text-white">
+                        Instagram
+                      </label>
                     </span>
                   </div>
                   <div className="bg-black bg-opacity-40 p-3 rounded-lg">
@@ -426,7 +427,9 @@ const CustomerProfileForm = () => {
                         type="radio"
                         className="w-4 h-4 text-yellow-600 bg-gray-800 border-gray-700 focus:ring-yellow-500"
                       />
-                      <label htmlFor="Tiktok2" className="ms-2 text-white">Tiktok</label>
+                      <label htmlFor="Tiktok2" className="ms-2 text-white">
+                        Tiktok
+                      </label>
                     </span>
                   </div>
                   <div className="bg-black bg-opacity-40 p-3 rounded-lg">
@@ -438,7 +441,9 @@ const CustomerProfileForm = () => {
                         type="radio"
                         className="w-4 h-4 text-yellow-600 bg-gray-800 border-gray-700 focus:ring-yellow-500"
                       />
-                      <label htmlFor="Facebook" className="ms-2 text-white">Facebook</label>
+                      <label htmlFor="Facebook" className="ms-2 text-white">
+                        Facebook
+                      </label>
                     </span>
                   </div>
                   <div className="bg-black bg-opacity-40 p-3 rounded-lg">
@@ -450,7 +455,9 @@ const CustomerProfileForm = () => {
                         type="radio"
                         className="w-4 h-4 text-yellow-600 bg-gray-800 border-gray-700 focus:ring-yellow-500"
                       />
-                      <label htmlFor="Youtube" className="ms-2 text-white">Youtube</label>
+                      <label htmlFor="Youtube" className="ms-2 text-white">
+                        Youtube
+                      </label>
                     </span>
                   </div>
                 </div>
