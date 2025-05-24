@@ -134,28 +134,27 @@ export default function DashboardAdmin() {
         setIsLoading(false);
         return;
       }
-
       const geraiName = rawData[0].gerai?.name || "";
       if (geraiName && !userGeraiName) {
         setUserGeraiName(geraiName);
       }
 
-      const flatData = rawData.map((item) => ({
-        totalHarga: item.totalHarga || 0,
-        status: item.status || "PROGRESS",
-      }));
+      const flatData: { totalHarga: number; status: string }[] = rawData.map(
+        (item) => ({
+          totalHarga: item.totalHarga || 0,
+          status: item.status || "PROGRESS",
+        })
+      );
 
       const stats = {
         totalAntrian: flatData.length,
         progress: flatData.filter((item) => item.status === "PROGRESS").length,
-        finished: flatData.filter((item) => item.status === "FINISHED").length,
-        cancelled: flatData.filter((item) => item.status === "CANCELLED")
-          .length,
+        finished: flatData.filter((item) => item.status == "FINISH").length,
+        cancelled: flatData.filter((item) => item.status == "CANCEL").length,
         pendapatanBersih: flatData
-          .filter((item) => item.status === "FINISHED")
+          .filter((item) => item.status == "FINISH")
           .reduce((sum, item) => sum + (item.totalHarga || 0), 0),
       };
-      console.log("Calculated stats:", stats);
       setStats(stats);
       setIsLoading(false);
     } catch (error) {

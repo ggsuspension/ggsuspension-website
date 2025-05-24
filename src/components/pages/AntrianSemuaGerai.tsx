@@ -4,15 +4,16 @@ import { useEffect, useState } from "react";
 import { FaMotorcycle, FaUserAlt, FaTools } from "react-icons/fa";
 import Navbar from "../fragments/Navbar";
 import { Link } from "react-router-dom";
-import { 
-  ArrowLeft, 
-  CalendarDays, 
-  Settings, 
-  ChevronRight, 
+import {
+  ArrowLeft,
+  CalendarDays,
+  Settings,
+  ChevronRight,
   Activity,
   Clock,
   CheckCircle2,
-  XCircle 
+  XCircle,
+  Filter,
 } from "lucide-react";
 import { formatDate } from "@/utils/date";
 import { RiStore3Fill } from "react-icons/ri";
@@ -28,6 +29,10 @@ export default function AntrianSemuaGerai() {
   const [data, setData] = useState<any>(undefined);
   const [dataCustomerNotFiltered, setDataCustomerNotFiltered] =
     useState<any>(undefined);
+  const [geraiOptions, setGeraiOptions] = useState<string[]>([]);
+  const [selectedGerai, setSelectedGerai] = useState<string>("all");
+  const [filteredData, setFilteredData] = useState<any>(undefined);
+
   let getCookiePelanggan: any = getCookie("pelangganGGSuspension");
   getCookiePelanggan = getCookiePelanggan ? JSON.parse(getCookiePelanggan) : "";
 
@@ -46,6 +51,12 @@ export default function AntrianSemuaGerai() {
           setData([]); // Set data kosong jika tidak ada antrian hari ini
           return;
         }
+
+        // Extract unique gerai options
+        const uniqueGeraiOptions: any = [
+          ...new Set(filteredData.map((item: any) => item.gerai)),
+        ];
+        setGeraiOptions(uniqueGeraiOptions);
 
         // Kelompokkan data berdasarkan gerai
         const grouped = filteredData.reduce((acc: any, cur: any) => {
@@ -67,15 +78,36 @@ export default function AntrianSemuaGerai() {
         }, {});
         const output = Object.values(grouped);
         setData(output);
+        setFilteredData(output);
       } catch (error) {
         console.error("Gagal mengambil data antrian:", error);
         setData([]); // Set data kosong jika ada error
+        setFilteredData([]);
       }
     };
     fetchData();
   }, []);
 
+  // Filter data based on selected gerai
+  useEffect(() => {
+    if (data) {
+      if (selectedGerai === "all") {
+        setFilteredData(data);
+      } else {
+        const filtered = data.filter(
+          (item: any) => item.gerai === selectedGerai
+        );
+        setFilteredData(filtered);
+      }
+    }
+  }, [selectedGerai, data]);
+
+  const handleGeraiChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedGerai(e.target.value);
+  };
+
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
+  const [status, setStatus] = useState("");
 
   useEffect(() => {
     const newChannel = getChannel();
@@ -103,11 +135,13 @@ export default function AntrianSemuaGerai() {
         { event: "connection_state_change" },
         ({ old, new: newState }: { old: string; new: string }) => {
           console.log(`Connection state changed from ${old} to ${newState}`);
+          setStatus(newState);
         }
       );
 
     newChannel.subscribe((status: string) => {
       if (status === "SUBSCRIBED") {
+        setStatus(status);
         newChannel.track({
           online_at: new Date().toISOString(),
         });
@@ -131,7 +165,6 @@ export default function AntrianSemuaGerai() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-600 to-orange-500 relative">
-      {/* Decorative background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 opacity-10">
         <svg
           className="absolute left-0 top-0 h-full w-1/3"
@@ -186,7 +219,7 @@ export default function AntrianSemuaGerai() {
       </div>
 
       <Navbar />
-      
+
       <div className="container mx-auto flex flex-col gap-4 p-4 pt-14 tablet:p-8 relative z-10">
         <Link
           to="/"
@@ -195,7 +228,7 @@ export default function AntrianSemuaGerai() {
           <ArrowLeft className="w-5 h-5" />
           <span className="text-lg font-medium">Kembali</span>
         </Link>
-        
+
         {/* Stylized Header */}
         <div className="relative mt-8 mb-6">
           <div className="absolute -top-6 -left-2 w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center z-10 shadow-lg">
@@ -232,6 +265,20 @@ export default function AntrianSemuaGerai() {
           </div>
         </div>
 
+        {/* Antrian Saya Button */}
+        {getCookiePelanggan.gerai && (
+          <div className="flex justify-center mb-4">
+            <a
+              className="bg-gradient-to-r from-yellow-600 to-orange-800 hover:from-yellow-500 hover:to-orange-700 px-6 py-3 text-white rounded-md tablet:text-xl font-bold flex items-center gap-2 shadow-lg transform hover:translate-y-1 transition-all duration-300 border-b-4 border-yellow-800"
+              href={`/#/antrian/${getCookiePelanggan.gerai.toLowerCase()}`}
+            >
+              <FaUserAlt className="text-yellow-300" />
+              Masuk Antrian Saya
+              <ChevronRight size={20} />
+            </a>
+          </div>
+        )}
+
         {/* Calendar Card */}
         <div className="flex justify-center items-center mb-4 p-0 relative">
           <div className="bg-gradient-to-r from-yellow-500 to-orange-500 px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 transform hover:scale-105 transition-transform duration-300">
@@ -247,40 +294,57 @@ export default function AntrianSemuaGerai() {
           </div>
         </div>
 
-        {/* Antrian Saya Button */}
-        {getCookiePelanggan.gerai && (
-          <div className="flex justify-center mb-4">
-            <a
-              className="bg-gradient-to-r from-yellow-600 to-orange-800 hover:from-yellow-500 hover:to-orange-700 px-6 py-3 text-white rounded-md tablet:text-xl font-bold flex items-center gap-2 shadow-lg transform hover:translate-y-1 transition-all duration-300 border-b-4 border-yellow-800"
-              href={`/#/antrian/${getCookiePelanggan.gerai.toLowerCase()}`}
-            >
-              <FaUserAlt className="text-yellow-300" />
-              Masuk Antrian Saya
-              <ChevronRight size={20} />
-            </a>
+        {/* Gerai Filter Dropdown */}
+        <div className="flex justify-center items-center mb-4">
+          <div className="bg-black bg-opacity-70 px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 transform hover:scale-105 transition-transform duration-300 border-l-4 border-yellow-500">
+            <div className="bg-orange-500 rounded-full p-2">
+              <Filter className="text-black" size={24} />
+            </div>
+            
+            <div className="relative">
+              <select
+                className="bg-gray-900 text-white font-bold py-2 px-4 rounded-md border-2 border-orange-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 appearance-none pr-10 text-lg"
+                value={selectedGerai}
+                onChange={handleGeraiChange}
+              >
+                <option value="all">SEMUA GERAI</option>
+                {geraiOptions.map((gerai, index) => (
+                  <option key={index} value={gerai}>
+                    GERAI {gerai}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-orange-500">
+                <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                </svg>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
 
         {/* Loading State */}
-        {data === undefined ? (
+        {filteredData === undefined ? (
           <div className="flex flex-col items-center justify-center p-12 bg-black bg-opacity-20 rounded-lg text-white">
             <div className="w-16 h-16 border-4 border-yellow-500 border-t-orange-500 rounded-full animate-spin mb-4"></div>
             <p className="text-xl font-medium">Loading...</p>
           </div>
-        ) : data.length === 0 ? (
+        ) : filteredData.length === 0 ? (
           <div className="bg-black bg-opacity-50 text-center p-8 rounded-lg shadow-lg border-l-4 border-yellow-500">
             <div className="inline-block p-4 bg-orange-500 rounded-full mb-4">
               <FaMotorcycle size={32} className="text-white" />
             </div>
             <p className="text-xl text-white font-bold">
-              Tidak ada antrian hari ini.
+              {selectedGerai === "all"
+                ? "Tidak ada antrian hari ini."
+                : `Tidak ada antrian untuk Gerai ${selectedGerai} hari ini.`}
             </p>
           </div>
         ) : (
           // Gerai List
           <div className="grid grid-cols-1 gap-6">
-            {data.map((row: any, index: number) => (
-              <div 
+            {filteredData.map((row: any, index: number) => (
+              <div
                 key={index}
                 className="bg-black bg-opacity-80 rounded-lg shadow-xl p-4 border-l-4 border-yellow-500 relative overflow-hidden"
               >
@@ -299,7 +363,7 @@ export default function AntrianSemuaGerai() {
                     />
                   </svg>
                 </div>
-                
+
                 {/* Gerai Header */}
                 <div className="flex items-center gap-3 mb-4 bg-gradient-to-r from-orange-600 to-yellow-500 rounded-lg p-3 shadow-lg">
                   <div className="bg-black rounded-full p-2">
@@ -309,7 +373,7 @@ export default function AntrianSemuaGerai() {
                     GERAI {row.gerai}
                   </h2>
                 </div>
-                
+
                 {/* Table */}
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse mb-4">
@@ -357,7 +421,9 @@ export default function AntrianSemuaGerai() {
                             </td>
                             <td className="p-3">
                               <span className="block text-sm tablet:text-base">
-                                {item.layanan ? item.layanan.toUpperCase() : "-"}
+                                {item.layanan
+                                  ? item.layanan.toUpperCase()
+                                  : "-"}
                               </span>
                             </td>
                             <td className="p-3 text-center">
@@ -387,7 +453,7 @@ export default function AntrianSemuaGerai() {
             ))}
           </div>
         )}
-        
+
         {/* Decorative footer */}
         <div className="h-3 bg-black mt-6 flex rounded-full overflow-hidden">
           <div className="w-1/5 h-full bg-orange-500"></div>

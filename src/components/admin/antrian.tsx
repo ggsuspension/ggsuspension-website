@@ -4,20 +4,23 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   cancelOrder,
   finishOrder,
-  getAllSeals,
   getAntrianCustomer,
   updateAntrian,
+  updateSeal,
 } from "@/utils/ggAPI";
 import { getAuthToken, decodeToken, removeAuthToken } from "@/utils/auth";
 import Swal from "sweetalert2";
 import NavbarDashboard from "../fragments/NavbarDashboard";
 import type { Antrian, GroupedAntrian, TransformedAntrian } from "@/types";
+import { getSealsByGeraiId } from "@/utils/ggsAPI";
+import { Download } from "lucide-react";
+import * as XLSX from "xlsx";
 
 function getFormattedDate(date: Date): string {
   const day = ("0" + date.getDate()).slice(-2);
   const month = ("0" + (date.getMonth() + 1)).slice(-2);
   const year = date.getFullYear().toString().slice(-2);
-  return `${day}-${month}-${year}`; // Format DD-MM-YY
+  return `${day}-${month}-${year}`;
 }
 
 export default function Antrian() {
@@ -35,6 +38,7 @@ export default function Antrian() {
   const [isLoading, setIsLoading] = useState(true);
   const [dataSeal, setDataSeal] = useState<any>([]);
   const token = getAuthToken();
+
   if (!token) {
     Swal.fire({
       icon: "warning",
@@ -51,12 +55,6 @@ export default function Antrian() {
   const decoded = decodeToken(token);
 
   useEffect(() => {
-    async function getSeal() {
-      const seal = await getAllSeals();
-      setDataSeal(seal);
-    }
-    getSeal();
-
     if (!decoded) {
       removeAuthToken();
       Swal.fire({
@@ -75,6 +73,11 @@ export default function Antrian() {
     setSelectedGeraiId(decoded.geraiId?.toString() || "");
   }, [navigate]);
 
+  async function getSealsByGerai() {
+    const seals = await getSealsByGeraiId(decoded?.geraiId);
+    setDataSeal(seals);
+  }
+
   useEffect(() => {
     const token = getAuthToken();
     if (!token) {
@@ -89,8 +92,8 @@ export default function Antrian() {
       });
       return;
     }
-
     const decoded = decodeToken(token);
+    getSealsByGerai();
     if (userRole && userRole !== "CEO" && selectedDate && selectedGeraiId) {
       fetchData(selectedDate, decoded);
     } else if (userRole === "CEO") {
@@ -107,14 +110,19 @@ export default function Antrian() {
       setErrorMessage(null);
       const response = await getAntrianCustomer();
       let rawData = response;
-      rawData = rawData.filter((data:any)=> data.created_at.substring(2, 10).split('-').reverse().join('-') == date).filter((item: any) => item.gerai == decoded.gerai.name);
+      rawData = rawData
+        .filter(
+          (data: any) =>
+            data.created_at.substring(2, 10).split("-").reverse().join("-") ==
+            date
+        )
+        .filter((item: any) => item.gerai == decoded.gerai.name);
       if (!Array.isArray(rawData) || rawData.length === 0) {
         setData([]);
         setErrorMessage(`Tidak ada data antrian untuk tanggal ${date}.`);
         setIsLoading(false);
         return;
       }
-
       const geraiName = rawData[0].gerai?.name || "Unknown Gerai";
       const transformedData: any = rawData.map(
         (item: any, _index: number, _array: Antrian[]) => {
@@ -138,20 +146,19 @@ export default function Antrian() {
               gerai: geraiName,
             };
           }
-
           return {
             id: item.id,
-            nama: item.customer?.nama || item.nama || "N/A",
-            plat: item.customer?.plat || item.plat_motor || "N/A",
-            no_wa: item.customer?.no_wa || item.noWA || "N/A",
-            layanan: item.layanan || "N/A",
+            nama: item.customer?.nama || item.nama || "kosong",
+            plat: item.customer?.plat || item.plat_motor || "kosong",
+            no_wa: item.customer?.no_wa || item.noWA || "kosong",
+            layanan: item.layanan || "kosong",
             subcategory:
-              item.jenis_motor || item.customer?.subcategory || "N/A",
-            motor: item.motor || item.customer?.motor || "N/A",
+              item.jenis_motor || item.customer?.subcategory || "kosong",
+            motor: item.motor || item.customer?.motor || "kosong",
             bagianMotor:
-              item.bagian_motor || item.customer?.bagian_motor || "N/A",
+              item.bagian_motor || item.customer?.bagian_motor || "kosong",
             bagianMotor2:
-              item.bagian_motor2 || item.customer?.bagian_motor || "N/A",
+              item.bagian_motor2 || item.customer?.bagian_motor || "kosong",
             hargaLayanan:
               item.harga_service || item.customer?.harga_layanan || 0,
             sparepart: item.sparepart,
@@ -159,6 +166,8 @@ export default function Antrian() {
             totalHarga: item.totalHarga || item.customer?.total_harga || 0,
             status: item.status,
             gerai: item.gerai,
+            sparepart_id: item.sparepart_id,
+            waktu: item.created_at,
           };
         }
       );
@@ -208,47 +217,261 @@ export default function Antrian() {
     }
   };
 
-  // const handleExport = () => {
-  //   if (data.length === 0) {
-  //     Swal.fire({
-  //       icon: "warning",
-  //       title: "Tidak Ada Data",
-  //       text: "Tidak ada data antrian untuk diekspor.",
-  //       timer: 1500,
-  //       showConfirmButton: false,
-  //     });
-  //     return;
-  //   }
+  const handleExport = () => {
+    if (data.length == 0) {
+      Swal.fire({
+        icon: "warning",
+        title: "Tidak Ada Data",
+        text: "Tidak ada data antrian untuk diekspor.",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+      return;
+    }
 
-  //   const csvData = data.flatMap((group) =>
-  //     group.data.map((item: TransformedAntrian) => ({
-  //       Nama: item.nama,
-  //       Plat: item.plat,
-  //       "No WA": item.no_wa,
-  //       Layanan: item.layanan,
-  //       Subkategori: item.subcategory,
-  //       Motor: item.motor,
-  //       "Bagian Motor": item.bagianMotor,
-  //       "Harga Layanan": item.hargaLayanan,
-  //       "Harga Seal": item.hargaSeal,
-  //       "Total Harga": item.totalHarga,
-  //       Status: item.status,
-  //       Waktu: new Date(item.waktu).toLocaleString(),
-  //       Gerai: group.gerai,
-  //     }))
-  //   );
+    // Transform data sesuai struktur layout yang diinginkan
+    const dataExcel = data.map((group: any) => {
+      return {
+        gerai: group.gerai,
+        data: group.data,
+        totalAntrian: group.data.length,
+      };
+    });
 
-  //   const csv = Papa.unparse(csvData);
-  //   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  //   const url = URL.createObjectURL(blob);
-  //   const link = document.createElement("a");
-  //   link.href = url;
-  //   link.download = `antrian_${selectedDate}_${userGeraiName || "gerai"}.csv`;
-  //   document.body.appendChild(link);
-  //   link.click();
-  //   document.body.removeChild(link);
-  //   URL.revokeObjectURL(url);
-  // };
+    // Buat sheet data dengan format array of arrays sesuai layout asli
+    const sheetData = dataExcel.flatMap((item: any) => {
+      return item.data.length > 0
+        ? [
+            // Header gerai
+            [
+              `GERAI: ${decoded?.gerai.name}`,
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              `Total: ${item.totalAntrian} antrian`,
+            ],
+            // Header kolom
+            [
+              "No",
+              "Nama",
+              "Plat Nomor",
+              "No WhatsApp",
+              "Layanan",
+              "Subkategori",
+              "Motor",
+              "Bagian Motor",
+              "Harga Layanan",
+              "Harga Seal",
+              "Total Harga",
+              "Status",
+              "Waktu",
+            ],
+            // Data antrian
+            ...item.data.map((row: TransformedAntrian, i: number) => [
+              i + 1,
+              row.nama || "-",
+              row.plat || "-",
+              row.no_wa || "-",
+              row.layanan || "-",
+              row.subcategory || "-",
+              row.motor || "-",
+              row.bagianMotor || "-",
+              row.hargaLayanan
+                ? `Rp ${row.hargaLayanan.toLocaleString("id-ID")}`
+                : "Rp 0",
+              row.hargaSeal
+                ? `Rp ${row.hargaSeal.toLocaleString("id-ID")}`
+                : "Rp 0",
+              row.totalHarga
+                ? `Rp ${row.totalHarga.toLocaleString("id-ID")}`
+                : "Rp 0",
+              row.status || "-",
+              row.waktu
+                ? new Date(row.waktu).toLocaleString("id-ID", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : "-",
+            ]),
+            [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "SUBTOTAL:",
+              `Rp ${item.data
+                .reduce(
+                  (sum: number, row: TransformedAntrian) =>
+                    sum + (row.hargaLayanan || 0)+(row.hargaSeal || 0),
+                  0
+                )
+                .toLocaleString("id-ID")}`,
+              "",
+              "",
+            ],
+            // Baris kosong
+            ["", "", "", "", "", "", "", "", "", "", "", "", ""],
+          ]
+        : [
+            // Jika tidak ada data
+            [
+              `GERAI: ${decoded?.gerai.name}`,
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "Total: 0 antrian",
+            ],
+            [
+              "No",
+              "Nama",
+              "Plat Nomor",
+              "No WhatsApp",
+              "Layanan",
+              "Subkategori",
+              "Motor",
+              "Bagian Motor",
+              "Harga Layanan",
+              "Harga Seal",
+              "Total Harga",
+              "Status",
+              "Waktu",
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "TIDAK ADA DATA ANTRIAN",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+            ],
+            ["", "", "", "", "", "", "", "", "", "", "", "", ""],
+          ];
+    });
+
+    // // Tambahkan grand total
+    // const grandTotal = data.reduce(
+    //   (total, group) =>
+    //     total +
+    //     group.data.reduce((sum, item) => sum + (item.totalHarga || 0), 0),
+    //   0
+    // );
+    // const totalAntrian = data.reduce(
+    //   (total, group) => total + group.data.length,
+    //   0
+    // );
+
+    // // Tambahkan baris grand total
+    // sheetData.push(
+    //   ["", "", "", "", "", "", "", "", "", "", "", "", ""],
+    //   [
+    //     "TOTAL KESELURUHAN",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "",
+    //     "GRAND TOTAL:",
+    //     `Rp ${grandTotal.toLocaleString("id-ID")}`,
+    //     `${totalAntrian} Antrian`,
+    //     selectedDate,
+    //   ]
+    // );
+
+    // Buat worksheet dari array of arrays
+    const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+
+    // Set lebar kolom agar sesuai dengan konten
+    worksheet["!cols"] = [
+      { width: 5 }, // No
+      { width: 20 }, // Nama
+      { width: 12 }, // Plat
+      { width: 15 }, // No WA
+      { width: 15 }, // Layanan
+      { width: 15 }, // Subkategori
+      { width: 12 }, // Motor
+      { width: 15 }, // Bagian Motor
+      { width: 15 }, // Harga Layanan
+      { width: 15 }, // Harga Seal
+      { width: 15 }, // Total Harga
+      { width: 10 }, // Status
+      { width: 18 }, // Waktu
+    ];
+
+    // Styling untuk header dan total (opsional)
+    const range = XLSX.utils.decode_range(worksheet["!ref"] || "A1");
+    for (let row = range.s.r; row <= range.e.r; row++) {
+      for (let col = range.s.c; col <= range.e.c; col++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+        const cell = worksheet[cellAddress];
+
+        if (
+          cell &&
+          typeof cell.v === "string" &&
+          (cell.v.startsWith("GERAI:") ||
+            cell.v === "No" ||
+            cell.v === "SUBTOTAL:" ||
+            cell.v === "GRAND TOTAL:" ||
+            cell.v === "TOTAL KESELURUHAN")
+        ) {
+          if (!cell.s) cell.s = {};
+          cell.s.font = { bold: true };
+        }
+      }
+    }
+
+    // Buat workbook dan tambahkan worksheet
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Antrian");
+
+    // Format nama file
+    const formattedDate = selectedDate.replace(/\//g, "-");
+
+    // Download file Excel
+    XLSX.writeFile(workbook, `Laporan_Antrian_${formattedDate}_${decoded?.gerai.name.toUpperCase()}.xlsx`);
+
+    // Notifikasi sukses
+    Swal.fire({
+      icon: "success",
+      title: "Export Berhasil",
+      text: `Data antrian tanggal ${selectedDate} berhasil diekspor ke Excel.`,
+      timer: 2000,
+      showConfirmButton: false,
+    });
+  };
 
   const handleEdit = (item: any) => {
     setEditItem({ ...item });
@@ -310,7 +533,8 @@ export default function Antrian() {
     }
   };
 
-  const handleFinish = async (id: number) => {
+  const handleFinish = async (id: number, sparepart_id: number) => {
+    const sealSelected = dataSeal.find((item: any) => item.id === sparepart_id);
     if (!id || typeof id !== "number") {
       Swal.fire({
         icon: "error",
@@ -321,6 +545,8 @@ export default function Antrian() {
     }
     try {
       const response = await finishOrder(id);
+      if (sealSelected && sealSelected.qty)
+        await updateSeal(sparepart_id, sealSelected?.qty - 1);
       if (response.message) {
         Swal.fire({
           icon: "success",
@@ -430,13 +656,13 @@ export default function Antrian() {
               {/* <span className="border p-2 bg-gray-200 rounded-md shadow-sm">
                 {userGeraiName || "Gerai Tidak Diketahui"}
               </span> */}
-              {/* <button
+              <button
                 onClick={handleExport}
                 className="flex items-center bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition shadow-md"
                 disabled={userRole === "CEO" || data.length === 0}
               >
                 <Download className="w-5 h-5 mr-2" /> Download
-              </button> */}
+              </button>
             </div>
             {isLoading && (
               <p className="text-center text-gray-600 mt-4">Memuat data...</p>

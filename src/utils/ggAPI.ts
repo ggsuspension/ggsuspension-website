@@ -185,7 +185,6 @@ export const getAllSeals = async ({
         "Cache-Control": "no-cache",
       },
     });
-    console.log("getAllSeals - Raw Data:", response.data);
     return response.data;
   } catch (error) {
     console.error("getAllSeals - Error:", error);
@@ -210,7 +209,6 @@ export const getSealsByGerai = async ({
 }): Promise<Sparepart[]> => {
   try {
     const seals = await getAllSeals({ signal });
-    console.log(`getSealsByGerai - All Seals:`, seals);
 
     const filteredSeals = seals.filter(
       (seal) =>
@@ -224,6 +222,25 @@ export const getSealsByGerai = async ({
       filteredSeals
     );
     return filteredSeals;
+  } catch (error) {
+    console.error("getSealsByGerai - Error:", error);
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        `Failed to fetch seals by gerai: ${
+          error.response?.data?.error || error.message
+        }`
+      );
+    }
+    throw new Error(
+      `Failed to fetch seals by gerai: ${(error as Error).message}`
+    );
+  }
+};
+
+export const updateSeal = async (id: number, qty?: number) => {
+  try {
+    const seals = await api.put(`/seals/update/${id}`, { qty });
+    return seals.data;
   } catch (error) {
     console.error("getSealsByGerai - Error:", error);
     if (axios.isAxiosError(error)) {
@@ -787,7 +804,9 @@ export const getDailyTrend = async (
 export const getDailyIncomeExpense = async (
   date: string,
   geraiId?: number
-): Promise<{ data: { total_revenue: string; total_expenses: string }[] }> => {
+): Promise<{
+  data: { total_revenue: string; total_expenses: string; net_revenue: string };
+}> => {
   try {
     const response = await api.get("/daily-net-revenue/daily-income-expense", {
       params: {
@@ -799,12 +818,11 @@ export const getDailyIncomeExpense = async (
       "getDailyIncomeExpense response:",
       JSON.stringify(response.data, null, 2)
     );
-    const data = Array.isArray(response.data.data)
-      ? response.data.data.map((item: any) => ({
-          total_revenue: item.total_revenue || "0",
-          total_expenses: item.total_expenses || "0",
-        }))
-      : [];
+    const data = response.data.data || {
+      total_revenue: "0",
+      total_expenses: "0",
+      net_revenue: "0",
+    };
     return { data };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
@@ -843,6 +861,7 @@ export const getDailyTrendTotal = async (
     );
   }
 };
+
 
 export const calculateDailyNetRevenue = async (
   date: string,
@@ -1099,6 +1118,10 @@ export const getAllExpensesTotal = async (
       `Failed to fetch expenses total: ${(error as Error).message}`
     );
   }
+};
+export const getTotalExpenses = async () => {
+  const expenses = await api.get("/total-expenses");
+  return expenses.data;
 };
 
 export const getTotalRevenue = async (

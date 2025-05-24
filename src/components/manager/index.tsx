@@ -1,12 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAuthToken, decodeToken, removeAuthToken } from "@/utils/auth";
-import {
-  getTotalPendapatan,
-  getAllExpenses,
-  formatDateForAPI,
-  getAntrianCustomer,
-} from "@/utils/ggAPI";
+import { getDailyTrendAll, getAllExpensesAll, getGerais } from "@/utils/ggAPI";
 import Swal from "sweetalert2";
 import NavbarDashboard from "../fragments/NavbarDashboard";
 import {
@@ -19,6 +14,7 @@ import {
   Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
+import { FaWallet, FaFileInvoice } from "react-icons/fa";
 
 ChartJS.register(
   CategoryScale,
@@ -29,30 +25,21 @@ ChartJS.register(
   Legend
 );
 
-function getWeekDays(): string[] {
-  const today = new Date();
-  const days = [];
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(today.getDate() - i);
-    days.push(date.toLocaleDateString("id-ID", { weekday: "long" }));
-  }
-  return days;
-}
-
-interface GeraiStats {
-  gerai: string;
-  income: number;
-  pengeluaran: number;
-}
-
 export default function DashboardCEO() {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
-  const [stats, setStats] = useState({ totalIncome: 0, totalPengeluaran: 0 });
-  const [weeklyData, setWeeklyData] = useState<number[]>([]);
-  const geraiData: Array<GeraiStats> = [];
+  const [stats, setStats] = useState({
+    totalIncome: 0,
+    totalCleanIncome: 0,
+    totalPengeluaran: 0,
+  });
+  const [chartData, setChartData] = useState<{
+    labels: string[];
+    grossRevenue: number[];
+    netRevenue: number[];
+    expenses: number[];
+  }>({ labels: [], grossRevenue: [], netRevenue: [], expenses: [] });
 
   useEffect(() => {
     const initializeUser = () => {
@@ -103,25 +90,57 @@ export default function DashboardCEO() {
     if (userRole !== "CEO") return;
 
     const fetchData = async () => {
-      const now = new Date();
-      let totalRevenue: any = await getAntrianCustomer();
-      totalRevenue = totalRevenue.reduce((acc: any, item: any) => {
-        acc += item.harga_service;
-        acc += item.harga_sparepart;
-        return acc;
-      }, 0);
-      await getAllExpenses(
-        undefined,
-        "2025-04-24",
-        formatDateForAPIStandard(now)
-      );
-      console.log("totalRevenue = ", totalRevenue);
-      setStats({
-        totalIncome: totalRevenue,
-        totalPengeluaran: 0,
-      });
       try {
-        await Promise.all([fetchWeeklyData()]);
+        const now = new Date();
+        const startDate = formatDateForAPIStandard(
+          new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000)
+        ); // 7 hari terakhir
+        const endDate = formatDateForAPIStandard(now);
+
+        // Ambil daftar gerai
+        const geraiList = await getGerais();
+        console.log("getGerais response:", geraiList);
+
+        // Ambil data pengeluaran untuk stats
+        const expensesResponse = await getAllExpensesAll(startDate, endDate);
+        console.log("expensesResponse for stats:", expensesResponse);
+
+        const totalPengeluaran = expensesResponse.data.reduce(
+          (acc: number, gerai: { data: { amount: number }[] }) =>
+            acc +
+            gerai.data.reduce(
+              (sum: number, item: { amount: number }) =>
+                sum + (item.amount || 0),
+              0
+            ),
+          0
+        );
+
+        // Ambil data pendapatan bersih untuk stats
+        const dailyTrendResponse = await getDailyTrendAll(startDate, endDate);
+        console.log("dailyTrendResponse for stats:", dailyTrendResponse);
+        const totalCleanIncome = dailyTrendResponse.data.reduce(
+          (acc: number, gerai: { data: { netRevenue: number }[] }) =>
+            acc +
+            gerai.data.reduce(
+              (sum: number, item: { netRevenue: number }) =>
+                sum + (item.netRevenue || 0),
+              0
+            ),
+          0
+        );
+
+        // Pendapatan kotor = pendapatan bersih + pengeluaran
+        const totalIncome = totalCleanIncome + totalPengeluaran;
+
+        setStats({
+          totalIncome,
+          totalCleanIncome,
+          totalPengeluaran,
+        });
+
+        // Ambil data untuk grafik
+        await fetchChartData(startDate, endDate);
       } catch (error) {
         console.error("Error fetching data:", error);
         Swal.fire({
@@ -145,128 +164,115 @@ export default function DashboardCEO() {
     }).then(() => navigate(redirectTo, { replace: true }));
   };
 
-  // const fetchDailyData = async () => {
-  //   try {
-  //     const today = formatDateForAPI(new Date());
-  //     const res = await getTotalPendapatan("2025-04-26", "2025-04-26");
-  //     console.log("HASILNYA", res);
-  //     // const [totalIncome, expenses] = await Promise.all([
-  //     //   getTotalPendapatan(today, today),
-  //     //   getAllExpenses(undefined, today, today),
-  //     // ]);
-
-  //     // setStats({
-  //     //   totalIncome,
-  //     //   totalPengeluaran: expenses.total || 0,
-  //     // });
-  //   } catch (error) {
-  //     console.error("Error fetching daily data:", error);
-  //     setStats({ totalIncome: 0, totalPengeluaran: 0 });
-  //   }
-  // };
-
-  const fetchWeeklyData = async () => {
+  const fetchChartData = async (
+    startDate: string,
+    endDate: string,
+  ) => {
     try {
-      const today = new Date();
-      const weekData: number[] = [];
+      // Ambil data pendapatan bersih dari dailyTrendAll
+      const dailyTrendResponse = await getDailyTrendAll(startDate, endDate);
+      console.log("dailyTrendResponse:", dailyTrendResponse);
+
+      // Ambil data pengeluaran dari getAllExpensesAll
+      const expensesResponse = await getAllExpensesAll(startDate, endDate);
+      console.log("expensesResponse:", expensesResponse);
+
+      // Buat daftar tanggal untuk sumbu X (7 hari terakhir)
+      const labels: string[] = [];
+      const grossRevenue: number[] = [];
+      const netRevenue: number[] = [];
+      const expenses: number[] = [];
       for (let i = 6; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(today.getDate() - i);
-        const formattedDate = formatDateForAPI(date);
-        const dailyIncome = await getTotalPendapatan(
-          formattedDate,
-          formattedDate
-        );
-        weekData.push(dailyIncome);
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        labels.push(formatDateForAPIStandard(date));
       }
-      setWeeklyData(weekData);
+
+      // Inisialisasi data per tanggal
+      labels.forEach(() => {
+        grossRevenue.push(0);
+        netRevenue.push(0);
+        expenses.push(0);
+      });
+
+      // Proses pendapatan bersih dari dailyTrendAll
+      dailyTrendResponse.data.forEach((gerai) => {
+        gerai.data.forEach((item) => {
+          const date = item.date.split("T")[0]; // Ambil YYYY-MM-DD
+          const index = labels.indexOf(date);
+          if (index !== -1) {
+            netRevenue[index] += item.netRevenue || 0;
+            console.log(
+              `Adding netRevenue for ${date}: ${item.netRevenue} (gerai: ${gerai.gerai})`
+            );
+          }
+        });
+      });
+
+      // Proses pengeluaran dari getAllExpensesAll
+      expensesResponse.data.forEach(
+        (gerai: {
+          gerai_id: number;
+          data: { date: string; amount: number }[];
+        }) => {
+          gerai.data.forEach((item) => {
+            const date = item.date.split(" ")[0]; // Ambil YYYY-MM-DD dari "2025-05-21 00:00:00"
+            const index = labels.indexOf(date);
+            if (index !== -1) {
+              expenses[index] += item.amount || 0;
+              console.log(
+                `Adding expense for ${date}: ${item.amount} (gerai_id: ${gerai.gerai_id})`
+              );
+            }
+          });
+        }
+      );
+
+      // Pendapatan kotor = pendapatan bersih + pengeluaran
+      labels.forEach((_, index) => {
+        grossRevenue[index] = netRevenue[index] + expenses[index];
+      });
+
+      console.log("Chart data before set:", {
+        labels,
+        grossRevenue,
+        netRevenue,
+        expenses,
+      });
+      setChartData({ labels, grossRevenue, netRevenue, expenses });
     } catch (error) {
-      console.error("Error fetching weekly data:", error);
-      setWeeklyData(Array(7).fill(0));
+      console.error("Error fetching chart data:", error);
+      setChartData({
+        labels: Array(7).fill(""),
+        grossRevenue: Array(7).fill(0),
+        netRevenue: Array(7).fill(0),
+        expenses: Array(7).fill(0),
+      });
     }
   };
 
-  // const fetchGeraiData = async (geraiList: Gerai[]) => {
-  //   try {
-  //     const today = formatDateForAPI(new Date());
-  //     const [pendapatanResponse, expensesResponse] = await Promise.all([
-  //       getPendapatanPerGerai(today, today),
-  //       getAllExpenses(undefined, today, today),
-  //     ]);
-
-  //     const pendapatanData = pendapatanResponse.data || [];
-  //     const expensesData = expensesResponse.data || [];
-
-  //     const geraiStats: Record<
-  //       string,
-  //       { income: number; pengeluaran: number }
-  //     > = {};
-  //     geraiList.forEach((gerai) => {
-  //       geraiStats[gerai.name] = { income: 0, pengeluaran: 0 };
-  //     });
-
-  //     pendapatanData.forEach(
-  //       (item: { gerai: string; totalRevenue: number }) => {
-  //         if (geraiStats[item.gerai]) {
-  //           geraiStats[item.gerai].income = item.totalRevenue || 0;
-  //         }
-  //       }
-  //     );
-
-  //     expensesData.forEach((item: { geraiId: number; amount: number }) => {
-  //       const gerai =
-  //         geraiList.find((g) => g.id === item.geraiId)?.name || "Unknown Gerai";
-  //       geraiStats[gerai] = geraiStats[gerai] || { income: 0, pengeluaran: 0 };
-  //       geraiStats[gerai].pengeluaran += item.amount || 0;
-  //     });
-
-  //     const geraiArray = Object.entries(geraiStats).map(([gerai, data]) => ({
-  //       gerai,
-  //       income: data.income,
-  //       pengeluaran: data.pengeluaran,
-  //     }));
-
-  //     setGeraiData(geraiArray);
-  //   } catch (error) {
-  //     console.error("Error fetching gerai data:", error);
-  //     setGeraiData(
-  //       geraiList.map((gerai) => ({
-  //         gerai: gerai.name,
-  //         income: 0,
-  //         pengeluaran: 0,
-  //       }))
-  //     );
-  //   }
-  // };
-
-  const weeklyChartData = {
-    labels: getWeekDays(),
+  const financialChartData = {
+    labels: chartData.labels,
     datasets: [
       {
-        label: "Total Income",
-        data: weeklyData.length ? weeklyData : Array(7).fill(0),
-        backgroundColor: "rgba(75, 192, 192, 0.6)",
-        borderColor: "rgba(75, 192, 192, 1)",
+        label: "Pendapatan Kotor",
+        data: chartData.grossRevenue,
+        backgroundColor: "rgba(59, 130, 246, 0.6)", // Biru lembut
+        borderColor: "rgba(59, 130, 246, 1)",
         borderWidth: 1,
       },
-    ],
-  };
-
-  const geraiChartData = {
-    labels: geraiData.map((item) => item.gerai),
-    datasets: [
       {
-        label: "Income",
-        data: geraiData.map((item) => item.income),
-        backgroundColor: "rgba(54, 162, 235, 0.6)",
-        borderColor: "rgba(54, 162, 235, 1)",
+        label: "Pendapatan Bersih",
+        data: chartData.netRevenue,
+        backgroundColor: "rgba(16, 185, 129, 0.6)", // Hijau lembut
+        borderColor: "rgba(16, 185, 129, 1)",
         borderWidth: 1,
       },
       {
         label: "Pengeluaran",
-        data: geraiData.map((item) => item.pengeluaran),
-        backgroundColor: "rgba(255, 99, 132, 0.6)",
-        borderColor: "rgba(255, 99, 132, 1)",
+        data: chartData.expenses,
+        backgroundColor: "rgba(239, 68, 68, 0.6)", // Merah lembut
+        borderColor: "rgba(239, 68, 68, 1)",
         borderWidth: 1,
       },
     ],
@@ -276,26 +282,21 @@ export default function DashboardCEO() {
     responsive: true,
     plugins: {
       legend: { position: "top" as const },
-      title: { display: true, text: "Income Mingguan (Semua Gerai)" },
+      title: { display: true, text: "Tren Keuangan Harian (Semua Gerai)" },
     },
     scales: {
-      y: { beginAtZero: true, title: { display: true, text: "Jumlah (Rp)" } },
+      y: {
+        beginAtZero: true,
+        title: { display: true, text: "Jumlah (Rp)" },
+        suggestedMax: 1000000,
+      },
+      x: { title: { display: true, text: "Tanggal" } },
     },
-  };
-
-  const geraiChartOptions = {
-    responsive: true,
-    plugins: {
-      legend: { position: "top" as const },
-      title: { display: true, text: "Income dan Pengeluaran per Gerai" },
-    },
-    scales: {
-      y: { beginAtZero: true, title: { display: true, text: "Jumlah (Rp)" } },
-    },
+    barPercentage: 0.3,
+    categoryPercentage: 0.9,
   };
 
   if (!userRole) return null;
-  console.log("TOTAL HARGA", stats.totalIncome);
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
@@ -306,62 +307,42 @@ export default function DashboardCEO() {
         </h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-lg font-semibold text-gray-700">
-              Total Income
-            </h3>
-            <p className="text-2xl font-bold text-green-600">
-              Rp {stats.totalIncome.toLocaleString("id-ID")}
-            </p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-lg font-semibold text-gray-700">
-              Total Pengeluaran
-            </h3>
-            <p className="text-2xl font-bold text-red-600">
-              Rp {stats.totalPengeluaran.toLocaleString("id-ID")}
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
-          <Bar data={weeklyChartData} options={chartOptions} />
-        </div>
-
-        {geraiData.length > 0 && (
-          <>
-            <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
-              <Bar data={geraiChartData} options={geraiChartOptions} />
-            </div>
-            <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
-              <h3 className="text-lg font-semibold text-gray-700 mb-4">
-                Income dan Pengeluaran per Gerai
+          <div className="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-50 hover:shadow-md transition-shadow duration-200">
+            <div className="flex items-center space-x-2">
+              <FaWallet className="text-green-600 text-lg transform hover:scale-110 transition-transform duration-200" />
+              <h3 className="text-sm font-medium text-gray-600">
+                Total Pendapatan
               </h3>
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-200">
-                    <th className="p-3 border-b">Gerai</th>
-                    <th className="p-3 border-b">Income (Rp)</th>
-                    <th className="p-3 border-b">Pengeluaran (Rp)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {geraiData.map((item, index) => (
-                    <tr key={index} className="border-b hover:bg-gray-50">
-                      <td className="p-3">{item.gerai}</td>
-                      <td className="p-3 text-green-600">
-                        {item.income.toLocaleString("id-ID")}
-                      </td>
-                      <td className="p-3 text-red-600">
-                        {item.pengeluaran.toLocaleString("id-ID")}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
-          </>
-        )}
+            <div className="mt-3 space-y-2">
+              <div className="flex items-baseline space-x-2">
+                <p className="text-2xl font-bold text-green-600">
+                  Rp {stats.totalCleanIncome.toLocaleString("id-ID")}
+                </p>
+                <p className="text-sm text-gray-500">
+                  <s>Rp {stats.totalIncome.toLocaleString("id-ID")}</s>
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-50 hover:shadow-md transition-shadow duration-200">
+            <div className="flex items-center space-x-2">
+              <FaFileInvoice className="text-red-600 text-lg transform hover:scale-110 transition-transform duration-200" />
+              <h3 className="text-sm font-medium text-gray-600">
+                Total Pengeluaran
+              </h3>
+            </div>
+            <div className="mt-3">
+              <p className="text-2xl font-bold text-red-600">
+                Rp {stats.totalPengeluaran.toLocaleString("id-ID")}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-50">
+          <Bar data={financialChartData} options={chartOptions} />
+        </div>
       </main>
     </div>
   );

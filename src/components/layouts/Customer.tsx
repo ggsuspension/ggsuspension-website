@@ -24,6 +24,7 @@ import { setCookie } from "@/utils/setCookie";
 import { motion } from "framer-motion";
 import ModalWelcome from "../fragments/ModalWelcome";
 import { CircleDotDashed } from "lucide-react";
+import { RiRefreshFill } from "react-icons/ri";
 
 interface Question {
   id: number;
@@ -198,10 +199,7 @@ export default function Customer() {
       jenis_motor: answers[1].selectedOptionText,
       bagian_motor: answers[2].selectedOptionText,
       bagian_motor2: answers.length < 5 ? "" : answers[3].selectedOptionText,
-      motor:
-        answers.length < 5
-          ? answers[3].selectedOptionText
-          : answers[4].selectedOptionText,
+      motor: answers[4].selectedOptionText,
       harga_service: price.bagianMotor1 + price.bagianMotor2,
     });
     if (result.success) {
@@ -242,15 +240,7 @@ export default function Customer() {
         setAllMotorParts(res);
       } else if (questions[currentQuestionIndex].options[0].type == "motor") {
         if (answers[1].selectedOptionText.includes("OHLINS")) {
-          setAnswers([
-            ...answers,
-            {
-              questionId: 5,
-              selectedOptionId: "0",
-              selectedOptionText: "Motor Lainnya",
-              selectedOptionType: "motor",
-            },
-          ]);
+          handleSelectOption("100", "Motor Lainnya", 0, "motor");
           return setShowResults(true);
         }
         setMotors(
@@ -300,9 +290,6 @@ export default function Customer() {
           <div className="space-y-5 mb-6">
             {questions.map((question, index) => {
               const answer = answers.find((a) => a.questionId === question.id);
-              // const selectedOption = question.options.find(
-              //   (o) => o.id === answer?.selectedOptionId
-              // );
               return (
                 <motion.div
                   key={question.id}
@@ -340,14 +327,16 @@ export default function Customer() {
               *Harga tidak termasuk sparepart tambahan
             </p>
           </div>
-          <div className="flex gap-3">
+          <div  onClick={() => {
+                setShowResults(false);
+              }} className="flex gap-3">
             <motion.button
-              onClick={() => setShowResults(false)}
-              className="bg-orange-500 text-white p-3 rounded-full shadow-lg hover:bg-gray-600 transition-all "
+              className="bg-orange-500 text-white p-3 rounded-full shadow-lg hover:bg-gray-600 transition-all flex items-center gap-1"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
               <IoIosArrowDropleftCircle className="text-2xl" />
+              <p className="font-bold">GANTI</p>
             </motion.button>
             <motion.button
               onClick={handleSubmit}
@@ -439,18 +428,29 @@ export default function Customer() {
               />
             </div>
           </div>
-          <div className="bg-gray-900 p-6 rounded-lg shadow-md mb-6 border-l-4 border-orange-500">
+          <div className="bg-gray-900 p-6 rounded-lg shadow-md mb-6 border-l-4 border-orange-500 flex flex-col">
             <h2 className="text-2xl font-bold text-white flex items-center">
               <FaCheckCircle className="text-yellow-500 mr-2" />
               {currentQuestion.text}
             </h2>
             {questions[currentQuestionIndex].options[0] &&
+              questions[currentQuestionIndex].options[0].type == "motorpart2" &&
+              answers[currentQuestionIndex] &&
+              answers[currentQuestionIndex].selectedOptionText.length > 0 && (
+                <button
+                  onClick={() => handleSelectOption("100", "", 0, "motorpart2")}
+                  className="bg-gradient-to-r from-orange-400 to-orange-700 p-2 rounded-xl font-bold text-white self-end mb-5 flex items-center gap-1"
+                >
+                  RESET <RiRefreshFill />
+                </button>
+              )}
+            {/* {questions[currentQuestionIndex].options[0] &&
               questions[currentQuestionIndex].options[0].type ==
                 "motorpart2" && (
                 <p className="text-red-400 text-lg mb-4">
                   Klik panah di bawah jika tidak menambah bagian motor lainnya{" "}
                 </p>
-              )}
+              )} */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {currentQuestion.options.map((option) => {
                 const isSelected = answers.some(
@@ -556,11 +556,12 @@ export default function Customer() {
                 onClick={() =>
                   setCurrentQuestionIndex(currentQuestionIndex - 1)
                 }
-                className="bg-gray-700 text-white p-3 rounded-full shadow-lg hover:bg-gray-600 transition-all"
+                className="bg-gray-700 text-white p-3 rounded-full shadow-lg hover:bg-gray-600 transition-all flex items-center gap-2"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
                 <IoIosArrowDropleftCircle className="text-3xl" />
+                <p>BALIK</p>
               </motion.button>
             )}
             {questions[currentQuestionIndex].options[0] &&
@@ -568,16 +569,25 @@ export default function Customer() {
                 questions[currentQuestionIndex].options[0].type ==
                   "motorpart2") && (
                 <motion.button
-                  onClick={() =>
+                  onClick={() => {
+                    if (
+                      questions[currentQuestionIndex].options[0].type ==
+                      "motorpart2"
+                    ) {
+                      handleSelectOption("100", "", 0, "motorpart2");
+                      setCurrentQuestionIndex(currentQuestionIndex + 1);
+                      return;
+                    }
                     questions.length - 1 === currentQuestionIndex
                       ? setShowResults(true)
-                      : setCurrentQuestionIndex(currentQuestionIndex + 1)
-                  }
-                  className="bg-gradient-to-r from-yellow-500 to-orange-500 text-black p-3 rounded-full shadow-lg hover:from-yellow-600 hover:to-orange-600 transition-all"
+                      : setCurrentQuestionIndex(currentQuestionIndex + 1);
+                  }}
+                  className="bg-gradient-to-r from-yellow-500 to-orange-500 text-black p-3 rounded-full shadow-lg hover:from-yellow-600 hover:to-orange-600 transition-all flex items-center gap-2"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 >
                   <IoIosArrowDroprightCircle className="text-3xl" />
+                  <p>LANJUT</p>
                 </motion.button>
               )}
           </div>

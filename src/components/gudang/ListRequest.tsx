@@ -99,14 +99,12 @@ const ListRequest = () => {
         setLoading(false);
       }
     };
-
     fetchStockRequests();
   }, [userRole]);
 
   const handleApprove = async (id: number) => {
     try {
       const updatedRequest = await approveStockRequest(id);
-      console.log("Stock request disetujui:", updatedRequest);
       setStockRequests((prevRequests) =>
         prevRequests.map((request) =>
           request.id === id

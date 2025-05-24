@@ -9,7 +9,7 @@ interface TabelAntrianHarianEditProps {
   dataSeal: any;
   isLoading: boolean;
   onEdit: (item: TransformedAntrian) => void;
-  onFinish: (id: number) => Promise<void>;
+  onFinish: (id: number, sparepart_id: number) => Promise<void>;
   onCancel: (id: number) => Promise<void>;
   editItem: any | null;
   setEditItem: React.Dispatch<React.SetStateAction<any | null>>;
@@ -417,6 +417,15 @@ const TabelAntrianHarianEdit: React.FC<TabelAntrianHarianEditProps> = ({
                                 "Apakah Anda yakin ingin menambahkan seal?"
                               );
                               if (confirmation) {
+                                if (JSON.parse(e.target.value).qty == 0) {
+                                  return Swal.fire({
+                                    icon: "warning",
+                                    title: "Gagal!",
+                                    text: "Stok Sparepart sudah habis.",
+                                    timer: 2000,
+                                    showConfirmButton: false,
+                                  });
+                                }
                                 const sendMessage = (data: any) => {
                                   channel?.send({
                                     type: "broadcast",
@@ -441,15 +450,17 @@ const TabelAntrianHarianEdit: React.FC<TabelAntrianHarianEditProps> = ({
                             name=""
                             id=""
                           >
-                            <option value="">Tambah Seal</option>
+                            <option value="">Tambah Sparepart</option>
                             {dataSeal.map((item: any) => (
                               <option
                                 value={JSON.stringify({
                                   sparepart: item.type + " - " + item.size,
                                   harga_sparepart: item.price,
+                                  sparepart_id: item.id,
+                                  qty: item.qty,
                                 })}
                               >
-                                {item.type} - {item.size}
+                                {item.type} - {item.size} -{item.qty}
                               </option>
                             ))}
                           </select>
@@ -485,14 +496,14 @@ const TabelAntrianHarianEdit: React.FC<TabelAntrianHarianEditProps> = ({
                           </>
                         ) : (
                           <>
-                            <button
-                              className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 text-sm"
-                              onClick={() => onEdit(item)}
-                            >
-                              Edit
-                            </button>
                             {item.status == "PROGRESS" && (
                               <div className="flex flex-col gap-1">
+                                <button
+                                  className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 text-sm"
+                                  onClick={() => onEdit(item)}
+                                >
+                                  Edit
+                                </button>
                                 <button
                                   className="bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 text-sm"
                                   onClick={() => {
@@ -502,7 +513,7 @@ const TabelAntrianHarianEdit: React.FC<TabelAntrianHarianEditProps> = ({
 
                                     if (yakin) {
                                       // aksi jika pengguna klik OK
-                                      onFinish(item.id);
+                                      onFinish(item.id, item.sparepart_id);
                                     } else {
                                       // aksi jika pengguna klik Cancel
                                       return;

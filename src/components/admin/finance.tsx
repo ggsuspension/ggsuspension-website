@@ -479,11 +479,7 @@ export default function Finance() {
       };
 
       // Proses pendapatan kotor dan pengeluaran dari dailyIncomeExpense
-      const dailyIncomeExpense =
-        Array.isArray(dailyIncomeExpenseResponse.data?.data) &&
-        dailyIncomeExpenseResponse.data.data.length > 0
-          ? dailyIncomeExpenseResponse.data.data[0]
-          : {};
+      const dailyIncomeExpense = dailyIncomeExpenseResponse.data || {};
       console.log("Processed dailyIncomeExpense:", dailyIncomeExpense);
       const totalPendapatan = parseFloat(dailyIncomeExpense.total_revenue) || 0;
       const totalPengeluaran =
@@ -728,7 +724,9 @@ export default function Finance() {
     };
 
     try {
-      await createExpense(data);
+      console.log("Sending createExpense request with data:", data);
+      const response = await createExpense(data);
+      console.log("createExpense response:", response);
 
       setAdditionalCosts((prev) => {
         const updatedCosts = { ...prev };
@@ -826,14 +824,19 @@ export default function Finance() {
       });
 
       if (timeRange === "day") {
-        fetchData();
+        setTimeout(() => fetchData(), 1000); // Beri waktu untuk job selesai
       }
     } catch (error: any) {
-      console.error("Error saat createExpense:", error);
+      console.error("Error in handleAddCost:", {
+        message: error.message,
+        response: error.response ? error.response.data : null,
+      });
       Swal.fire({
         icon: "error",
         title: "Gagal Menambah Pengeluaran",
         text: error.message || "Terjadi kesalahan saat menambah pengeluaran.",
+        timer: 2000,
+        showConfirmButton: false,
       });
     }
   };
@@ -870,7 +873,14 @@ export default function Finance() {
           </thead>
           <tbody>
             {allExpenses.map((expense, idx) => (
-              <tr key={expense.id || idx} className="hover:bg-gray-50">
+              <tr
+                key={
+                  expense.id
+                    ? `expense-${expense.id}`
+                    : `temp-${idx}-${Date.now()}`
+                }
+                className="hover:bg-gray-50"
+              >
                 <td className="border border-gray-200 px-4 py-2 text-sm text-gray-600">
                   {formatDateForDisplay(expense.date || new Date(), true)}
                 </td>
