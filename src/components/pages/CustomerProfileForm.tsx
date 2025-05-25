@@ -266,15 +266,18 @@ const CustomerProfileForm = () => {
                   <FaClock className="text-yellow-500" />
                   No WhatsApp
                 </label>
-                <input
-                  type="text"
-                  placeholder="+628123456789"
-                  required
-                  name="noWA"
-                  pattern="\+62[0-9]{9,12}"
-                  title="Nomor WA harus diawali +62 dan memiliki 9-12 digit"
-                  className="w-full px-4 py-3 bg-slate-800 backdrop-blur-sm rounded-lg border border-orange-500/20 placeholder-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
-                />
+                <div className="flex items-center gap-3">
+                  <span>+62</span>
+                  <input
+                    type="text"
+                    placeholder="8123456789"
+                    required
+                    name="noWA"
+                    pattern="\[0-9]{9,12}"
+                    title="Nomor WA harus diawali +62 dan memiliki 9-12 digit"
+                    className="w-full px-4 py-3 bg-slate-800 backdrop-blur-sm rounded-lg border border-orange-500/20 placeholder-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
+                  />
+                </div>
               </div>
 
               <div>
